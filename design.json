@@ -1,0 +1,944 @@
+{
+  "meta": {
+    "name": "Pollora – Poll App Design System",
+    "version": "1.0.0",
+    "platform": "iOS (mobile-first)",
+    "theme": "dark-only",
+    "description": "A dark-mode social polling app design system. High contrast, purple accent, minimal chrome. Community-driven and data-forward."
+  },
+
+  "designPrinciples": [
+    "Dark-first: pure black (#000000) canvas with layered dark-surface cards",
+    "Single accent color (electric violet/purple) used consistently for all interactive and active states",
+    "High information density within cards — no wasted space, but breathing room between sections",
+    "Data visualisation (poll bars) is the hero element; styled as pill-shaped filled bars on dark tracks",
+    "Typography is clean and system-native; large bold headings contrast with small muted metadata",
+    "Avatar/profile images are circular with a subtle border, humanising the content feed",
+    "Bottom navigation is persistent, with the primary CTA (Create) as a floating elevated FAB in the center"
+  ],
+
+  "colorTokens": {
+    "background": {
+      "base": "#000000",
+      "surface": "#1A1A1A",
+      "surfaceElevated": "#222222",
+      "surfaceCard": "#1C1C1C",
+      "surfaceModal": "#1E1E1E",
+      "surfaceInput": "#262626",
+      "surfaceIconBadge": "#2A2566",
+      "overlay": "rgba(0, 0, 0, 0.6)"
+    },
+    "accent": {
+      "primary": "#5B4FE8",
+      "primaryHover": "#6B5FF8",
+      "primaryMuted": "rgba(91, 79, 232, 0.25)",
+      "primaryBorder": "rgba(91, 79, 232, 0.6)"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#AAAAAA",
+      "tertiary": "#666666",
+      "accent": "#7B6FFF",
+      "placeholder": "#555555",
+      "destructive": "#FF5555",
+      "success": "#4CAF50"
+    },
+    "border": {
+      "default": "#2E2E2E",
+      "subtle": "#1E1E1E",
+      "active": "#5B4FE8"
+    },
+    "poll": {
+      "barTrack": "#2C2C2C",
+      "barFillLeading": "#5B4FE8",
+      "barFillOther": "#333333",
+      "barFillSelected": "#4A3FC4"
+    },
+    "status": {
+      "positive": "#4CAF50",
+      "positiveText": "#6FCF97",
+      "negative": "#FF5555",
+      "neutral": "#AAAAAA"
+    },
+    "bottomNav": {
+      "background": "#0A0A0A",
+      "activeIcon": "#7B6FFF",
+      "activeLabel": "#7B6FFF",
+      "inactiveIcon": "#666666",
+      "inactiveLabel": "#666666",
+      "fabBackground": "#5B4FE8",
+      "fabIcon": "#FFFFFF"
+    }
+  },
+
+  "typography": {
+    "fontFamily": {
+      "primary": "SF Pro Display",
+      "fallback": "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif"
+    },
+    "scale": {
+      "screenTitle": {
+        "size": 32,
+        "weight": "800",
+        "lineHeight": 1.1,
+        "color": "text.primary",
+        "usage": "Top-level screen headings (e.g. 'Polls', 'My Polls', 'Create Poll')"
+      },
+      "screenSubtitle": {
+        "size": 15,
+        "weight": "400",
+        "lineHeight": 1.4,
+        "color": "text.secondary",
+        "usage": "Subtitle below screen title (e.g. 'Ask a question and add options')"
+      },
+      "sectionTitle": {
+        "size": 18,
+        "weight": "700",
+        "lineHeight": 1.2,
+        "color": "text.primary",
+        "usage": "Section labels within a screen (e.g. 'Your Polls')"
+      },
+      "pollQuestion": {
+        "size": 18,
+        "weight": "700",
+        "lineHeight": 1.3,
+        "color": "text.primary",
+        "usage": "The main question text in a poll card"
+      },
+      "optionLabel": {
+        "size": 15,
+        "weight": "500",
+        "lineHeight": 1.3,
+        "color": "text.primary",
+        "usage": "Text inside poll option bar rows"
+      },
+      "optionPercentage": {
+        "size": 14,
+        "weight": "600",
+        "lineHeight": 1,
+        "color": "text.primary",
+        "usage": "Percentage value aligned right of a poll bar row"
+      },
+      "voteCount": {
+        "size": 14,
+        "weight": "500",
+        "lineHeight": 1,
+        "color": "text.accent",
+        "usage": "Total vote count below poll options (e.g. '1,245 votes')"
+      },
+      "userName": {
+        "size": 15,
+        "weight": "700",
+        "lineHeight": 1.2,
+        "color": "text.primary",
+        "usage": "Username in poll card header row"
+      },
+      "timestamp": {
+        "size": 13,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.tertiary",
+        "usage": "Relative timestamps (e.g. '2h ago', '1d ago')"
+      },
+      "formLabel": {
+        "size": 16,
+        "weight": "600",
+        "lineHeight": 1.2,
+        "color": "text.primary",
+        "usage": "Input field labels in forms (e.g. 'Poll question', 'Option 1')"
+      },
+      "formLabelOptional": {
+        "size": 16,
+        "weight": "400",
+        "lineHeight": 1.2,
+        "color": "text.secondary",
+        "usage": "Optional suffix appended to form labels"
+      },
+      "formHelper": {
+        "size": 12,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.tertiary",
+        "usage": "Helper text below form sections (e.g. 'Minimum 2 options')"
+      },
+      "navLabel": {
+        "size": 11,
+        "weight": "400",
+        "lineHeight": 1,
+        "usage": "Bottom navigation tab label"
+      },
+      "profileName": {
+        "size": 22,
+        "weight": "700",
+        "lineHeight": 1.2,
+        "color": "text.primary",
+        "usage": "Large display name in profile header card"
+      },
+      "profileHandle": {
+        "size": 14,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "@ handle below profile name"
+      },
+      "profileMeta": {
+        "size": 13,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "Joined date and other metadata in profile header"
+      },
+      "statValue": {
+        "size": 28,
+        "weight": "700",
+        "lineHeight": 1.1,
+        "color": "text.accent",
+        "usage": "Large numeric stat values in stat cards"
+      },
+      "statLabel": {
+        "size": 13,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "Label above stat value in stat cards"
+      },
+      "statDelta": {
+        "size": 12,
+        "weight": "500",
+        "lineHeight": 1,
+        "color": "status.positiveText",
+        "usage": "Weekly delta indicator below stat value (e.g. '+2 this week ↑')"
+      },
+      "listItemTitle": {
+        "size": 15,
+        "weight": "600",
+        "lineHeight": 1.3,
+        "color": "text.primary",
+        "usage": "Poll title in My Polls list rows"
+      },
+      "listItemMeta": {
+        "size": 12,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "Leading option snippet in list rows (e.g. '• Escanor leading')"
+      },
+      "listItemTimestamp": {
+        "size": 12,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.tertiary",
+        "usage": "Timestamp in list row right side"
+      },
+      "voteBadge": {
+        "size": 12,
+        "weight": "600",
+        "lineHeight": 1,
+        "color": "text.accent",
+        "usage": "Pill-shaped vote count badge in list rows"
+      },
+      "buttonPrimary": {
+        "size": 17,
+        "weight": "700",
+        "lineHeight": 1,
+        "color": "#FFFFFF",
+        "usage": "Primary CTA button text (e.g. 'Publish Poll')"
+      },
+      "addOptionLabel": {
+        "size": 16,
+        "weight": "500",
+        "lineHeight": 1,
+        "color": "text.primary",
+        "usage": "Label next to the + icon in 'Add option' row"
+      },
+      "sheetTitle": {
+        "size": 26,
+        "weight": "800",
+        "lineHeight": 1.1,
+        "color": "text.primary",
+        "usage": "Bottom sheet main title (e.g. 'Switch account')"
+      },
+      "sheetSubtitle": {
+        "size": 14,
+        "weight": "400",
+        "lineHeight": 1.3,
+        "color": "text.secondary",
+        "usage": "Subtitle inside bottom sheet"
+      },
+      "accountName": {
+        "size": 16,
+        "weight": "600",
+        "lineHeight": 1.2,
+        "color": "text.primary",
+        "usage": "Account display name in account switcher rows"
+      },
+      "accountEmail": {
+        "size": 13,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "Email below account name in switcher"
+      },
+      "actionItemTitle": {
+        "size": 16,
+        "weight": "600",
+        "lineHeight": 1.2,
+        "color": "text.primary",
+        "usage": "Action row title (e.g. 'Add another account')"
+      },
+      "actionItemSubtitle": {
+        "size": 13,
+        "weight": "400",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "Action row subtitle (e.g. 'Sign in with a different Google account')"
+      },
+      "destructiveAction": {
+        "size": 16,
+        "weight": "600",
+        "lineHeight": 1.2,
+        "color": "text.destructive",
+        "usage": "Destructive action title (e.g. 'Sign out from all accounts')"
+      },
+      "cancelButton": {
+        "size": 17,
+        "weight": "500",
+        "lineHeight": 1,
+        "color": "text.accent",
+        "usage": "Bottom sheet cancel button text"
+      },
+      "sortDropdown": {
+        "size": 14,
+        "weight": "500",
+        "lineHeight": 1,
+        "color": "text.secondary",
+        "usage": "Sort/filter dropdown label (e.g. 'Latest ↓')"
+      },
+      "createNewPollCTA": {
+        "size": 16,
+        "weight": "600",
+        "lineHeight": 1,
+        "color": "text.accent",
+        "usage": "Inline secondary CTA (e.g. '+ Create New Poll')"
+      }
+    }
+  },
+
+  "spacing": {
+    "base": 4,
+    "scale": {
+      "xs": 4,
+      "sm": 8,
+      "md": 12,
+      "lg": 16,
+      "xl": 20,
+      "xxl": 24,
+      "xxxl": 32
+    },
+    "screenPadding": {
+      "horizontal": 16,
+      "top": 16,
+      "bottom": 0
+    },
+    "cardPadding": {
+      "horizontal": 16,
+      "vertical": 16
+    },
+    "cardGap": 12,
+    "formFieldGap": 12,
+    "formSectionGap": 20,
+    "listRowPaddingVertical": 14,
+    "listRowPaddingHorizontal": 12,
+    "sectionHeaderMarginBottom": 12,
+    "statCardGap": 12,
+    "pollOptionRowGap": 8,
+    "avatarTextGap": 12,
+    "iconLabelGap": 8
+  },
+
+  "borderRadius": {
+    "card": 16,
+    "cardLarge": 20,
+    "input": 12,
+    "button": 14,
+    "buttonPill": 999,
+    "pollBar": 999,
+    "pollBarTrack": 999,
+    "avatar": 9999,
+    "iconBadge": 12,
+    "voteBadgePill": 999,
+    "bottomSheet": 20,
+    "accountRow": 14,
+    "fabButton": 9999,
+    "navTab": 0
+  },
+
+  "shadows": {
+    "card": "none",
+    "fab": "0px 4px 16px rgba(91, 79, 232, 0.45)",
+    "modal": "0px -4px 24px rgba(0, 0, 0, 0.6)"
+  },
+
+  "components": {
+    "screenHeader": {
+      "description": "Top of each screen with large title and optional right action",
+      "layout": "row, space-between, verticalCenter",
+      "paddingHorizontal": 16,
+      "paddingTop": 16,
+      "paddingBottom": 8,
+      "elements": {
+        "title": "typography.screenTitle",
+        "rightAction": {
+          "type": "iconButton",
+          "size": 40,
+          "background": "background.surfaceElevated",
+          "borderRadius": "borderRadius.avatar",
+          "iconColor": "text.primary",
+          "icon": "person or gear icon"
+        }
+      }
+    },
+
+    "pollCard": {
+      "description": "Feed card showing a single poll with results",
+      "background": "background.surfaceCard",
+      "borderRadius": "borderRadius.card",
+      "padding": "cardPadding",
+      "marginBottom": "spacing.cardGap",
+      "layout": "column",
+      "elements": {
+        "header": {
+          "layout": "row, verticalCenter",
+          "gap": "spacing.avatarTextGap",
+          "avatar": {
+            "size": 40,
+            "shape": "circle",
+            "borderRadius": "borderRadius.avatar"
+          },
+          "meta": {
+            "layout": "column",
+            "userName": "typography.userName",
+            "timestamp": "typography.timestamp"
+          }
+        },
+        "question": {
+          "typography": "typography.pollQuestion",
+          "marginTop": 12,
+          "marginBottom": 12
+        },
+        "optionRow": {
+          "description": "A single poll option with bar and percentage",
+          "layout": "row, verticalCenter, space-between",
+          "marginBottom": "spacing.pollOptionRowGap",
+          "barContainer": {
+            "flex": 1,
+            "height": 40,
+            "borderRadius": "borderRadius.pollBarTrack",
+            "background": "poll.barTrack",
+            "overflow": "hidden",
+            "position": "relative"
+          },
+          "barFill": {
+            "position": "absolute",
+            "top": 0,
+            "left": 0,
+            "bottom": 0,
+            "borderRadius": "borderRadius.pollBar",
+            "background": {
+              "leading": "poll.barFillLeading",
+              "others": "poll.barFillOther"
+            },
+            "widthDrivenBy": "percentage"
+          },
+          "optionLabel": {
+            "position": "absolute, left-centered-vertically",
+            "paddingLeft": 12,
+            "typography": "typography.optionLabel"
+          },
+          "percentage": {
+            "marginLeft": 10,
+            "minWidth": 40,
+            "textAlign": "right",
+            "typography": "typography.optionPercentage"
+          }
+        },
+        "voteCount": {
+          "typography": "typography.voteCount",
+          "marginTop": 8
+        }
+      }
+    },
+
+    "pollOptionBar": {
+      "description": "Reusable bar row used inside pollCard",
+      "height": 40,
+      "borderRadius": 999,
+      "trackColor": "poll.barTrack",
+      "fillColorLeading": "poll.barFillLeading",
+      "fillColorOther": "poll.barFillOther",
+      "labelPaddingLeft": 12,
+      "labelTypography": "typography.optionLabel",
+      "percentageTypography": "typography.optionPercentage",
+      "percentageMinWidth": 40
+    },
+
+    "createPollForm": {
+      "description": "Full-screen form for creating a new poll",
+      "background": "background.base",
+      "formCard": {
+        "background": "background.surfaceCard",
+        "borderRadius": "borderRadius.cardLarge",
+        "padding": "cardPadding"
+      },
+      "fieldLabel": "typography.formLabel",
+      "optionalSuffix": "typography.formLabelOptional",
+      "input": {
+        "background": "background.surfaceInput",
+        "borderRadius": "borderRadius.input",
+        "height": 50,
+        "paddingHorizontal": 14,
+        "typography": {
+          "value": "typography.optionLabel",
+          "placeholder": { "same": true, "color": "text.placeholder" }
+        },
+        "border": "none"
+      },
+      "addOptionRow": {
+        "background": "background.surfaceInput",
+        "borderRadius": "borderRadius.input",
+        "height": 50,
+        "paddingHorizontal": 14,
+        "layout": "row, verticalCenter, gap-12",
+        "icon": {
+          "type": "circle filled",
+          "size": 28,
+          "background": "accent.primary",
+          "iconColor": "#FFFFFF",
+          "icon": "plus"
+        },
+        "label": "typography.addOptionLabel"
+      },
+      "helperText": "typography.formHelper",
+      "publishButton": {
+        "background": "accent.primary",
+        "borderRadius": "borderRadius.button",
+        "height": 56,
+        "typography": "typography.buttonPrimary",
+        "fullWidth": true,
+        "marginTop": 24
+      }
+    },
+
+    "myPollsScreen": {
+      "description": "User profile screen with stats and list of their polls",
+      "background": "background.base",
+      "profileCard": {
+        "background": "background.surfaceCard",
+        "borderRadius": "borderRadius.card",
+        "padding": "cardPadding",
+        "layout": "row, verticalCenter, gap-16",
+        "gradientOverlay": {
+          "direction": "left-to-right",
+          "colors": ["transparent", "rgba(42, 37, 102, 0.4)"],
+          "position": "absolute, full-bleed"
+        },
+        "avatar": {
+          "size": 60,
+          "shape": "circle",
+          "editBadge": {
+            "size": 22,
+            "background": "accent.primary",
+            "icon": "pencil",
+            "position": "bottom-right corner of avatar"
+          }
+        },
+        "nameBlock": {
+          "displayName": "typography.profileName",
+          "handle": "typography.profileHandle",
+          "joinedDate": {
+            "typography": "typography.profileMeta",
+            "iconSize": 13,
+            "iconColor": "text.secondary",
+            "layout": "row, gap-4"
+          }
+        }
+      },
+      "statsRow": {
+        "layout": "row, gap-12",
+        "flex": "equal split",
+        "statCard": {
+          "background": "background.surfaceCard",
+          "borderRadius": "borderRadius.card",
+          "padding": "cardPadding",
+          "layout": "column",
+          "iconBadge": {
+            "size": 36,
+            "background": "background.surfaceIconBadge",
+            "borderRadius": "borderRadius.iconBadge",
+            "iconSize": 18,
+            "iconColor": "#FFFFFF"
+          },
+          "label": "typography.statLabel",
+          "value": "typography.statValue",
+          "delta": "typography.statDelta"
+        }
+      },
+      "sectionHeader": {
+        "layout": "row, space-between, verticalCenter",
+        "title": "typography.sectionTitle",
+        "sortDropdown": {
+          "typography": "typography.sortDropdown",
+          "icon": "chevron-down",
+          "iconSize": 12,
+          "gap": 4
+        }
+      },
+      "pollListCard": {
+        "background": "background.surfaceCard",
+        "borderRadius": "borderRadius.card",
+        "padding": { "horizontal": 0, "vertical": 0 },
+        "overflow": "hidden",
+        "listRow": {
+          "layout": "row, verticalCenter, space-between",
+          "paddingHorizontal": 16,
+          "paddingVertical": 14,
+          "divider": {
+            "height": 1,
+            "color": "border.subtle",
+            "marginLeft": 16
+          },
+          "iconBadge": {
+            "size": 44,
+            "background": "background.surfaceIconBadge",
+            "borderRadius": "borderRadius.iconBadge",
+            "iconSize": 20,
+            "iconColor": "#FFFFFF",
+            "marginRight": 12
+          },
+          "textBlock": {
+            "layout": "column, gap-4",
+            "title": "typography.listItemTitle",
+            "metaRow": {
+              "layout": "row, verticalCenter, gap-6",
+              "voteBadge": {
+                "background": "accent.primaryMuted",
+                "paddingHorizontal": 8,
+                "paddingVertical": 3,
+                "borderRadius": "borderRadius.voteBadgePill",
+                "typography": "typography.voteBadge"
+              },
+              "leadingOption": "typography.listItemMeta"
+            }
+          },
+          "rightBlock": {
+            "layout": "row, verticalCenter, gap-6",
+            "timestamp": "typography.listItemTimestamp",
+            "chevron": {
+              "icon": "chevron-right",
+              "size": 14,
+              "color": "text.tertiary"
+            }
+          }
+        }
+      },
+      "createNewPollButton": {
+        "layout": "center",
+        "typography": "typography.createNewPollCTA",
+        "iconPrefix": "plus",
+        "iconSize": 14,
+        "background": "background.surfaceCard",
+        "borderRadius": "borderRadius.card",
+        "paddingVertical": 18
+      }
+    },
+
+    "bottomNavigation": {
+      "description": "Persistent bottom tab bar with 3 tabs and a center FAB",
+      "height": 83,
+      "background": "bottomNav.background",
+      "borderTop": "1px solid border.subtle",
+      "tabs": [
+        {
+          "id": "feed",
+          "label": "Feed",
+          "icon": "list-bullets or grid",
+          "activeColor": "bottomNav.activeIcon",
+          "inactiveColor": "bottomNav.inactiveIcon"
+        },
+        {
+          "id": "create",
+          "label": "Create",
+          "type": "FAB",
+          "fabSize": 56,
+          "fabBackground": "bottomNav.fabBackground",
+          "fabIcon": "plus",
+          "fabIconColor": "bottomNav.fabIcon",
+          "fabBorderRadius": "borderRadius.fabButton",
+          "shadow": "shadows.fab",
+          "activeColor": "bottomNav.activeLabel",
+          "inactiveColor": "bottomNav.inactiveLabel"
+        },
+        {
+          "id": "myPolls",
+          "label": "My Polls",
+          "icon": "person",
+          "activeColor": "bottomNav.activeIcon",
+          "inactiveColor": "bottomNav.inactiveIcon"
+        }
+      ],
+      "labelTypography": "typography.navLabel",
+      "activeTabIndicator": "label and icon tint change to accent.primary, no underline"
+    },
+
+    "bottomSheet": {
+      "description": "Modal sheet sliding up from bottom (e.g. account switcher)",
+      "background": "background.surfaceModal",
+      "borderRadius": { "topLeft": 20, "topRight": 20 },
+      "dragHandle": {
+        "width": 36,
+        "height": 4,
+        "background": "#444444",
+        "borderRadius": 999,
+        "alignSelf": "center",
+        "marginTop": 10,
+        "marginBottom": 20
+      },
+      "titleBlock": {
+        "title": "typography.sheetTitle",
+        "subtitle": "typography.sheetSubtitle",
+        "gap": 4,
+        "marginBottom": 24
+      },
+      "accountRow": {
+        "layout": "row, verticalCenter, space-between",
+        "paddingHorizontal": 16,
+        "paddingVertical": 16,
+        "background": {
+          "default": "background.surfaceElevated",
+          "selected": "accent.primaryMuted"
+        },
+        "border": {
+          "default": "1px solid border.default",
+          "selected": "1px solid accent.primaryBorder"
+        },
+        "borderRadius": "borderRadius.accountRow",
+        "marginBottom": 10,
+        "avatar": { "size": 44, "shape": "circle" },
+        "textBlock": {
+          "gap": 2,
+          "name": "typography.accountName",
+          "email": "typography.accountEmail"
+        },
+        "radioIndicator": {
+          "size": 24,
+          "borderRadius": "9999",
+          "border": "2px solid #444",
+          "selected": {
+            "background": "accent.primary",
+            "icon": "checkmark white"
+          }
+        }
+      },
+      "actionGroup": {
+        "background": "background.surfaceElevated",
+        "borderRadius": "borderRadius.card",
+        "marginTop": 10,
+        "actionRow": {
+          "layout": "row, verticalCenter",
+          "paddingHorizontal": 16,
+          "paddingVertical": 16,
+          "gap": 16,
+          "iconSize": 24,
+          "divider": "1px solid border.subtle",
+          "chevron": {
+            "icon": "chevron-right",
+            "size": 14,
+            "color": "text.tertiary",
+            "marginLeft": "auto"
+          }
+        }
+      },
+      "cancelButton": {
+        "layout": "center",
+        "paddingVertical": 18,
+        "background": "background.surfaceElevated",
+        "borderRadius": "borderRadius.card",
+        "typography": "typography.cancelButton",
+        "marginTop": 10
+      },
+      "backdrop": "background.overlay",
+      "gestureClose": true
+    },
+
+    "avatar": {
+      "sizes": {
+        "sm": 32,
+        "md": 40,
+        "lg": 60,
+        "xl": 72
+      },
+      "shape": "circle",
+      "borderRadius": 9999,
+      "border": "none by default",
+      "editBadge": {
+        "background": "accent.primary",
+        "iconColor": "#FFFFFF",
+        "size": 22,
+        "borderRadius": 9999,
+        "position": "bottom-right"
+      }
+    },
+
+    "iconBadge": {
+      "description": "Rounded square icon container used in stats and list rows",
+      "background": "background.surfaceIconBadge",
+      "borderRadius": 12,
+      "sizes": {
+        "sm": { "container": 36, "icon": 18 },
+        "md": { "container": 44, "icon": 20 }
+      },
+      "iconColor": "#FFFFFF"
+    }
+  },
+
+  "screenInventory": {
+    "feed": {
+      "route": "/feed",
+      "title": "Polls",
+      "rightAction": "profileIconButton",
+      "content": "verticalScrollList of pollCards",
+      "activeNavTab": "feed"
+    },
+    "createPoll": {
+      "route": "/create",
+      "title": "Create Poll",
+      "subtitle": "Ask a question and add options",
+      "content": "createPollForm",
+      "activeNavTab": "create"
+    },
+    "myPolls": {
+      "route": "/my-polls",
+      "title": "My Polls",
+      "rightAction": "settingsGearIcon",
+      "content": "profileCard + statsRow + pollListCard",
+      "activeNavTab": "myPolls"
+    },
+    "switchAccount": {
+      "type": "bottomSheet",
+      "trigger": "profileAvatar tap in MyPolls header",
+      "content": "accountRows + actionGroup + cancelButton"
+    }
+  },
+
+  "patterns": {
+    "dataForwardCard": "Cards show live vote totals prominently. Lead with the largest value in accent color.",
+    "progressBarResult": "Poll options are always rendered as full-width track bars. The leading option gets accent.primary fill. All others get a dark grey fill. Width is proportional to vote percentage.",
+    "avatarPlusMeta": "Always pair an avatar with username + relative timestamp. Username bold, timestamp muted below.",
+    "statWithDelta": "Stat values use accent color. A green arrow + positive number below signals weekly growth.",
+    "voteBadgePill": "Small rounded pill chip with accent muted background and accent text for vote counts in list rows.",
+    "sectionSortControl": "Section title row has an inline dropdown on the right (e.g. 'Latest ↓') for sorting/filtering.",
+    "iconBadgeCategorisation": "Each poll in a list view is given a context icon (trophy, atom, tv, question-mark, swords, etc.) inside a small rounded-square badge to visually distinguish categories.",
+    "bottomSheetSelection": "Radio-style rows with avatar + name/email. Selected row has purple border + filled checkmark. Unselected has grey empty circle.",
+    "inlineGradientAccent": "Profile cards use a subtle dark-purple gradient overlay applied from center-right to create depth without lightening the surface.",
+    "fabCenterNav": "The center nav item is always a raised circular FAB with accent background. It does not collapse into a text label."
+  },
+
+  "interactions": {
+    "pollOptionTap": "Tapping an option before voting highlights it and registers a vote. Bar animates fill width from 0 to final %.",
+    "cardPress": "Cards have a subtle background lightening on press (e.g. #1C1C1C → #242424).",
+    "sheetDismiss": "Drag down or tap backdrop to dismiss bottom sheets.",
+    "navTabSwitch": "Icon and label transition to accent color. No additional animations required.",
+    "fabPress": "FAB scales down slightly on press (scale 0.95) then springs back.",
+    "addOptionTap": "Inserts a new input field above the 'Add option' row with a fade/slide-down animation.",
+    "publishButton": "Full width button at the bottom. On tap: loading spinner replaces text, then success state."
+  },
+
+  "iconography": {
+    "style": "SF Symbols or equivalent line icons — consistent stroke weight (~1.5px at default size)",
+    "size": {
+      "navIcon": 22,
+      "headerAction": 20,
+      "actionRow": 22,
+      "listChevron": 14,
+      "sortChevron": 12
+    },
+    "usedIcons": {
+      "feed": "list.bullet or rectangle.stack",
+      "create": "plus",
+      "myPolls": "person",
+      "settings": "gearshape",
+      "profile": "person.circle",
+      "edit": "pencil",
+      "calendar": "calendar",
+      "addAccount": "person.badge.plus",
+      "signOut": "arrow.right.square",
+      "chevronRight": "chevron.right",
+      "chevronDown": "chevron.down",
+      "check": "checkmark",
+      "pollCategory_battle": "crossed-swords",
+      "pollCategory_character": "questionmark.bubble",
+      "pollCategory_strength": "trophy",
+      "pollCategory_fruit": "atom or sparkles",
+      "pollCategory_anime": "tv.play",
+      "createNewPoll": "plus (inline)"
+    }
+  },
+
+  "motion": {
+    "defaultDuration": "250ms",
+    "easing": "cubic-bezier(0.4, 0, 0.2, 1)",
+    "barFillAnimation": {
+      "property": "width",
+      "from": "0%",
+      "to": "percentage value",
+      "duration": "400ms",
+      "easing": "cubic-bezier(0.0, 0, 0.2, 1)"
+    },
+    "bottomSheetPresent": {
+      "property": "translateY",
+      "from": "100%",
+      "to": "0%",
+      "duration": "320ms",
+      "easing": "cubic-bezier(0.32, 0.72, 0, 1)"
+    },
+    "cardPressScale": {
+      "property": "scale",
+      "to": 0.98,
+      "duration": "100ms"
+    }
+  },
+
+  "accessibility": {
+    "minimumTouchTarget": 44,
+    "contrastRatio": {
+      "primaryTextOnBase": "≥7:1 (AAA)",
+      "accentOnBase": "≥4.5:1 (AA)"
+    },
+    "semanticRoles": {
+      "pollOption": "button with role=radio when pre-vote, progressbar post-vote",
+      "navTabs": "tabBar with tabItem roles",
+      "bottomSheet": "role=dialog with accessible title"
+    }
+  },
+
+  "doAndDonts": {
+    "do": [
+      "Use #000000 as the base background — not #111 or #0A0A0A",
+      "Always use accent.primary (#5B4FE8) for the leading poll option, active nav tabs, vote counts, stat values, and CTAs",
+      "Maintain 16px horizontal screen padding consistently",
+      "Use circular avatars at all times — no rounded squares for user images",
+      "Bottom sheet drag handle is always visible and centered at the top of the sheet",
+      "Stat values in the profile screen must use the accent color to feel lively",
+      "Vote count badges in list rows must use the pill shape with accent muted background"
+    ],
+    "dont": [
+      "Don't use gradients for poll bars — use solid fills on a track",
+      "Don't show poll percentages inside the bar — label goes inside-left, percent goes outside-right",
+      "Don't use borders on cards — separation is achieved through background color contrast",
+      "Don't use any light theme — this system is dark-only",
+      "Don't use more than one accent color — purple is the sole accent throughout",
+      "Don't stack multiple CTAs — each screen has at most one primary action button",
+      "Don't use icon-only navigation labels — all tabs always have a text label below the icon"
+    ]
+  }
+}

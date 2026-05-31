@@ -99,7 +99,7 @@ class _PolloraBottomNav extends StatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: 56 + bottom,
+        height: 83 + bottom,
         child: Padding(
           padding: EdgeInsets.only(bottom: bottom),
           child: Row(

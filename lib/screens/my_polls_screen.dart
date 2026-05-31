@@ -29,18 +29,46 @@ class MyPollsScreen extends StatelessWidget {
                       height: 1.1,
                     ),
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surfaceElevated,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.settings_outlined,
-                      color: AppColors.textPrimary,
-                      size: 20,
-                    ),
+                  Row(
+                    children: [
+                      // Profile avatar — triggers Switch Account sheet
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _showSwitchAccountSheet(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF8B6914),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: const Text(
+                            'C',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      // Settings gear
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.settings_outlined,
+                          color: AppColors.textPrimary,
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -50,9 +78,11 @@ class MyPollsScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Profile Card
-                _ProfileCard(
-                  onAvatarTap: () => _showSwitchAccountSheet(context),
+                // Profile Card — whole card tappable to open sheet
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _showSwitchAccountSheet(context),
+                  child: const _ProfileCard(),
                 ),
                 const SizedBox(height: 12),
 
@@ -125,35 +155,25 @@ class MyPollsScreen extends StatelessWidget {
 // Profile Card
 // ──────────────────────────────────────────────
 class _ProfileCard extends StatelessWidget {
-  final VoidCallback onAvatarTap;
-
-  const _ProfileCard({required this.onAvatarTap});
+  const _ProfileCard();
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surfaceCard,
-        ),
+        decoration: const BoxDecoration(color: AppColors.surfaceCard),
         child: Stack(
           children: [
-            // Gradient overlay (right side)
+            // Gradient overlay — full-height, right half of card
             Positioned.fill(
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Container(
-                  width: 200,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                        Colors.transparent,
-                        Color(0x662A2566),
-                      ],
-                    ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    stops: [0.4, 1.0],
+                    colors: [Colors.transparent, Color(0x662A2566)],
                   ),
                 ),
               ),
@@ -164,41 +184,38 @@ class _ProfileCard extends StatelessWidget {
               child: Row(
                 children: [
                   // Avatar with edit badge
-                  GestureDetector(
-                    onTap: onAvatarTap,
-                    child: Stack(
-                      children: [
-                        const CircleAvatar(
-                          radius: 30,
-                          backgroundColor: Color(0xFF8B6914),
-                          child: Text(
-                            'C',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                            ),
+                  Stack(
+                    children: [
+                      const CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Color(0xFF8B6914),
+                        child: Text(
+                          'C',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: const BoxDecoration(
-                              color: AppColors.accentPrimary,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.edit_rounded,
-                              color: Colors.white,
-                              size: 12,
-                            ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 22,
+                          height: 22,
+                          decoration: const BoxDecoration(
+                            color: AppColors.accentPrimary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.edit_rounded,
+                            color: Colors.white,
+                            size: 12,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                   const SizedBox(width: 16),
                   // Name block

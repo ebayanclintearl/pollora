@@ -230,51 +230,59 @@ class _PollOptionBar extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Stack(
-            children: [
-              // Track
-              Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.pollBarTrack,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              ),
-              // Fill
-              FractionallySizedBox(
-                widthFactor: option.percentage / 100,
-                child: Container(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final fillWidth = constraints.maxWidth * (option.percentage / 100);
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
                   height: 40,
-                  decoration: BoxDecoration(
-                    color: option.isLeading
-                        ? AppColors.pollBarLeading
-                        : AppColors.pollBarOther,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              // Label inside bar
-              Positioned.fill(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 12),
-                    child: Text(
-                      option.label,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Track — full width, flat (ClipRRect handles rounding)
+                      Container(color: AppColors.pollBarTrack),
+                      // Fill — exact pixel width, flat
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: fillWidth,
+                          height: 40,
+                          child: Container(
+                            color: option.isLeading
+                                ? AppColors.pollBarLeading
+                                : AppColors.pollBarOther,
+                          ),
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      // Label — left-aligned inside bar
+                      Positioned(
+                        left: 12,
+                        top: 0,
+                        bottom: 0,
+                        right: 8,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            option.label,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         ),
         const SizedBox(width: 10),
+        // Percentage — outside the bar
         SizedBox(
           width: 40,
           child: Text(

@@ -105,12 +105,29 @@ class FeedScreen extends StatefulWidget {
 
 class _FeedScreenState extends State<FeedScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+  bool _searchActive = false;
   String _searchQuery = '';
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
+  }
+
+  void _activateSearch() {
+    setState(() => _searchActive = true);
+    Future.delayed(const Duration(milliseconds: 50), () => _searchFocus.requestFocus());
+  }
+
+  void _cancelSearch() {
+    _searchController.clear();
+    _searchFocus.unfocus();
+    setState(() {
+      _searchActive = false;
+      _searchQuery = '';
+    });
   }
 
   List<_PollData> get _filtered {
@@ -134,70 +151,113 @@ class _FeedScreenState extends State<FeedScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(16, top + 16, 16, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Polls',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      height: 1.1,
-                    ),
-                  ),
-                  const CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Color(0xFF8B6914),
-                    child: Text(
-                      'C',
+              child: AnimatedCrossFade(
+                duration: const Duration(milliseconds: 220),
+                crossFadeState: _searchActive
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                // Default header
+                firstChild: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Polls',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1.1,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // ── Search bar ──
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceCard,
-                  borderRadius: BorderRadius.circular(12),
+                    Row(
+                      children: [
+                        // Search icon
+                        GestureDetector(
+                          onTap: _activateSearch,
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: AppColors.surfaceElevated,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.search_rounded,
+                              color: AppColors.textPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Color(0xFF8B6914),
+                          child: Text(
+                            'C',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (v) => setState(() => _searchQuery = v),
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: 'Search polls...',
-                    hintStyle: TextStyle(
-                      fontSize: 15,
-                      color: AppColors.textTertiary,
+                // Search header
+                secondChild: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceCard,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocus,
+                          onChanged: (v) => setState(() => _searchQuery = v),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: AppColors.textPrimary,
+                          ),
+                          decoration: const InputDecoration(
+                            hintText: 'Search polls...',
+                            hintStyle: TextStyle(
+                              fontSize: 15,
+                              color: AppColors.textTertiary,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search_rounded,
+                              color: AppColors.textTertiary,
+                              size: 20,
+                            ),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          cursorColor: AppColors.accentPrimary,
+                        ),
+                      ),
                     ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: AppColors.textTertiary,
-                      size: 20,
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: _cancelSearch,
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textAccent,
+                        ),
+                      ),
                     ),
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  cursorColor: AppColors.accentPrimary,
+                  ],
                 ),
               ),
             ),
@@ -216,9 +276,7 @@ class _FeedScreenState extends State<FeedScreen> {
                               color: AppColors.textTertiary, size: 40),
                           const SizedBox(height: 12),
                           Text(
-                            _searchQuery.isEmpty
-                                ? 'No polls in this category yet'
-                                : 'No results for "$_searchQuery"',
+                            'No results for "$_searchQuery"',
                             style: const TextStyle(
                               fontSize: 15,
                               color: AppColors.textTertiary,

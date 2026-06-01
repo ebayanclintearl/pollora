@@ -28,17 +28,16 @@ class FeedScreen extends StatelessWidget {
                       height: 1.1,
                     ),
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surfaceElevated,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.person_outline_rounded,
-                      color: AppColors.textPrimary,
-                      size: 20,
+                  const CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Color(0xFF8B6914),
+                    child: Text(
+                      'C',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -55,6 +54,7 @@ class FeedScreen extends StatelessWidget {
                   userName: 'RoronoaZoro',
                   timestamp: '2h ago',
                   question: 'Who is the strongest?',
+                  coverAsset: 'assets/images/poll_cover_sample.png',
                   options: const [
                     _PollOption(label: 'Ban', percentage: 19, isLeading: false),
                     _PollOption(label: 'Escanor', percentage: 67, isLeading: true),
@@ -117,6 +117,7 @@ class _PollCard extends StatelessWidget {
   final String userName;
   final String timestamp;
   final String question;
+  final String? coverAsset;
   final List<_PollOption> options;
   final String voteCount;
 
@@ -126,6 +127,7 @@ class _PollCard extends StatelessWidget {
     required this.userName,
     required this.timestamp,
     required this.question,
+    this.coverAsset,
     required this.options,
     required this.voteCount,
   });
@@ -137,84 +139,102 @@ class _PollCard extends StatelessWidget {
         color: AppColors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: avatarColor,
-                child: Text(
-                  avatarLabel,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+      clipBehavior: Clip.hardEdge,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: avatarColor,
+                  child: Text(
+                    avatarLabel,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
+                      ),
+                    ),
+                    Text(
+                      timestamp,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textTertiary,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Question
+            Text(
+              question,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                height: 1.3,
+              ),
+            ),
+            // Cover image — below question, above options
+            if (coverAsset != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: Image.asset(
+                    coverAsset!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    timestamp,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.textTertiary,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
-              ),
             ],
-          ),
-          const SizedBox(height: 12),
-          // Question
-          Text(
-            question,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-              height: 1.3,
+            const SizedBox(height: 12),
+            // Options
+            ...options.asMap().entries.map((e) {
+              final i = e.key;
+              final opt = e.value;
+              return Padding(
+                padding: EdgeInsets.only(bottom: i < options.length - 1 ? 8 : 0),
+                child: _PollOptionBar(option: opt),
+              );
+            }),
+            const SizedBox(height: 8),
+            // Vote count
+            Text(
+              voteCount,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textAccent,
+                height: 1.0,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          // Options
-          ...options.asMap().entries.map((e) {
-            final i = e.key;
-            final opt = e.value;
-            return Padding(
-              padding: EdgeInsets.only(bottom: i < options.length - 1 ? 8 : 0),
-              child: _PollOptionBar(option: opt),
-            );
-          }),
-          const SizedBox(height: 8),
-          // Vote count
-          Text(
-            voteCount,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textAccent,
-              height: 1.0,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

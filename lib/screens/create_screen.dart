@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../app_colors.dart';
 
 class CreateScreen extends StatefulWidget {
@@ -15,6 +17,10 @@ class _CreateScreenState extends State<CreateScreen> {
     TextEditingController(),
   ];
 
+  XFile? _pickedImage;
+  bool _imageEnabled = false;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void dispose() {
     for (final c in _optionControllers) {
@@ -28,6 +34,16 @@ class _CreateScreenState extends State<CreateScreen> {
       _optionControllers.add(TextEditingController());
     });
   }
+
+  Future<void> _pickImage() async {
+    final image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (image != null) setState(() => _pickedImage = image);
+  }
+
+  void _removeImage() => setState(() => _pickedImage = null);
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +95,26 @@ class _CreateScreenState extends State<CreateScreen> {
                     placeholder: 'What should we watch tonight?',
                     minLines: 2,
                   ),
+                  const SizedBox(height: 20),
+
+                  // Cover image toggle + picker
+                  _ImageToggleRow(
+                    enabled: _imageEnabled,
+                    onChanged: (val) {
+                      setState(() {
+                        _imageEnabled = val;
+                        if (!val) _pickedImage = null;
+                      });
+                    },
+                  ),
+                  if (_imageEnabled) ...[
+                    const SizedBox(height: 12),
+                    _ImagePickerField(
+                      image: _pickedImage,
+                      onPick: _pickImage,
+                      onRemove: _removeImage,
+                    ),
+                  ],
                   const SizedBox(height: 20),
 
                   // Options
@@ -244,6 +280,183 @@ class _InputField extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────
+// Image Toggle Row
+// ─────────────────────────────────────────────
+class _ImageToggleRow extends StatelessWidget {
+  final bool enabled;
+  final ValueChanged<bool> onChanged;
+
+  const _ImageToggleRow({required this.enabled, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 50,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceInput,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: enabled ? AppColors.accentPrimary : AppColors.surfaceElevated,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.image_outlined,
+              color: enabled ? Colors.white : AppColors.textTertiary,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Add cover image',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Switch(
+            value: enabled,
+            onChanged: onChanged,
+            activeColor: Colors.white,
+            activeTrackColor: AppColors.accentPrimary,
+            inactiveThumbColor: AppColors.textTertiary,
+            inactiveTrackColor: AppColors.surfaceElevated,
+            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Image Picker Field
+// ─────────────────────────────────────────────
+class _ImagePickerField extends StatelessWidget {
+  final XFile? image;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  const _ImagePickerField({
+    required this.image,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: image == null
+            ? _EmptyImageState(onPick: onPick)
+            : _FilledImageState(image: image!, onRemove: onRemove),
+      ),
+    );
+  }
+}
+
+class _EmptyImageState extends StatelessWidget {
+  final VoidCallback onPick;
+  const _EmptyImageState({required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPick,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: AppColors.surfaceInput,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.image_outlined,
+                color: AppColors.textSecondary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Add photo',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '16 : 9 aspect ratio',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FilledImageState extends StatelessWidget {
+  final XFile image;
+  final VoidCallback onRemove;
+  const _FilledImageState({required this.image, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.file(File(image.path), fit: BoxFit.cover),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: onRemove,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.65),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 class _AddOptionRow extends StatelessWidget {
   final VoidCallback onTap;
 

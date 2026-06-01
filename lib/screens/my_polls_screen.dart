@@ -29,46 +29,18 @@ class MyPollsScreen extends StatelessWidget {
                       height: 1.1,
                     ),
                   ),
-                  Row(
-                    children: [
-                      // Profile avatar — triggers Switch Account sheet
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () => _showSwitchAccountSheet(context),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF8B6914),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            'C',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Settings gear
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: AppColors.surfaceElevated,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.settings_outlined,
-                          color: AppColors.textPrimary,
-                          size: 20,
-                        ),
-                      ),
-                    ],
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: AppColors.surfaceElevated,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.settings_outlined,
+                      color: AppColors.textPrimary,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),

@@ -370,7 +370,7 @@ class _ImageToggleRow extends StatelessWidget {
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
-              'Add cover image',
+              'Add image',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,

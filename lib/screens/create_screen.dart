@@ -11,6 +11,8 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreenState extends State<CreateScreen> {
+  static const int _maxOptions = 6;
+
   final List<TextEditingController> _optionControllers = [
     TextEditingController(),
     TextEditingController(),
@@ -30,8 +32,15 @@ class _CreateScreenState extends State<CreateScreen> {
   }
 
   void _addOption() {
+    if (_optionControllers.length >= _maxOptions) return;
+    setState(() => _optionControllers.add(TextEditingController()));
+  }
+
+  void _removeOption(int index) {
+    if (index < 2) return; // first two are required
     setState(() {
-      _optionControllers.add(TextEditingController());
+      _optionControllers[index].dispose();
+      _optionControllers.removeAt(index);
     });
   }
 
@@ -122,15 +131,18 @@ class _CreateScreenState extends State<CreateScreen> {
 
                   const SizedBox(height: 12),
 
-                  // Add option row
-                  _AddOptionRow(onTap: _addOption),
+                  // Add option row — hidden at max
+                  if (_optionControllers.length < _maxOptions)
+                    _AddOptionRow(onTap: _addOption),
 
                   const SizedBox(height: 12),
 
                   // Helper text
-                  const Text(
-                    'Minimum 2 options',
-                    style: TextStyle(
+                  Text(
+                    _optionControllers.length >= _maxOptions
+                        ? 'Maximum $_maxOptions options reached'
+                        : 'Minimum 2 options · Maximum $_maxOptions',
+                    style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textTertiary,
@@ -177,12 +189,41 @@ class _CreateScreenState extends State<CreateScreen> {
     final widgets = <Widget>[];
     for (int i = 0; i < _optionControllers.length; i++) {
       final isOptional = i >= 2;
+      final canRemove = i >= 2;
       final label = isOptional ? 'Option ${i + 1} (optional)' : 'Option ${i + 1}';
       final isLast = i == _optionControllers.length - 1;
 
-      widgets.add(_FieldLabel(label: label, isOptional: isOptional));
+      // Label row with optional remove button
+      widgets.add(
+        Row(
+          children: [
+            Expanded(child: _FieldLabel(label: label, isOptional: isOptional)),
+            if (canRemove)
+              GestureDetector(
+                onTap: () => _removeOption(i),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceInput,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
       widgets.add(const SizedBox(height: 8));
-      widgets.add(_InputField(placeholder: 'Enter an option'));
+      widgets.add(_InputField(
+        placeholder: 'Enter an option',
+        controller: _optionControllers[i],
+      ));
       if (!isLast) widgets.add(const SizedBox(height: 12));
     }
     return widgets;
@@ -241,8 +282,9 @@ class _FieldLabel extends StatelessWidget {
 class _InputField extends StatelessWidget {
   final String placeholder;
   final int minLines;
+  final TextEditingController? controller;
 
-  const _InputField({required this.placeholder, this.minLines = 1});
+  const _InputField({required this.placeholder, this.minLines = 1, this.controller});
 
   @override
   Widget build(BuildContext context) {
@@ -252,6 +294,7 @@ class _InputField extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
+        controller: controller,
         minLines: minLines,
         maxLines: minLines > 1 ? 4 : 1,
         style: const TextStyle(

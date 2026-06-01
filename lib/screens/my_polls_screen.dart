@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_colors.dart';
 import '../widgets/switch_account_sheet.dart';
+import 'settings_screen.dart';
 
 class MyPollsScreen extends StatefulWidget {
   const MyPollsScreen({super.key});
@@ -47,17 +48,22 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                       height: 1.1,
                     ),
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surfaceElevated,
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
-                    child: const Icon(
-                      Icons.settings_outlined,
-                      color: AppColors.textPrimary,
-                      size: 20,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.settings_outlined,
+                        color: AppColors.textPrimary,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],

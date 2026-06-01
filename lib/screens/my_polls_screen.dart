@@ -2,8 +2,25 @@ import 'package:flutter/material.dart';
 import '../app_colors.dart';
 import '../widgets/switch_account_sheet.dart';
 
-class MyPollsScreen extends StatelessWidget {
+class MyPollsScreen extends StatefulWidget {
   const MyPollsScreen({super.key});
+
+  @override
+  State<MyPollsScreen> createState() => _MyPollsScreenState();
+}
+
+class _MyPollsScreenState extends State<MyPollsScreen> {
+  int _selectedTab = 0; // 0 = Your Polls, 1 = Favorites
+
+  void _showSwitchAccountSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(0.6),
+      builder: (_) => const SwitchAccountSheet(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,6 +30,7 @@ class MyPollsScreen extends StatelessWidget {
       backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
+          // ── Header ──
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(16, top + 16, 16, 8),
@@ -46,64 +64,38 @@ class MyPollsScreen extends StatelessWidget {
               ),
             ),
           ),
+
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Profile Card — whole card tappable to open sheet
+                // Profile Card
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () => _showSwitchAccountSheet(context),
+                  onTap: _showSwitchAccountSheet,
                   child: const _ProfileCard(),
                 ),
                 const SizedBox(height: 12),
 
                 // Stats Row
                 const _StatsRow(),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20),
 
-                // Section Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Your Polls',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
-                      ),
-                    ),
-                    Row(
-                      children: const [
-                        Text(
-                          'Latest',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        SizedBox(width: 2),
-                        Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 16,
-                          color: AppColors.textSecondary,
-                        ),
-                      ],
-                    ),
-                  ],
+                // Segmented control
+                _SegmentedControl(
+                  selected: _selectedTab,
+                  onChanged: (i) => setState(() => _selectedTab = i),
                 ),
                 const SizedBox(height: 12),
 
-                // Poll List Card
-                _PollListCard(),
-                const SizedBox(height: 12),
-
-                // Create New Poll CTA
-                _CreateNewPollButton(),
+                // Tab content
+                if (_selectedTab == 0) ...[
+                  _PollListCard(),
+                  const SizedBox(height: 12),
+                  _CreateNewPollButton(),
+                ] else ...[
+                  _FavoritesCard(),
+                ],
               ]),
             ),
           ),
@@ -111,14 +103,164 @@ class MyPollsScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  void _showSwitchAccountSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.6),
-      builder: (_) => const SwitchAccountSheet(),
+// ──────────────────────────────────────────────
+// Segmented Control
+// ──────────────────────────────────────────────
+class _SegmentedControl extends StatelessWidget {
+  final int selected;
+  final ValueChanged<int> onChanged;
+
+  const _SegmentedControl({required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        children: [
+          _Segment(label: 'Your Polls', index: 0, selected: selected, onTap: onChanged),
+          _Segment(label: 'Favorites', index: 1, selected: selected, onTap: onChanged),
+        ],
+      ),
+    );
+  }
+}
+
+class _Segment extends StatelessWidget {
+  final String label;
+  final int index;
+  final int selected;
+  final ValueChanged<int> onTap;
+
+  const _Segment({
+    required this.label,
+    required this.index,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = index == selected;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.accentPrimary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          alignment: Alignment.center,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (index == 1)
+                Padding(
+                  padding: const EdgeInsets.only(right: 5),
+                  child: Icon(
+                    Icons.favorite_rounded,
+                    size: 13,
+                    color: isSelected ? Colors.white : AppColors.textTertiary,
+                  ),
+                ),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Favorites Card
+// ──────────────────────────────────────────────
+class _FavoritesCard extends StatelessWidget {
+  _FavoritesCard();
+
+  final List<_PollRow> _favorites = [
+    _PollRow(
+      title: 'Who is the strongest?',
+      votes: '1,246',
+      leading: 'Escanor leading',
+      timestamp: '2h ago',
+    ),
+    _PollRow(
+      title: 'Which is your favorite Anime?',
+      votes: '2,541',
+      leading: 'One Piece leading',
+      timestamp: '1d ago',
+    ),
+    _PollRow(
+      title: 'Best anime battle of all time?',
+      votes: '5,103',
+      leading: 'Goku vs Vegeta leading',
+      timestamp: '2d ago',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    if (_favorites.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: const Column(
+          children: [
+            Icon(Icons.favorite_border_rounded,
+                color: AppColors.textTertiary, size: 36),
+            SizedBox(height: 12),
+            Text(
+              'No favorites yet',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textTertiary,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Heart a poll in the feed to save it here',
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        color: AppColors.surfaceCard,
+        child: Column(
+          children: _favorites.asMap().entries.map((e) {
+            return _PollListRow(
+              poll: e.value,
+              showDivider: e.key < _favorites.length - 1,
+              trailingIcon: Icons.favorite_rounded,
+              trailingColor: const Color(0xFFFF5C7A),
+            );
+          }).toList(),
+        ),
+      ),
     );
   }
 }
@@ -357,35 +499,30 @@ class _PollListCard extends StatelessWidget {
 
   final List<_PollRow> _polls = [
     _PollRow(
-      icon: Icons.emoji_events_outlined,
       title: 'Who is the strongest?',
       votes: '3,245',
       leading: 'Escanor leading',
       timestamp: '2d ago',
     ),
     _PollRow(
-      icon: Icons.tv_outlined,
       title: 'Which Devil Fruit is most useful?',
       votes: '987',
       leading: 'Gomo Gomu no Mi leading',
       timestamp: '5d ago',
     ),
     _PollRow(
-      icon: Icons.auto_awesome_outlined,
       title: 'Which is your favorite Anime?',
       votes: '2,541',
       leading: 'One Piece leading',
       timestamp: '1w ago',
     ),
     _PollRow(
-      icon: Icons.help_outline_rounded,
       title: 'Which character deserves more love?',
       votes: '648',
       leading: 'Killua leading',
       timestamp: '2w ago',
     ),
     _PollRow(
-      icon: Icons.sports_kabaddi_rounded,
       title: 'Best anime battle of all time?',
       votes: '5,103',
       leading: 'Goku vs 3ron leading',
@@ -413,14 +550,12 @@ class _PollListCard extends StatelessWidget {
 }
 
 class _PollRow {
-  final IconData icon;
   final String title;
   final String votes;
   final String leading;
   final String timestamp;
 
   const _PollRow({
-    required this.icon,
     required this.title,
     required this.votes,
     required this.leading,
@@ -431,8 +566,16 @@ class _PollRow {
 class _PollListRow extends StatelessWidget {
   final _PollRow poll;
   final bool showDivider;
+  final IconData trailingIcon;
+  final Color trailingColor;
 
-  const _PollListRow({super.key, required this.poll, required this.showDivider});
+  const _PollListRow({
+    super.key,
+    required this.poll,
+    required this.showDivider,
+    this.trailingIcon = Icons.chevron_right_rounded,
+    this.trailingColor = AppColors.textTertiary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -442,17 +585,6 @@ class _PollListRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              // Icon badge
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceIconBadge,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(poll.icon, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
               // Text block
               Expanded(
                 child: Column(
@@ -525,10 +657,10 @@ class _PollListRow extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
-                    Icons.chevron_right_rounded,
+                  Icon(
+                    trailingIcon,
                     size: 16,
-                    color: AppColors.textTertiary,
+                    color: trailingColor,
                   ),
                 ],
               ),

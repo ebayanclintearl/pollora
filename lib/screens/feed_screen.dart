@@ -90,6 +90,36 @@ const _polls = [
     ],
     voteCount: '5,103 votes',
   ),
+  _PollData(
+    avatarColor: Color(0xFF1A3A6B),
+    avatarLabel: 'KL',
+    userName: 'KilluaZ',
+    timestamp: '3d ago',
+    question: 'Who has the best power system in anime?',
+    options: [
+      _PollOption(label: 'Nen – Hunter x Hunter', percentage: 34, isLeading: true),
+      _PollOption(label: 'Devil Fruits – One Piece', percentage: 22, isLeading: false),
+      _PollOption(label: 'Chakra – Naruto', percentage: 19, isLeading: false),
+      _PollOption(label: 'Quirks – My Hero Academia', percentage: 13, isLeading: false),
+      _PollOption(label: 'Alchemy – Fullmetal', percentage: 8, isLeading: false),
+      _PollOption(label: 'Cursed Energy – Jujutsu', percentage: 4, isLeading: false),
+    ],
+    voteCount: '8,742 votes',
+  ),
+  _PollData(
+    avatarColor: Color(0xFF6B1A1A),
+    avatarLabel: 'ER',
+    userName: 'ErenYeager',
+    timestamp: '4d ago',
+    question: 'Which anime had the best ending?',
+    options: [
+      _PollOption(label: 'Fullmetal Alchemist: Brotherhood', percentage: 41, isLeading: true),
+      _PollOption(label: 'Steins;Gate', percentage: 28, isLeading: false),
+      _PollOption(label: 'Attack on Titan', percentage: 18, isLeading: false),
+      _PollOption(label: 'Demon Slayer', percentage: 13, isLeading: false),
+    ],
+    voteCount: '3,891 votes',
+  ),
 ];
 
 
@@ -315,6 +345,8 @@ class _PollCard extends StatefulWidget {
 
 class _PollCardState extends State<_PollCard> {
   bool _favorited = false;
+  bool _optionsExpanded = false;
+  static const int _previewCount = 3;
 
   @override
   Widget build(BuildContext context) {
@@ -400,11 +432,48 @@ class _PollCardState extends State<_PollCard> {
 
             const SizedBox(height: 12),
 
-            // Options
-            ...p.options.asMap().entries.map((e) => Padding(
-                  padding: EdgeInsets.only(bottom: e.key < p.options.length - 1 ? 8 : 0),
-                  child: _PollOptionBar(option: e.value),
-                )),
+            // Options — capped at 3, expandable
+            Builder(builder: (_) {
+              final hasMore = p.options.length > _previewCount;
+              final visible = _optionsExpanded || !hasMore
+                  ? p.options
+                  : p.options.sublist(0, _previewCount);
+              final hidden = hasMore ? p.options.length - _previewCount : 0;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ...visible.asMap().entries.map((e) => Padding(
+                        padding: EdgeInsets.only(
+                            bottom: e.key < visible.length - 1 ? 8 : 0),
+                        child: _PollOptionBar(option: e.value),
+                      )),
+                  if (hasMore && !_optionsExpanded) ...[
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => setState(() => _optionsExpanded = true),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentPrimaryMuted,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '+$hidden more option${hidden > 1 ? 's' : ''}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textAccent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            }),
 
             const SizedBox(height: 12),
 

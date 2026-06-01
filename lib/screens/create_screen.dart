@@ -103,6 +103,7 @@ class _CreateScreenState extends State<CreateScreen> {
                   _InputField(
                     placeholder: 'What should we watch tonight?',
                     minLines: 2,
+                    maxLength: 120,
                   ),
                   const SizedBox(height: 20),
 
@@ -223,6 +224,7 @@ class _CreateScreenState extends State<CreateScreen> {
       widgets.add(_InputField(
         placeholder: 'Enter an option',
         controller: _optionControllers[i],
+        maxLength: 40,
       ));
       if (!isLast) widgets.add(const SizedBox(height: 12));
     }
@@ -283,8 +285,14 @@ class _InputField extends StatelessWidget {
   final String placeholder;
   final int minLines;
   final TextEditingController? controller;
+  final int? maxLength;
 
-  const _InputField({required this.placeholder, this.minLines = 1, this.controller});
+  const _InputField({
+    required this.placeholder,
+    this.minLines = 1,
+    this.controller,
+    this.maxLength,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -297,6 +305,7 @@ class _InputField extends StatelessWidget {
         controller: controller,
         minLines: minLines,
         maxLines: minLines > 1 ? 4 : 1,
+        maxLength: maxLength,
         style: const TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,
@@ -316,6 +325,8 @@ class _InputField extends StatelessWidget {
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
+          // hide Flutter's built-in counter
+          counterText: '',
         ),
         cursorColor: AppColors.accentPrimary,
       ),

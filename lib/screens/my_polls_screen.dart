@@ -97,8 +97,6 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                 // Tab content
                 if (_selectedTab == 0) ...[
                   _PollListCard(),
-                  const SizedBox(height: 12),
-                  _CreateNewPollButton(),
                 ] else ...[
                   _FavoritesCard(),
                 ],

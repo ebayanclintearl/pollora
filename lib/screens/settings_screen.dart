@@ -321,15 +321,7 @@ class _SettingsRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             child: Row(
               children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(9),
-                  ),
-                  child: Icon(icon, size: 17, color: AppColors.textSecondary),
-                ),
+                Icon(icon, size: 20, color: AppColors.textSecondary),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
@@ -350,7 +342,7 @@ class _SettingsRow extends StatelessWidget {
         if (showDivider)
           Container(
             height: 1,
-            margin: const EdgeInsets.only(left: 64),
+            margin: const EdgeInsets.only(left: 48),
             color: AppColors.borderSubtle,
           ),
       ],
@@ -380,15 +372,7 @@ class _SettingsToggleRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       child: Row(
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
-              borderRadius: BorderRadius.circular(9),
-            ),
-            child: Icon(icon, size: 17, color: AppColors.textSecondary),
-          ),
+          Icon(icon, size: 20, color: AppColors.textSecondary),
           const SizedBox(width: 14),
           Expanded(
             child: Text(

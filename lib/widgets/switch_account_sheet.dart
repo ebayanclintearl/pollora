@@ -270,18 +270,9 @@ class _ActionRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             child: Row(
               children: [
-                Container(
-                  width: 34, height: 34,
-                  decoration: BoxDecoration(
-                    color: isDestructive
-                        ? AppColors.textDestructive.withValues(alpha: 0.12)
-                        : AppColors.surfaceInput,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon,
-                    color: isDestructive ? AppColors.textDestructive : AppColors.textSecondary,
-                    size: 18),
-                ),
+                Icon(icon,
+                  color: isDestructive ? AppColors.textDestructive : AppColors.textSecondary,
+                  size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(title,

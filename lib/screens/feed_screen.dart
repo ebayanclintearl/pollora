@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/comments_sheet.dart';
 import '../app_colors.dart';
 
 // ─────────────────────────────────────────────
@@ -8,7 +9,8 @@ class _PollOption {
   final String label;
   final int percentage;
   final bool isLeading;
-  const _PollOption({required this.label, required this.percentage, required this.isLeading});
+  final String? imageAsset;
+  const _PollOption({required this.label, required this.percentage, required this.isLeading, this.imageAsset});
 }
 
 class _PollData {
@@ -20,6 +22,7 @@ class _PollData {
   final String? coverAsset;
   final List<_PollOption> options;
   final String voteCount;
+  final int commentCount;
 
   const _PollData({
     required this.avatarColor,
@@ -30,6 +33,7 @@ class _PollData {
     this.coverAsset,
     required this.options,
     required this.voteCount,
+    this.commentCount = 0,
   });
 }
 
@@ -41,6 +45,7 @@ const _polls = [
     avatarColor: Color(0xFF1A6B3C),
     avatarLabel: 'RZ',
     userName: 'RoronoaZoro',
+    commentCount: 12,
     timestamp: '2h ago',
     question: 'Who is the strongest?',
     coverAsset: 'assets/images/poll_cover_sample.png',
@@ -55,6 +60,7 @@ const _polls = [
     avatarColor: Color(0xFF8B4513),
     avatarLabel: 'MD',
     userName: 'MonkeyDLuffy',
+    commentCount: 7,
     timestamp: '6h ago',
     question: 'Which Devil Fruit is the most useful?',
     options: [
@@ -68,6 +74,7 @@ const _polls = [
     avatarColor: Color(0xFF2B4D8B),
     avatarLabel: 'IC',
     userName: 'Ichigo',
+    commentCount: 23,
     timestamp: '1d ago',
     question: 'Which is your favorite Anime?',
     options: [
@@ -81,6 +88,7 @@ const _polls = [
     avatarColor: Color(0xFF6B2B8B),
     avatarLabel: 'GK',
     userName: 'GokuSon',
+    commentCount: 41,
     timestamp: '2d ago',
     question: 'Best anime battle of all time?',
     options: [
@@ -94,6 +102,7 @@ const _polls = [
     avatarColor: Color(0xFF1A3A6B),
     avatarLabel: 'KL',
     userName: 'KilluaZ',
+    commentCount: 8,
     timestamp: '3d ago',
     question: 'Who has the best power system in anime?',
     options: [
@@ -110,6 +119,7 @@ const _polls = [
     avatarColor: Color(0xFF6B1A1A),
     avatarLabel: 'ER',
     userName: 'ErenYeager',
+    commentCount: 5,
     timestamp: '4d ago',
     question: 'Which anime had the best ending?',
     options: [
@@ -194,8 +204,8 @@ class _FeedScreenState extends State<FeedScreen> {
                     const Text(
                       'Polls',
                       style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                         height: 1.1,
                       ),
@@ -402,6 +412,7 @@ class _PollCardState extends State<_PollCard> {
                     ],
                   ),
                 ),
+
               ],
             ),
 
@@ -411,7 +422,7 @@ class _PollCardState extends State<_PollCard> {
             Text(
               p.question,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
                 height: 1.3,
@@ -489,6 +500,34 @@ class _PollCardState extends State<_PollCard> {
                   ),
                 ),
                 const Spacer(),
+                // Comments
+                GestureDetector(
+                  onTap: () => showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    barrierColor: Colors.black.withOpacity(0.5),
+                    builder: (_) => CommentsSheet(
+                      pollQuestion: widget.poll.question,
+                      commentCount: widget.poll.commentCount,
+                    ),
+                  ),
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.textTertiary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.poll.commentCount}',
+                          style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 4),
                 // Favorite
                 GestureDetector(
                   onTap: () => setState(() => _favorited = !_favorited),
@@ -536,6 +575,17 @@ class _PollOptionBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // Square option image (if present)
+        if (option.imageAsset != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 40, height: 40,
+              child: Image.asset(option.imageAsset!, fit: BoxFit.cover),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {

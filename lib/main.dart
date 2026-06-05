@@ -119,12 +119,12 @@ class _PolloraBottomNav extends StatelessWidget {
                 isActive: currentIndex == 1,
                 onTap: () => onTap(1),
               ),
-              // My Polls
+              // Profile
               _NavTab(
                 index: 2,
                 currentIndex: currentIndex,
                 icon: Icons.person_outline_rounded,
-                label: 'My Polls',
+                label: 'Profile',
                 onTap: onTap,
               ),
             ],
@@ -213,7 +213,7 @@ class _CreateFAB extends StatelessWidget {
           Text(
             'Create',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: isActive ? AppColors.navActive : AppColors.navInactive,
               fontWeight: FontWeight.w400,
             ),

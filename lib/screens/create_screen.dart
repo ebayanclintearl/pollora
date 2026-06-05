@@ -22,6 +22,8 @@ class _CreateScreenState extends State<CreateScreen> {
   XFile? _pickedImage;
   bool _imageEnabled = false;
   final ImagePicker _picker = ImagePicker();
+  List<XFile?> _optionImages = [null, null, null];
+  bool get _imageMode => _optionImages.any((img) => img != null);
 
   @override
   void dispose() {
@@ -33,14 +35,32 @@ class _CreateScreenState extends State<CreateScreen> {
 
   void _addOption() {
     if (_optionControllers.length >= _maxOptions) return;
-    setState(() => _optionControllers.add(TextEditingController()));
+    setState(() {
+      _optionControllers.add(TextEditingController());
+      _optionImages.add(null);
+    });
   }
 
   void _removeOption(int index) {
-    if (index < 2) return; // first two are required
+    if (index < 2) return;
     setState(() {
       _optionControllers[index].dispose();
       _optionControllers.removeAt(index);
+      if (index < _optionImages.length) _optionImages.removeAt(index);
+    });
+  }
+
+  Future<void> _pickOptionImage(int index) async {
+    final image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (image != null) {
+      while (_optionImages.length <= index) _optionImages.add(null);
+      setState(() => _optionImages[index] = image);
+    }
+  }
+
+  void _removeOptionImage(int index) {
+    setState(() {
+      if (index < _optionImages.length) _optionImages[index] = null;
     });
   }
 
@@ -69,8 +89,8 @@ class _CreateScreenState extends State<CreateScreen> {
             const Text(
               'Create Poll',
               style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w800,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
                 height: 1.1,
               ),
@@ -173,7 +193,7 @@ class _CreateScreenState extends State<CreateScreen> {
                 child: const Text(
                   'Publish Poll',
                   style: TextStyle(
-                    fontSize: 17,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
@@ -221,11 +241,28 @@ class _CreateScreenState extends State<CreateScreen> {
         ),
       );
       widgets.add(const SizedBox(height: 8));
-      widgets.add(_InputField(
-        placeholder: 'Enter an option',
-        controller: _optionControllers[i],
-        maxLength: 40,
-      ));
+      widgets.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (_imageMode) ...[
+              _OptionImagePicker(
+                image: i < _optionImages.length ? _optionImages[i] : null,
+                onPick: () => _pickOptionImage(i),
+                onRemove: () => _removeOptionImage(i),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: _InputField(
+                placeholder: 'Enter an option',
+                controller: _optionControllers[i],
+                maxLength: 40,
+              ),
+            ),
+          ],
+        ),
+      );
       if (!isLast) widgets.add(const SizedBox(height: 12));
     }
     return widgets;
@@ -244,7 +281,7 @@ class _FieldLabel extends StatelessWidget {
       return Text(
         label,
         style: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
           height: 1.2,
@@ -260,7 +297,7 @@ class _FieldLabel extends StatelessWidget {
           TextSpan(
             text: parts[0],
             style: const TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
               height: 1.2,
@@ -335,6 +372,57 @@ class _InputField extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
+// Option Image Picker (square 1:1)
+// ─────────────────────────────────────────────
+class _OptionImagePicker extends StatelessWidget {
+  final XFile? image;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+  const _OptionImagePicker({required this.image, required this.onPick, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: image == null ? onPick : null,
+      behavior: HitTestBehavior.opaque,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 50,
+          height: 50,
+          child: image == null
+              ? Container(
+                  color: AppColors.surfaceElevated,
+                  child: const Icon(Icons.add_photo_alternate_outlined,
+                      color: AppColors.textTertiary, size: 20),
+                )
+              : Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.file(File(image!.path), fit: BoxFit.cover),
+                    Positioned(
+                      top: 2, right: 2,
+                      child: GestureDetector(
+                        onTap: onRemove,
+                        child: Container(
+                          width: 18, height: 18,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close_rounded, color: Colors.white, size: 10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 // Image Toggle Row
 // ─────────────────────────────────────────────
 class _ImageToggleRow extends StatelessWidget {
@@ -372,7 +460,7 @@ class _ImageToggleRow extends StatelessWidget {
             child: Text(
               'Add image',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),
@@ -542,7 +630,7 @@ class _AddOptionRow extends StatelessWidget {
             const Text(
               'Add option',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
               ),

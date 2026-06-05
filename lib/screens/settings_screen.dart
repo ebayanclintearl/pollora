@@ -41,8 +41,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Text(
                   'Settings',
                   style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     height: 1.1,
                   ),

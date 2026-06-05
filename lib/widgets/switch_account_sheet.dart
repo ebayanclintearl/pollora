@@ -126,7 +126,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
               child: const Text(
                 'Cancel',
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textAccent,
                   height: 1.0,
@@ -209,7 +209,7 @@ class _AccountRow extends StatelessWidget {
                   Text(
                     account.name,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
                       height: 1.2,

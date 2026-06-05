@@ -40,10 +40,10 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
-                    'My Polls',
+                    'Profile',
                     style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
                       height: 1.1,
                     ),
@@ -272,8 +272,15 @@ class _FavoritesCard extends StatelessWidget {
 // ──────────────────────────────────────────────
 // Profile Card
 // ──────────────────────────────────────────────
-class _ProfileCard extends StatelessWidget {
+class _ProfileCard extends StatefulWidget {
   const _ProfileCard();
+
+  @override
+  State<_ProfileCard> createState() => _ProfileCardState();
+}
+
+class _ProfileCardState extends State<_ProfileCard> {
+  bool _following = false;
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +290,7 @@ class _ProfileCard extends StatelessWidget {
         decoration: const BoxDecoration(color: AppColors.surfaceCard),
         child: Stack(
           children: [
-            // Gradient overlay — full-height, right half of card
+            // Gradient overlay
             Positioned.fill(
               child: Container(
                 decoration: const BoxDecoration(
@@ -299,89 +306,117 @@ class _ProfileCard extends StatelessWidget {
             // Content
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar with edit badge
-                  Stack(
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Color(0xFF8B6914),
-                        child: Text(
-                          'C',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
+                      // Avatar with edit badge
+                      Stack(
+                        children: [
+                          const CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Color(0xFF8B6914),
+                            child: Text(
+                              'C',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: const BoxDecoration(
+                                color: AppColors.accentPrimary,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.edit_rounded, color: Colors.white, size: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 14),
+                      // Name block
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Clint',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                                height: 1.2,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              '@clint',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: const [
+                                Icon(Icons.calendar_today_rounded, size: 11, color: AppColors.textSecondary),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Joined May 2024',
+                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Text.rich(TextSpan(children: [
+                                  TextSpan(text: '124', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  TextSpan(text: ' Followers', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                ])),
+                                const SizedBox(width: 14),
+                                Text.rich(TextSpan(children: [
+                                  TextSpan(text: '48', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  TextSpan(text: ' Following', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                ])),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 22,
-                          height: 22,
-                          decoration: const BoxDecoration(
-                            color: AppColors.accentPrimary,
-                            shape: BoxShape.circle,
+                      // Follow button
+                      GestureDetector(
+                        onTap: () => setState(() => _following = !_following),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: _following ? Colors.transparent : AppColors.accentPrimary,
+                            border: Border.all(
+                              color: _following ? AppColors.borderDefault : AppColors.accentPrimary,
+                            ),
+                            borderRadius: BorderRadius.circular(999),
                           ),
-                          child: const Icon(
-                            Icons.edit_rounded,
-                            color: Colors.white,
-                            size: 12,
+                          child: Text(
+                            _following ? 'Following' : 'Follow',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: _following ? AppColors.textTertiary : Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(width: 16),
-                  // Name block
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Clint',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          '@clint',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                            height: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: const [
-                            Icon(
-                              Icons.calendar_today_rounded,
-                              size: 12,
-                              color: AppColors.textSecondary,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Joined May 2024',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.textSecondary,
-                                height: 1.0,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -414,7 +449,7 @@ class _StatsRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            icon: Icons.people_outline_rounded,
+            icon: Icons.how_to_vote_outlined,
             label: 'Total Votes',
             value: '1,245',
             delta: '+312 this week ↑',
@@ -473,22 +508,24 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 28,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: AppColors.textAccent,
               height: 1.1,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            delta,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSuccess,
-              height: 1.0,
+          if (delta.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              delta,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSuccess,
+                height: 1.0,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

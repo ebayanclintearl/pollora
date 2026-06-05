@@ -29,9 +29,9 @@ class AppColors {
   static const Color borderSubtle = Color(0xFF1E1E1E);
 
   // Poll
-  static const Color pollBarTrack = Color(0xFF2C2C2C);
+  static const Color pollBarTrack = Color(0xFF3A3A3A);
   static const Color pollBarLeading = Color(0xFF5B4FE8);
-  static const Color pollBarOther = Color(0xFF333333);
+  static const Color pollBarOther = Color(0xFF4A4A4A);
 
   // Navigation
   static const Color navBackground = Color(0xFF0A0A0A);

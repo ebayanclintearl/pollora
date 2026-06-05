@@ -531,16 +531,6 @@ class _PollListRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              // Leading dot accent
-              Container(
-                width: 8,
-                height: 8,
-                margin: const EdgeInsets.only(right: 12, top: 2),
-                decoration: const BoxDecoration(
-                  color: AppColors.accentPrimary,
-                  shape: BoxShape.circle,
-                ),
-              ),
               // Text block
               Expanded(
                 child: Column(

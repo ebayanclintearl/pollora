@@ -693,46 +693,66 @@
     "bottomSheet": {
       "description": "Modal sheet sliding up from bottom (e.g. account switcher)",
       "background": "background.surfaceModal",
-      "borderRadius": { "topLeft": 20, "topRight": 20 },
+      "border": "0.7px top border using border.default",
+      "borderRadius": { "topLeft": 28, "topRight": 28 },
+      "padding": {
+        "horizontal": 16,
+        "top": 8,
+        "bottom": "safe-area-bottom + 18"
+      },
       "dragHandle": {
-        "width": 36,
+        "width": 38,
         "height": 4,
-        "background": "#444444",
+        "background": "#5A5A5A",
         "borderRadius": 999,
         "alignSelf": "center",
-        "marginTop": 10,
-        "marginBottom": 20
+        "marginTop": 0,
+        "marginBottom": 14
       },
       "titleBlock": {
+        "layout": "centered title with close icon aligned right",
         "title": "typography.sheetTitle",
-        "subtitle": "typography.sheetSubtitle",
-        "gap": 4,
-        "marginBottom": 24
+        "subtitle": "none",
+        "closeButton": {
+          "size": 34,
+          "background": "background.surfaceElevated",
+          "shape": "circle",
+          "icon": "close",
+          "iconSize": 20,
+          "iconColor": "text.secondary"
+        },
+        "gap": 0,
+        "marginBottom": 20
       },
       "accountRow": {
         "layout": "row, verticalCenter, space-between",
-        "paddingHorizontal": 16,
-        "paddingVertical": 16,
+        "paddingHorizontal": 14,
+        "paddingVertical": 14,
         "background": {
           "default": "background.surfaceElevated",
-          "selected": "accent.primaryMuted"
+          "selected": "background.surfaceElevated"
         },
         "border": {
-          "default": "1px solid border.default",
-          "selected": "1px solid accent.primaryBorder"
+          "default": "0.8px solid border.subtle",
+          "selected": "1.1px solid accent.primaryBorder"
         },
-        "borderRadius": "borderRadius.accountRow",
+        "borderRadius": 18,
         "marginBottom": 10,
-        "avatar": { "size": 44, "shape": "circle" },
+        "avatar": {
+          "size": 48,
+          "shape": "circle",
+          "background": "background.surfaceInput",
+          "textColor": "text.primary"
+        },
         "textBlock": {
-          "gap": 2,
+          "gap": 1,
           "name": "typography.accountName",
           "email": "typography.accountEmail"
         },
         "radioIndicator": {
-          "size": 24,
+          "size": 28,
           "borderRadius": "9999",
-          "border": "2px solid #444",
+          "border": "2px solid #555555",
           "selected": {
             "background": "accent.primary",
             "icon": "checkmark white"
@@ -741,31 +761,32 @@
       },
       "actionGroup": {
         "background": "background.surfaceElevated",
-        "borderRadius": "borderRadius.card",
-        "marginTop": 10,
+        "border": "1px solid border.subtle",
+        "borderRadius": 18,
+        "marginTop": 18,
         "actionRow": {
           "layout": "row, verticalCenter",
-          "paddingHorizontal": 16,
-          "paddingVertical": 16,
-          "gap": 16,
-          "iconSize": 24,
-          "divider": "1px solid border.subtle",
+          "paddingHorizontal": 14,
+          "paddingVertical": 15,
+          "gap": 12,
+          "iconBadge": {
+            "size": 36,
+            "borderRadius": 12,
+            "defaultBackground": "background.surfaceInput",
+            "destructiveBackground": "background.surfaceInput"
+          },
+          "iconSize": 21,
+          "subtitle": "none",
+          "divider": "1px solid border.subtle inset left 62 right 14",
           "chevron": {
             "icon": "chevron-right",
-            "size": 14,
+            "size": 18,
             "color": "text.tertiary",
             "marginLeft": "auto"
           }
         }
       },
-      "cancelButton": {
-        "layout": "center",
-        "paddingVertical": 18,
-        "background": "background.surfaceElevated",
-        "borderRadius": "borderRadius.card",
-        "typography": "typography.cancelButton",
-        "marginTop": 10
-      },
+      "cancelButton": "removed; dismiss via top-right close button or backdrop",
       "backdrop": "background.overlay",
       "gestureClose": true
     },

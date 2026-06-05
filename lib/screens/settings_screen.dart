@@ -13,136 +13,166 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
-    final bottom = MediaQuery.of(context).padding.bottom;
-
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(16, top + 16, 16, bottom + 32),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Header ──
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  behavior: HitTestBehavior.opaque,
-                  child: const Padding(
-                    padding: EdgeInsets.only(right: 12),
-                    child: Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: AppColors.textPrimary,
-                      size: 20,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.textSecondary,
+                        size: 16,
+                      ),
                     ),
                   ),
-                ),
-                const Text(
-                  'Settings',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    height: 1.1,
+                  const SizedBox(width: 14),
+                  const Text(
+                    'Settings',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const SizedBox(height: 28),
 
-            // ── Account ──
-            _SectionLabel(label: 'Account'),
-            _SettingsCard(
-              children: [
-                _SettingsRow(
-                  icon: Icons.person_outline_rounded,
-                  label: 'Edit Profile',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+            // ── Scrollable body ──
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                children: [
+                  // ── Profile row ──
+                  _ProfileRow(),
+                  const SizedBox(height: 28),
 
-            // ── Preferences ──
-            _SectionLabel(label: 'Preferences'),
-            _SettingsCard(
-              children: [
-                _SettingsToggleRow(
-                  icon: Icons.notifications_none_rounded,
-                  label: 'Notifications',
-                  value: _notificationsEnabled,
-                  onChanged: (v) => setState(() => _notificationsEnabled = v),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  // ── Account ──
+                  const _SectionLabel('Account'),
+                  _SettingsCard(
+                    children: [
+                      _SettingsRow(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Edit Profile',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-            // ── Support ──
-            _SectionLabel(label: 'Support'),
-            _SettingsCard(
-              children: [
-                _SettingsRow(
-                  icon: Icons.star_outline_rounded,
-                  label: 'Rate App',
-                  onTap: () {},
-                  showDivider: true,
-                ),
-                _SettingsRow(
-                  icon: Icons.mail_outline_rounded,
-                  label: 'Contact Us',
-                  onTap: () {},
-                  showDivider: true,
-                ),
-                _SettingsRow(
-                  icon: Icons.ios_share_rounded,
-                  label: 'Share App',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  // ── Preferences ──
+                  const _SectionLabel('Preferences'),
+                  _SettingsCard(
+                    children: [
+                      _SettingsToggleRow(
+                        icon: Icons.notifications_none_rounded,
+                        label: 'Notifications',
+                        value: _notificationsEnabled,
+                        onChanged: (v) =>
+                            setState(() => _notificationsEnabled = v),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-            // ── Legal ──
-            _SectionLabel(label: 'Legal'),
-            _SettingsCard(
-              children: [
-                _SettingsRow(
-                  icon: Icons.shield_outlined,
-                  label: 'Privacy Policy',
-                  onTap: () {},
-                  showDivider: true,
-                ),
-                _SettingsRow(
-                  icon: Icons.article_outlined,
-                  label: 'Terms of Service',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+                  // ── Support ──
+                  const _SectionLabel('Support'),
+                  _SettingsCard(
+                    children: [
+                      _SettingsRow(
+                        icon: Icons.star_outline_rounded,
+                        label: 'Rate the App',
+                        onTap: () {},
+                        showDivider: true,
+                      ),
+                      _SettingsRow(
+                        icon: Icons.mail_outline_rounded,
+                        label: 'Contact Us',
+                        onTap: () {},
+                        showDivider: true,
+                      ),
+                      _SettingsRow(
+                        icon: Icons.ios_share_rounded,
+                        label: 'Share App',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
 
-            // ── Sign Out ──
-            _SettingsCard(
-              children: [
-                _SettingsRow(
-                  icon: Icons.logout_rounded,
-                  label: 'Sign Out',
-                  isDestructive: true,
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
+                  // ── Legal ──
+                  const _SectionLabel('Legal'),
+                  _SettingsCard(
+                    children: [
+                      _SettingsRow(
+                        icon: Icons.shield_outlined,
+                        label: 'Privacy Policy',
+                        onTap: () {},
+                        showDivider: true,
+                      ),
+                      _SettingsRow(
+                        icon: Icons.article_outlined,
+                        label: 'Terms of Service',
+                        onTap: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
 
-            // ── App version ──
-            Center(
-              child: Text(
-                'Pollora v1.0.0',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textTertiary,
-                ),
+                  // ── Sign Out — standalone destructive button ──
+                  GestureDetector(
+                    onTap: () {},
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.textDestructive.withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.logout_rounded,
+                              color: AppColors.textDestructive, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Sign Out',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDestructive,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ── App version ──
+                  const Center(
+                    child: Text(
+                      'Pollora v1.0.0',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.textTertiary),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -153,11 +183,79 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 // ─────────────────────────────────────────────
+// Profile row — mini summary at top of settings
+// ─────────────────────────────────────────────
+class _ProfileRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 52,
+            height: 52,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Color(0xFF8B6914),
+            ),
+            child: const Center(
+              child: Text(
+                'C',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Name + handle
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Clint',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    height: 1.2,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  '@clint',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Chevron
+          const Icon(Icons.chevron_right_rounded,
+              color: AppColors.textTertiary, size: 20),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 // Section label
 // ─────────────────────────────────────────────
 class _SectionLabel extends StatelessWidget {
   final String label;
-  const _SectionLabel({required this.label});
+  const _SectionLabel(this.label);
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +275,7 @@ class _SectionLabel extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Settings Card (groups rows)
+// Settings card
 // ─────────────────────────────────────────────
 class _SettingsCard extends StatelessWidget {
   final List<Widget> children;
@@ -196,64 +294,54 @@ class _SettingsCard extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Settings Row (tappable)
+// Settings row (tappable)
 // ─────────────────────────────────────────────
 class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool showDivider;
-  final bool isDestructive;
 
   const _SettingsRow({
     required this.icon,
     required this.label,
     required this.onTap,
     this.showDivider = false,
-    this.isDestructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? AppColors.textDestructive : AppColors.textPrimary;
-
     return Column(
       children: [
         GestureDetector(
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             child: Row(
               children: [
                 Container(
                   width: 34,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: isDestructive
-                        ? AppColors.textDestructive.withOpacity(0.12)
-                        : AppColors.surfaceIconBadge,
+                    color: AppColors.surfaceElevated,
                     borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Icon(icon, size: 18, color: isDestructive ? AppColors.textDestructive : Colors.white),
+                  child: Icon(icon, size: 17, color: AppColors.textSecondary),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: color,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
-                if (!isDestructive)
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: AppColors.textTertiary,
-                  ),
+                const Icon(Icons.chevron_right_rounded,
+                    size: 17, color: AppColors.textTertiary),
               ],
             ),
           ),
@@ -270,7 +358,7 @@ class _SettingsRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Settings Toggle Row
+// Settings toggle row
 // ─────────────────────────────────────────────
 class _SettingsToggleRow extends StatelessWidget {
   final IconData icon;
@@ -288,17 +376,17 @@ class _SettingsToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       child: Row(
         children: [
           Container(
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppColors.surfaceIconBadge,
+              color: AppColors.surfaceElevated,
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(icon, size: 18, color: Colors.white),
+            child: Icon(icon, size: 17, color: AppColors.textSecondary),
           ),
           const SizedBox(width: 14),
           Expanded(

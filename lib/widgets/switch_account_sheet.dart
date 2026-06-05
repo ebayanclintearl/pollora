@@ -12,126 +12,131 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
   int _selectedIndex = 0;
 
   final List<_Account> _accounts = const [
-    _Account(name: 'Clint', email: 'clint@example.com', avatarColor: Color(0xFF8B6914), label: 'C'),
-    _Account(name: 'Naruto Uzumaki', email: 'naruto@example.com', avatarColor: Color(0xFFE8A020), label: 'N'),
-    _Account(name: 'Goku Son', email: 'goku@example.com', avatarColor: Color(0xFF1A6B3C), label: 'G'),
+    _Account(
+      name: 'Clint',
+      email: 'clint@example.com',
+      label: 'C',
+    ),
+    _Account(
+      name: 'Naruto Uzumaki',
+      email: 'naruto@example.com',
+      label: 'N',
+    ),
+    _Account(
+      name: 'Goku Son',
+      email: 'goku@example.com',
+      label: 'G',
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.surfaceModal,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
+    return Material(
+      color: Colors.transparent,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Drag handle
           Container(
-            width: 36,
-            height: 4,
-            margin: const EdgeInsets.only(top: 10, bottom: 20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF444444),
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-
-          // Title block
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Switch account',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-                height: 1.1,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceModal,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(color: AppColors.borderDefault, width: 0.7),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Choose an account to continue',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
-                height: 1.3,
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Account rows
-          ..._accounts.asMap().entries.map((e) {
-            final i = e.key;
-            final account = e.value;
-            final isSelected = i == _selectedIndex;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _AccountRow(
-                account: account,
-                isSelected: isSelected,
-                onTap: () => setState(() => _selectedIndex = i),
-              ),
-            );
-          }),
-
-          // Action group
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.surfaceElevated,
-              borderRadius: BorderRadius.circular(16),
-            ),
+            padding: EdgeInsets.fromLTRB(16, 8, 16, bottom + 18),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _ActionRow(
-                  icon: Icons.person_add_outlined,
-                  title: 'Add another account',
-                  subtitle: 'Sign in with a different Google account',
-                  isDestructive: false,
-                  showDivider: true,
+                Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5A5A5A),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                 ),
-                _ActionRow(
-                  icon: Icons.logout_rounded,
-                  title: 'Sign out from all accounts',
-                  subtitle: 'This will sign you out of Pulse',
-                  isDestructive: true,
-                  showDivider: false,
+                const SizedBox(height: 14),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    const Center(
+                      child: Text(
+                        'Switch account',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          height: 1.25,
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: const BoxDecoration(
+                            color: AppColors.surfaceElevated,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: AppColors.textSecondary,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ..._accounts.asMap().entries.map((e) {
+                  final i = e.key;
+                  final account = e.value;
+                  final isSelected = i == _selectedIndex;
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      bottom: i == _accounts.length - 1 ? 0 : 10,
+                    ),
+                    child: _AccountRow(
+                      account: account,
+                      isSelected: isSelected,
+                      onTap: () => setState(() => _selectedIndex = i),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 18),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: const Column(
+                    children: [
+                      _ActionRow(
+                        icon: Icons.person_add_outlined,
+                        title: 'Add another account',
+                        isDestructive: false,
+                        showDivider: true,
+                      ),
+                      _ActionRow(
+                        icon: Icons.logout_rounded,
+                        title: 'Sign out from all accounts',
+                        isDestructive: true,
+                        showDivider: false,
+                      ),
+                    ],
+                  ),
                 ),
               ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Cancel
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              alignment: Alignment.center,
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textAccent,
-                  height: 1.0,
-                ),
-              ),
             ),
           ),
         ],
@@ -143,13 +148,11 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
 class _Account {
   final String name;
   final String email;
-  final Color avatarColor;
   final String label;
 
   const _Account({
     required this.name,
     required this.email,
-    required this.avatarColor,
     required this.label,
   });
 }
@@ -160,7 +163,6 @@ class _AccountRow extends StatelessWidget {
   final VoidCallback onTap;
 
   const _AccountRow({
-    super.key,
     required this.account,
     required this.isSelected,
     required this.onTap,
@@ -170,38 +172,37 @@ class _AccountRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
+      behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.accentPrimaryMuted
-              : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(14),
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isSelected
                 ? AppColors.accentPrimaryBorder
-                : AppColors.borderDefault,
-            width: 1,
+                : AppColors.borderSubtle,
+            width: isSelected ? 1.1 : 0.8,
           ),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         child: Row(
           children: [
-            // Avatar
             CircleAvatar(
-              radius: 22,
-              backgroundColor: account.avatarColor,
+              radius: 24,
+              backgroundColor: AppColors.surfaceInput,
               child: Text(
                 account.label,
                 style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
+                  height: 1,
                 ),
               ),
             ),
             const SizedBox(width: 12),
-            // Text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,42 +210,49 @@ class _AccountRow extends StatelessWidget {
                   Text(
                     account.name,
                     style: const TextStyle(
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
-                      height: 1.2,
+                      height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 1),
                   Text(
                     account.email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: AppColors.textSecondary,
-                      height: 1.0,
+                      height: 1.35,
                     ),
                   ),
                 ],
               ),
             ),
-            // Radio indicator
+            const SizedBox(width: 12),
             AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 24,
-              height: 24,
+              duration: const Duration(milliseconds: 180),
+              width: 28,
+              height: 28,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? AppColors.accentPrimary : Colors.transparent,
+                color:
+                    isSelected ? AppColors.accentPrimary : Colors.transparent,
                 border: Border.all(
                   color: isSelected
                       ? AppColors.accentPrimary
-                      : const Color(0xFF444444),
+                      : const Color(0xFF555555),
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                  ? const Icon(
+                      Icons.check_rounded,
+                      color: Colors.white,
+                      size: 17,
+                    )
                   : null,
             ),
           ],
@@ -257,62 +265,55 @@ class _AccountRow extends StatelessWidget {
 class _ActionRow extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
   final bool isDestructive;
   final bool showDivider;
 
   const _ActionRow({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.isDestructive,
     required this.showDivider,
   });
 
   @override
   Widget build(BuildContext context) {
-    final titleColor =
-        isDestructive ? AppColors.textDestructive : AppColors.textPrimary;
-    final iconColor =
-        isDestructive ? AppColors.textDestructive : AppColors.textPrimary;
-
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           child: Row(
             children: [
-              Icon(icon, color: iconColor, size: 24),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: titleColor,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
-                        height: 1.0,
-                      ),
-                    ),
-                  ],
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceInput,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: AppColors.textSecondary,
+                  size: 21,
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: isDestructive
+                        ? AppColors.textDestructive
+                        : AppColors.textPrimary,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
               const Icon(
                 Icons.chevron_right_rounded,
-                size: 16,
+                size: 18,
                 color: AppColors.textTertiary,
               ),
             ],
@@ -321,7 +322,7 @@ class _ActionRow extends StatelessWidget {
         if (showDivider)
           Container(
             height: 1,
-            margin: const EdgeInsets.only(left: 16),
+            margin: const EdgeInsets.only(left: 62, right: 14),
             color: AppColors.borderSubtle,
           ),
       ],

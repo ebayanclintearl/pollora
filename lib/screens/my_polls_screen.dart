@@ -145,19 +145,6 @@ class _ProfileHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: const BoxDecoration(
-                        color: AppColors.accentPrimary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.edit_rounded, color: Colors.white, size: 13),
-                    ),
-                  ),
                 ],
               ),
 
@@ -190,11 +177,13 @@ class _ProfileHeader extends StatelessWidget {
                     const SizedBox(height: 8),
                     Row(
                       children: const [
-                        Icon(Icons.calendar_today_rounded, size: 11, color: AppColors.textTertiary),
+                        Icon(Icons.calendar_today_rounded,
+                            size: 11, color: AppColors.textTertiary),
                         SizedBox(width: 4),
                         Text(
                           'Joined May 2024',
-                          style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                          style: TextStyle(
+                              fontSize: 12, color: AppColors.textTertiary),
                         ),
                       ],
                     ),
@@ -202,32 +191,6 @@ class _ProfileHeader extends StatelessWidget {
                 ),
               ),
             ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Edit Profile — full-width button below avatar row
-          GestureDetector(
-            onTap: () {},
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: double.infinity,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text(
-                  'Edit Profile',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -355,8 +318,16 @@ class _SegmentedControl extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       child: Row(
         children: [
-          _Segment(label: 'Your Polls', index: 0, selected: selected, onTap: onChanged),
-          _Segment(label: 'Favorites', index: 1, selected: selected, onTap: onChanged),
+          _Segment(
+              label: 'Your Polls',
+              index: 0,
+              selected: selected,
+              onTap: onChanged),
+          _Segment(
+              label: 'Favorites',
+              index: 1,
+              selected: selected,
+              onTap: onChanged),
         ],
       ),
     );
@@ -513,7 +484,8 @@ class _FavoritesCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: const Column(
           children: [
-            Icon(Icons.favorite_border_rounded, color: AppColors.textTertiary, size: 36),
+            Icon(Icons.favorite_border_rounded,
+                color: AppColors.textTertiary, size: 36),
             SizedBox(height: 12),
             Text(
               'No favorites yet',

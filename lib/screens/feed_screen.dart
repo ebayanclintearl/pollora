@@ -10,8 +10,7 @@ class _PollOption {
   final String label;
   final int percentage;
   final bool isLeading;
-  final String? imageAsset;
-  const _PollOption({required this.label, required this.percentage, required this.isLeading, this.imageAsset});
+  const _PollOption({required this.label, required this.percentage, required this.isLeading});
 }
 
 class _PollData {
@@ -20,7 +19,6 @@ class _PollData {
   final String userName;
   final String timestamp;
   final String question;
-  final String? coverAsset;
   final List<_PollOption> options;
   final int voteCount;
   final int commentCount;
@@ -31,7 +29,6 @@ class _PollData {
     required this.userName,
     required this.timestamp,
     required this.question,
-    this.coverAsset,
     required this.options,
     required this.voteCount,
     this.commentCount = 0,
@@ -45,7 +42,6 @@ const _polls = [
   _PollData(
     avatarColor: Color(0xFF1A6B3C), avatarLabel: 'RZ', userName: 'RoronoaZoro',
     commentCount: 12, timestamp: '2h ago', question: 'Who is the strongest?',
-    coverAsset: 'assets/images/poll_cover_sample.png',
     options: [
       _PollOption(label: 'Ban', percentage: 19, isLeading: false),
       _PollOption(label: 'Escanor', percentage: 67, isLeading: true),
@@ -372,15 +368,6 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             // ── Question ──
             Text(p.question, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.35)),
 
-            // ── Cover image ──
-            if (p.coverAsset != null) ...[
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: AspectRatio(aspectRatio: 16 / 9, child: Image.asset(p.coverAsset!, fit: BoxFit.cover)),
-              ),
-            ],
-
             const SizedBox(height: 12),
 
             // ── Options ──
@@ -504,17 +491,7 @@ class _PollOptionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        if (option.imageAsset != null) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: SizedBox(width: 40, height: 40, child: Image.asset(option.imageAsset!, fit: BoxFit.cover)),
-          ),
-          const SizedBox(width: 8),
-        ],
-        Expanded(
-          child: LayoutBuilder(
+    return LayoutBuilder(
             builder: (context, constraints) {
               final fillWidth = constraints.maxWidth * (option.percentage / 100);
               return AnimatedContainer(
@@ -574,10 +551,7 @@ class _PollOptionBar extends StatelessWidget {
                 ),
               );
             },
-          ),
-        ),
-      ],
-    );
+          );
   }
 }
 

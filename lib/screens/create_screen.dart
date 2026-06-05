@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import '../app_colors.dart';
 
 class CreateScreen extends StatefulWidget {
@@ -19,10 +17,6 @@ class _CreateScreenState extends State<CreateScreen> {
     TextEditingController(),
     TextEditingController(),
   ];
-
-  XFile? _coverImage;
-  bool _imageEnabled = false;
-  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -42,28 +36,6 @@ class _CreateScreenState extends State<CreateScreen> {
       _optionControllers[index].dispose();
       _optionControllers.removeAt(index);
     });
-  }
-
-  Future<void> _toggleCoverImage() async {
-    if (_imageEnabled) {
-      setState(() {
-        _imageEnabled = false;
-        _coverImage = null;
-      });
-      return;
-    }
-    final image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
-    if (image != null) {
-      setState(() {
-        _imageEnabled = true;
-        _coverImage = image;
-      });
-    }
-  }
-
-  Future<void> _replaceCoverImage() async {
-    final image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
-    if (image != null) setState(() => _coverImage = image);
   }
 
   @override
@@ -122,19 +94,6 @@ class _CreateScreenState extends State<CreateScreen> {
               ),
             ),
 
-            // Compact cover image strip — only when enabled
-            if (_imageEnabled && _coverImage != null) ...[
-              const SizedBox(height: 16),
-              _CoverImageStrip(
-                image: _coverImage!,
-                onReplace: _replaceCoverImage,
-                onRemove: () => setState(() {
-                  _imageEnabled = false;
-                  _coverImage = null;
-                }),
-              ),
-            ],
-
             const SizedBox(height: 24),
 
             // Options section header
@@ -183,7 +142,7 @@ class _CreateScreenState extends State<CreateScreen> {
         ),
       ),
 
-      // Publish + image button — always pinned above keyboard
+      // Publish button — always pinned above keyboard
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
@@ -193,54 +152,27 @@ class _CreateScreenState extends State<CreateScreen> {
               top: BorderSide(color: AppColors.borderDefault, width: 0.5),
             ),
           ),
-          child: Row(
-            children: [
-              // Image toggle
-              GestureDetector(
-                onTap: _toggleCoverImage,
-                behavior: HitTestBehavior.opaque,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: _imageEnabled ? AppColors.accentPrimary : AppColors.surfaceInput,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.image_outlined,
-                    color: _imageEnabled ? Colors.white : AppColors.textTertiary,
-                    size: 20,
-                  ),
+          child: SizedBox(
+            height: 44,
+            child: ElevatedButton(
+              onPressed: () => HapticFeedback.mediumImpact(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accentPrimary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(width: 12),
-              // Publish button
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: ElevatedButton(
-                    onPressed: () => HapticFeedback.mediumImpact(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentPrimary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Publish Poll',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+              child: const Text(
+                'Publish Poll',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -349,88 +281,6 @@ class _OptionRow extends StatelessWidget {
         else
           const SizedBox(width: 36),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Compact cover image strip
-// ─────────────────────────────────────────────
-class _CoverImageStrip extends StatelessWidget {
-  final XFile image;
-  final VoidCallback onReplace;
-  final VoidCallback onRemove;
-
-  const _CoverImageStrip({
-    required this.image,
-    required this.onReplace,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceInput,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            // Thumbnail
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-              child: SizedBox(
-                width: 70,
-                height: 52,
-                child: Image.file(File(image.path), fit: BoxFit.cover),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Labels
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Cover image',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  GestureDetector(
-                    onTap: onReplace,
-                    child: const Text(
-                      'Replace photo',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textAccent,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Remove
-            GestureDetector(
-              onTap: onRemove,
-              behavior: HitTestBehavior.opaque,
-              child: const SizedBox(
-                width: 44,
-                height: 52,
-                child: Icon(Icons.close_rounded, size: 16, color: AppColors.textTertiary),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

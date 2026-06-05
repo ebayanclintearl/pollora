@@ -17,6 +17,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   int _currentPage = 0;
   static const int _totalPages = 3;
 
+  // Tracks whether bars have already played for the current visit to page 1
+  bool _barsPlayed = false;
+
   // Per-page stagger
   late AnimationController _contentCtrl;
   late Animation<double> _illustrationScale;
@@ -105,6 +108,30 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
 
     _contentCtrl.forward();
+
+    // Listen to exact scroll position — only fire bars when fully settled at page 1
+    _pageCtrl.addListener(_onPageScroll);
+  }
+
+  void _onPageScroll() {
+    if (!_pageCtrl.hasClients) return;
+    final pos = _pageCtrl.page ?? 0;
+
+    // Fully settled on page 1
+    if ((pos - 1.0).abs() < 0.005) {
+      if (!_barsPlayed) {
+        _barsPlayed = true;
+        Future.delayed(const Duration(milliseconds: 160), () {
+          if (mounted && _currentPage == 1) _barsCtrl.forward(from: 0);
+        });
+      }
+    }
+
+    // Moved away from page 1 — reset so bars replay on next visit
+    if ((pos - 1.0).abs() > 0.4 && _barsPlayed) {
+      _barsPlayed = false;
+      _barsCtrl.reset();
+    }
   }
 
   @override
@@ -118,12 +145,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _onPageChanged(int page) {
     setState(() => _currentPage = page);
     _contentCtrl.forward(from: 0);
-    // Animate bars when results page comes into view
-    if (page == 1) {
-      Future.delayed(const Duration(milliseconds: 250), () {
-        if (mounted) _barsCtrl.forward(from: 0);
-      });
-    }
   }
 
   void _nextPage() {

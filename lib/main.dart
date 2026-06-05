@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
 import 'screens/splash_screen.dart';
+import 'screens/onboarding_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/create_screen.dart';
 import 'screens/my_polls_screen.dart';
@@ -56,12 +57,18 @@ class _AppEntry extends StatefulWidget {
 
 class _AppEntryState extends State<_AppEntry> {
   bool _splashDone = false;
+  bool _onboardingDone = false;
 
   @override
   Widget build(BuildContext context) {
     if (!_splashDone) {
       return SplashScreen(
         onComplete: () => setState(() => _splashDone = true),
+      );
+    }
+    if (!_onboardingDone) {
+      return OnboardingScreen(
+        onComplete: () => setState(() => _onboardingDone = true),
       );
     }
     return const MainShell();

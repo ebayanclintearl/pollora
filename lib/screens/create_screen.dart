@@ -220,7 +220,7 @@ class _OptionRow extends StatelessWidget {
         // Input
         Expanded(
           child: Container(
-            height: 44,
+            height: 52,
             decoration: BoxDecoration(
               color: AppColors.surfaceInput,
               borderRadius: BorderRadius.circular(12),
@@ -249,13 +249,13 @@ class _OptionRow extends StatelessWidget {
             onTap: onRemove,
             behavior: HitTestBehavior.opaque,
             child: const SizedBox(
-              width: 36,
-              height: 44,
-              child: Icon(Icons.close_rounded, size: 15, color: AppColors.textTertiary),
+              width: 44,
+              height: 52,
+              child: Icon(Icons.close_rounded, size: 18, color: AppColors.textTertiary),
             ),
           )
         else
-          const SizedBox(width: 36),
+          const SizedBox(width: 44),
       ],
     );
   }

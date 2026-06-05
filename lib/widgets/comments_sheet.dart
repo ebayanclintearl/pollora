@@ -207,7 +207,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Container(
-                    constraints: const BoxConstraints(minHeight: 38),
+                    constraints: const BoxConstraints(minHeight: 44),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceInput,
                       borderRadius: BorderRadius.circular(999),
@@ -235,8 +235,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   onTap: _hasText ? _submitComment : null,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    width: 34,
-                    height: 34,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: _hasText ? AppColors.accentPrimary : AppColors.surfaceElevated,
                       shape: BoxShape.circle,
@@ -352,8 +352,11 @@ class _CommentRowState extends State<_CommentRow> {
                 ),
                 const SizedBox(height: 8),
 
-                // Actions row
-                Row(
+                // Actions row — 44dp min height for thumb target
+                SizedBox(
+                  height: 44,
+                  child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Like
                     GestureDetector(
@@ -403,6 +406,7 @@ class _CommentRowState extends State<_CommentRow> {
                       ),
                     ],
                   ],
+                  ),
                 ),
               ],
             ),

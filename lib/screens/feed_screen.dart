@@ -381,7 +381,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ...visible.asMap().entries.map((e) => Padding(
-                    padding: EdgeInsets.only(bottom: e.key < visible.length - 1 ? 6 : 0),
+                    padding: EdgeInsets.only(bottom: e.key < visible.length - 1 ? 8 : 0),
                     child: GestureDetector(
                       onTap: () => _onVote(e.key),
                       child: _PollOptionBar(
@@ -397,7 +397,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                       onTap: () => setState(() => _optionsExpanded = true),
                       behavior: HitTestBehavior.opaque,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(color: AppColors.accentPrimaryMuted, borderRadius: BorderRadius.circular(999)),
                         child: Text('+$hidden more option${hidden > 1 ? 's' : ''}',
                             style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent)),
@@ -434,7 +434,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                   },
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     child: Row(
                       children: [
                         const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: AppColors.textTertiary),
@@ -449,7 +449,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                   onTap: _toggleFavorite,
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     child: ScaleTransition(
                       scale: _heartScale,
                       child: Icon(
@@ -495,7 +495,7 @@ class _PollOptionBar extends StatelessWidget {
               final fillWidth = constraints.maxWidth * (option.percentage / 100);
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                height: 42,
+                height: 52,
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
                 foregroundDecoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
@@ -514,7 +514,7 @@ class _PollOptionBar extends StatelessWidget {
                         duration: const Duration(milliseconds: 380),
                         curve: Curves.easeOut,
                         width: hasVoted ? fillWidth : 0,
-                        height: 42,
+                        height: 52,
                         color: option.isLeading ? AppColors.pollBarLeading : AppColors.pollBarOther,
                       ),
                     ),
@@ -604,7 +604,7 @@ class _SkeletonCardState extends State<_SkeletonCard> with SingleTickerProviderS
               const SizedBox(height: 16),
               ...List.generate(3, (i) => Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Container(height: 42, decoration: r(10.0)),
+                child: Container(height: 52, decoration: r(8.0)),
               )),
               const SizedBox(height: 14),
               Container(height: 1, color: AppColors.borderSubtle),

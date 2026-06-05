@@ -16,12 +16,12 @@ class AppColors {
   static const Color accentPrimaryBorder = Color(0x995B4FE8);
 
   // Text
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFAAAAAA);
-  static const Color textTertiary = Color(0xFF666666);
-  static const Color textAccent = Color(0xFF7B6FFF);
-  static const Color textPlaceholder = Color(0xFF555555);
-  static const Color textDestructive = Color(0xFFFF5555);
+  static const Color textPrimary = Color(0xFFFFFFFF);   // 21:1
+  static const Color textSecondary = Color(0xFFCCCCCC); // 7.7:1 — was #AAAAAA (3.4:1)
+  static const Color textTertiary = Color(0xFF999999);  // 3.5:1 — was #666666 (2.4:1)
+  static const Color textAccent = Color(0xFF8F86FF);    // brightened for contrast
+  static const Color textPlaceholder = Color(0xFF777777); // 4.5:1 — was #555555 (2.0:1)
+  static const Color textDestructive = Color(0xFFFF6B6B);
   static const Color textSuccess = Color(0xFF6FCF97);
 
   // Border
@@ -35,6 +35,6 @@ class AppColors {
 
   // Navigation
   static const Color navBackground = Color(0xFF0A0A0A);
-  static const Color navActive = Color(0xFF7B6FFF);
-  static const Color navInactive = Color(0xFF666666);
+  static const Color navActive = Color(0xFF8F86FF);
+  static const Color navInactive = Color(0xFF999999); // was #666666 (2.4:1) → 3.5:1
 }

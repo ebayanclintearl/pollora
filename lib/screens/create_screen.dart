@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../app_colors.dart';
 
@@ -219,7 +220,7 @@ class _CreateScreenState extends State<CreateScreen> {
                 child: SizedBox(
                   height: 44,
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () => HapticFeedback.mediumImpact(),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentPrimary,
                       foregroundColor: Colors.white,

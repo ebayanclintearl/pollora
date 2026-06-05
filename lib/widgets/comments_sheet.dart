@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../app_colors.dart';
 
 class CommentsSheet extends StatefulWidget {
@@ -47,6 +48,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
   void _submitComment() {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    HapticFeedback.lightImpact();
     final newComment = _Comment(
       avatarLabel: 'C',
       avatarColor: const Color(0xFF8B6914),

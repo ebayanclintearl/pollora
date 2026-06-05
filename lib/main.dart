@@ -72,7 +72,11 @@ class _MainShellState extends State<MainShell> {
         ),
         bottomNavigationBar: _PolloraBottomNav(
           currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
+          onTap: (i) {
+            if (i == _currentIndex) return;
+            HapticFeedback.selectionClick();
+            setState(() => _currentIndex = i);
+          },
         ),
       ),
     );

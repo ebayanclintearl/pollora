@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -285,7 +286,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   // CTA
                   SizedBox(
                     width: double.infinity,
-                    height: 54,
+                    height: 56,
                     child: ElevatedButton(
                       onPressed: _nextPage,
                       style: ElevatedButton.styleFrom(
@@ -376,16 +377,7 @@ class _OnboardingPage extends StatelessWidget {
                   opacity: titleFade,
                   child: SlideTransition(
                     position: titleSlide,
-                    child: Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        height: 1.15,
-                        letterSpacing: -0.6,
-                      ),
-                    ),
+                    child: Text(title, style: AppTypography.displayOnboarding),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -393,15 +385,7 @@ class _OnboardingPage extends StatelessWidget {
                   opacity: subtitleFade,
                   child: SlideTransition(
                     position: subtitleSlide,
-                    child: Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
-                        height: 1.6,
-                      ),
-                    ),
+                    child: Text(subtitle, style: AppTypography.bodyLarge),
                   ),
                 ),
               ],
@@ -609,9 +593,9 @@ class _ResultsIllustration extends StatelessWidget {
 
             // Bars
             _ChartBar(fill: bar1.value, isLeading: true),
-            const SizedBox(height: 9),
+            const SizedBox(height: 8),
             _ChartBar(fill: bar2.value, isLeading: false),
-            const SizedBox(height: 9),
+            const SizedBox(height: 8),
             _ChartBar(fill: bar3.value, isLeading: false),
           ],
         );

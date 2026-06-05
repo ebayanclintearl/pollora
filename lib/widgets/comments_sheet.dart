@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 
 class CommentsSheet extends StatefulWidget {
   final String pollQuestion;
@@ -120,11 +121,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: Row(
               children: [
-                const Text(
-                  'Comments',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                ),
-                const SizedBox(width: 6),
+                const Text('Comments', style: AppTypography.titleMedium),
+                const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
@@ -133,7 +131,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   ),
                   child: Text(
                     '${_comments.length}',
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textAccent),
+                    style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent),
                   ),
                 ),
               ],
@@ -149,11 +147,11 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textTertiary, size: 36),
-                        SizedBox(height: 10),
-                        Text('No comments yet', style: TextStyle(fontSize: 14, color: AppColors.textTertiary)),
+                        Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textTertiary, size: 48),
+                        SizedBox(height: 12),
+                        Text('No comments yet', style: AppTypography.titleSmall),
                         SizedBox(height: 4),
-                        Text('Be the first to comment', style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        Text('Be the first to comment', style: AppTypography.labelMedium),
                       ],
                     ),
                   )
@@ -321,7 +319,7 @@ class _CommentRowState extends State<_CommentRow> {
             backgroundColor: widget.comment.avatarColor,
             child: Text(
               widget.comment.avatarLabel,
-              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(width: 10),
@@ -336,12 +334,12 @@ class _CommentRowState extends State<_CommentRow> {
                   children: [
                     Text(
                       widget.comment.username,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                      style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
                     ),
                     const SizedBox(width: 6),
                     Text(
                       widget.comment.timestamp,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                      style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400),
                     ),
                   ],
                 ),
@@ -350,7 +348,7 @@ class _CommentRowState extends State<_CommentRow> {
                 // Comment text — primary, readable
                 Text(
                   widget.comment.text,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textPrimary, height: 1.45),
+                  style: AppTypography.bodyMedium,
                 ),
                 const SizedBox(height: 8),
 
@@ -365,17 +363,15 @@ class _CommentRowState extends State<_CommentRow> {
                         children: [
                           Icon(
                             _liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            size: 14,
+                            size: 16,
                             color: _liked ? const Color(0xFFFF5C7A) : AppColors.textTertiary,
                           ),
                           if (likes > 0) ...[
                             const SizedBox(width: 4),
                             Text(
                               '$likes',
-                              style: TextStyle(
-                                fontSize: 12,
+                              style: AppTypography.labelMedium.copyWith(
                                 color: _liked ? const Color(0xFFFF5C7A) : AppColors.textTertiary,
-                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -388,9 +384,9 @@ class _CommentRowState extends State<_CommentRow> {
                     GestureDetector(
                       onTap: widget.onReply,
                       behavior: HitTestBehavior.opaque,
-                      child: const Text(
+                      child: Text(
                         'Reply',
-                        style: TextStyle(fontSize: 12, color: AppColors.textTertiary, fontWeight: FontWeight.w500),
+                        style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary),
                       ),
                     ),
 
@@ -400,9 +396,9 @@ class _CommentRowState extends State<_CommentRow> {
                       GestureDetector(
                         onTap: widget.onDelete,
                         behavior: HitTestBehavior.opaque,
-                        child: const Text(
+                        child: Text(
                           'Delete',
-                          style: TextStyle(fontSize: 12, color: AppColors.textDestructive, fontWeight: FontWeight.w500),
+                          style: AppTypography.labelMedium.copyWith(color: AppColors.textDestructive),
                         ),
                       ),
                     ],

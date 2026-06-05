@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 import '../widgets/switch_account_sheet.dart';
 import 'settings_screen.dart';
 
@@ -40,22 +41,15 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Profile',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  const Text('Profile', style: AppTypography.screenTitle),
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
                     behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 38,
-                      height: 38,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: AppColors.surfaceElevated,
                         borderRadius: BorderRadius.circular(12),
@@ -63,7 +57,7 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                       child: const Icon(
                         Icons.settings_outlined,
                         color: AppColors.textSecondary,
-                        size: 18,
+                        size: 20,
                       ),
                     ),
                   ),
@@ -150,7 +144,7 @@ class _ProfileHeader extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
 
               // Name block
               Expanded(
@@ -158,34 +152,18 @@ class _ProfileHeader extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 4),
-                    const Text(
-                      'Clint',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
-                      ),
-                    ),
+                    const Text('Clint', style: AppTypography.profileName),
                     const SizedBox(height: 2),
-                    const Text(
-                      '@clint',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    const Text('@clint', style: AppTypography.bodySmall),
                     const SizedBox(height: 8),
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Icon(Icons.calendar_today_rounded,
-                            size: 11, color: AppColors.textTertiary),
+                            size: 14, color: AppColors.textTertiary),
                         SizedBox(width: 4),
                         Text(
                           'Joined May 2024',
-                          style: TextStyle(
-                              fontSize: 12, color: AppColors.textTertiary),
+                          style: AppTypography.statLabel,
                         ),
                       ],
                     ),
@@ -263,23 +241,10 @@ class _StatCell extends StatelessWidget {
             children: [
               Text(
                 _formatStat(animated.round()),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  height: 1.1,
-                ),
+                style: AppTypography.statValue,
               ),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textTertiary,
-                  height: 1.0,
-                ),
-              ),
+              const SizedBox(height: 4),
+              Text(label, style: AppTypography.statLabel),
             ],
           );
         },
@@ -370,15 +335,13 @@ class _Segment extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 5),
                   child: Icon(
                     Icons.favorite_rounded,
-                    size: 13,
+                    size: 16,
                     color: isSelected ? Colors.white : AppColors.textTertiary,
                   ),
                 ),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
+                style: AppTypography.labelMedium.copyWith(
                   color: isSelected ? Colors.white : AppColors.textTertiary,
                 ),
               ),
@@ -585,34 +548,18 @@ class _PollListRow extends StatelessWidget {
                   children: [
                     Text(
                       poll.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        height: 1.3,
-                      ),
+                      style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
                         Text(
                           poll.votes,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textAccent,
-                          ),
+                          style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent),
                         ),
-                        const Text(
-                          ' votes',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textTertiary,
-                          ),
-                        ),
+                        Text(' votes', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400)),
                         const SizedBox(width: 6),
                         Container(
                           width: 3,
@@ -626,10 +573,7 @@ class _PollListRow extends StatelessWidget {
                         Expanded(
                           child: Text(
                             '${poll.leading} leading',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppColors.textTertiary,
-                            ),
+                            style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -646,13 +590,10 @@ class _PollListRow extends StatelessWidget {
                 children: [
                   Text(
                     poll.timestamp,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textTertiary,
-                    ),
+                    style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 4),
-                  Icon(trailingIcon, size: 15, color: trailingColor),
+                  Icon(trailingIcon, size: 16, color: trailingColor),
                 ],
               ),
             ],

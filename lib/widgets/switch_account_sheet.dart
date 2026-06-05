@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 
 class SwitchAccountSheet extends StatefulWidget {
   const SwitchAccountSheet({super.key});
@@ -60,11 +61,8 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    const Center(
-                      child: Text(
-                        'Switch Account',
-                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                      ),
+                    Center(
+                      child: Text('Switch Account', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700)),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -74,7 +72,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                         child: Container(
                           width: 32, height: 32,
                           decoration: const BoxDecoration(color: AppColors.surfaceElevated, shape: BoxShape.circle),
-                          child: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 17),
+                          child: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 20),
                         ),
                       ),
                     ),
@@ -97,7 +95,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                 // Switch confirm button
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 52,
                   child: ElevatedButton(
                     onPressed: _confirmSwitch,
                     style: ElevatedButton.styleFrom(
@@ -108,7 +106,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                     ),
                     child: Text(
                       'Switch to ${selected.name.split(' ').first}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                      style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700, color: Colors.white),
                     ),
                   ),
                 ),
@@ -211,10 +209,10 @@ class _AccountRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(account.name,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary, height: 1.3)),
-                  const SizedBox(height: 1),
+                    style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
                   Text(account.handle,
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: AppTypography.bodySmall,
                     overflow: TextOverflow.ellipsis),
                 ],
               ),
@@ -276,14 +274,12 @@ class _ActionRow extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(title,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                    style: AppTypography.titleSmall.copyWith(
                       color: isDestructive ? AppColors.textDestructive : AppColors.textPrimary,
                     )),
                 ),
                 if (!isDestructive)
-                  const Icon(Icons.chevron_right_rounded, size: 17, color: AppColors.textTertiary),
+                  const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textTertiary),
               ],
             ),
           ),

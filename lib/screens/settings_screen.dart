@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -28,8 +29,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () => Navigator.of(context).pop(),
                     behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 38,
-                      height: 38,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: AppColors.surfaceElevated,
                         borderRadius: BorderRadius.circular(12),
@@ -37,19 +38,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
                         color: AppColors.textSecondary,
-                        size: 16,
+                        size: 20,
                       ),
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Text(
-                    'Settings',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  const Text('Settings', style: AppTypography.sectionTitle),
                 ],
               ),
             ),
@@ -145,16 +139,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: AppColors.textDestructive.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.logout_rounded,
+                          const Icon(Icons.logout_rounded,
                               color: AppColors.textDestructive, size: 18),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Sign Out',
-                            style: TextStyle(
-                              fontSize: 15,
+                            style: AppTypography.titleSmall.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppColors.textDestructive,
                             ),
@@ -218,27 +211,13 @@ class _ProfileRow extends StatelessWidget {
           ),
           const SizedBox(width: 14),
           // Name + handle
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Clint',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    height: 1.2,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '@clint',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
+                Text('Clint', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                const Text('@clint', style: AppTypography.bodySmall),
               ],
             ),
           ),
@@ -264,12 +243,7 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         label.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textTertiary,
-          letterSpacing: 0.8,
-        ),
+        style: AppTypography.labelSmall,
       ),
     );
   }
@@ -318,23 +292,16 @@ class _SettingsRow extends StatelessWidget {
           onTap: () { HapticFeedback.selectionClick(); onTap(); },
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
                 Icon(icon, size: 20, color: AppColors.textSecondary),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+                  child: Text(label, style: AppTypography.titleSmall),
                 ),
                 const Icon(Icons.chevron_right_rounded,
-                    size: 17, color: AppColors.textTertiary),
+                    size: 20, color: AppColors.textTertiary),
               ],
             ),
           ),
@@ -369,20 +336,13 @@ class _SettingsToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
           Icon(icon, size: 20, color: AppColors.textSecondary),
           const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
+            child: Text(label, style: AppTypography.titleSmall),
           ),
           Switch(
             value: value,

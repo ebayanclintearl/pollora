@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../widgets/comments_sheet.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 
 // ─────────────────────────────────────────────
 // Data models
@@ -200,7 +201,7 @@ class _FeedScreenState extends State<FeedScreen> {
                   firstChild: Row(
                     children: [
                       const Expanded(
-                        child: Text('Polls', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                        child: Text('Polls', style: AppTypography.screenTitle),
                       ),
                       GestureDetector(
                         onTap: _activateSearch,
@@ -208,7 +209,7 @@ class _FeedScreenState extends State<FeedScreen> {
                         child: Container(
                           width: 38, height: 38,
                           decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
-                          child: const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 19),
+                          child: const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
                         ),
                       ),
                     ],
@@ -227,7 +228,7 @@ class _FeedScreenState extends State<FeedScreen> {
                             decoration: const InputDecoration(
                               hintText: 'Search polls…',
                               hintStyle: TextStyle(fontSize: 15, color: AppColors.textTertiary),
-                              prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 19),
+                              prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 20),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
@@ -346,17 +347,17 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
               children: [
                 CircleAvatar(
                   radius: 17, backgroundColor: p.avatarColor,
-                  child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Row(
                     children: [
-                      Text(p.userName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                      Text(p.userName, style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w500)),
                       const SizedBox(width: 6),
                       Container(width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.textTertiary, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
-                      Text(p.timestamp, style: const TextStyle(fontSize: 13, color: AppColors.textTertiary)),
+                      Text(p.timestamp, style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary)),
                     ],
                   ),
                 ),
@@ -366,7 +367,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             const SizedBox(height: 12),
 
             // ── Question ──
-            Text(p.question, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3)),
+            Text(p.question, style: AppTypography.cardTitle),
 
             const SizedBox(height: 12),
 
@@ -399,7 +400,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(color: AppColors.accentPrimaryMuted, borderRadius: BorderRadius.circular(999)),
                         child: Text('+$hidden more option${hidden > 1 ? 's' : ''}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textAccent)),
+                            style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent)),
                       ),
                     ),
                   ],
@@ -414,10 +415,10 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             // ── Footer ──
             Row(
               children: [
-                const Icon(Icons.how_to_vote_outlined, size: 14, color: AppColors.textTertiary),
+                const Icon(Icons.how_to_vote_outlined, size: 16, color: AppColors.textTertiary),
                 const SizedBox(width: 5),
                 Text('${_formatVotes(displayCount)} votes',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                    style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary)),
                 const Spacer(),
                 // Comments
                 GestureDetector(
@@ -433,41 +434,39 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                   },
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.all(8),
                     child: Row(
                       children: [
-                        const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: AppColors.textTertiary),
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: AppColors.textTertiary),
                         const SizedBox(width: 4),
-                        Text('${widget.poll.commentCount}', style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                        Text('${widget.poll.commentCount}', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary)),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 2),
                 // Favorite with bounce
                 GestureDetector(
                   onTap: _toggleFavorite,
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    padding: const EdgeInsets.all(8),
                     child: ScaleTransition(
                       scale: _heartScale,
                       child: Icon(
                         _favorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        size: 18,
+                        size: 20,
                         color: _favorited ? const Color(0xFFFF5C7A) : AppColors.textTertiary,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 2),
                 // Share
                 GestureDetector(
                   onTap: () => HapticFeedback.lightImpact(),
                   behavior: HitTestBehavior.opaque,
                   child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    child: Icon(Icons.ios_share_rounded, size: 18, color: AppColors.textTertiary),
+                    padding: EdgeInsets.all(8),
+                    child: Icon(Icons.ios_share_rounded, size: 20, color: AppColors.textTertiary),
                   ),
                 ),
               ],
@@ -497,9 +496,9 @@ class _PollOptionBar extends StatelessWidget {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 height: 42,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
                 foregroundDecoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   border: isVoted
                       ? Border.all(color: AppColors.accentPrimary, width: 1.5)
                       : Border.all(color: Colors.transparent, width: 1.5),
@@ -526,10 +525,8 @@ class _PollOptionBar extends StatelessWidget {
                           Expanded(
                             child: Text(
                               option.label,
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: AppTypography.titleSmall.copyWith(
                                 fontWeight: isVoted ? FontWeight.w700 : FontWeight.w500,
-                                color: AppColors.textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -542,7 +539,7 @@ class _PollOptionBar extends StatelessWidget {
                                 child: Icon(Icons.check_circle_rounded, size: 15, color: Colors.white),
                               ),
                             Text('${option.percentage}%',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0)),
                           ],
                         ],
                       ),
@@ -638,7 +635,7 @@ class _EmptyState extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             Container(
-              width: 88, height: 88,
+              width: 96, height: 96,
               decoration: const BoxDecoration(color: AppColors.surfaceCard, shape: BoxShape.circle),
             ),
             Container(
@@ -647,19 +644,19 @@ class _EmptyState extends StatelessWidget {
             ),
             Icon(
               isSearch ? Icons.search_off_rounded : Icons.bar_chart_rounded,
-              size: 30, color: AppColors.textTertiary,
+              size: 48, color: AppColors.textTertiary,
             ),
           ],
         ),
         const SizedBox(height: 20),
         Text(
           isSearch ? 'No polls found' : 'Nothing here yet',
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
           isSearch ? '"$query" didn\'t match any polls' : 'Pull down to refresh',
-          style: const TextStyle(fontSize: 14, color: AppColors.textTertiary),
+          style: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
           textAlign: TextAlign.center,
         ),
       ],

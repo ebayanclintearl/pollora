@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_typography.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/feed_screen.dart';
@@ -221,17 +222,16 @@ class _NavTab extends StatelessWidget {
               ),
               child: Icon(
                 isActive ? activeIcon : icon,
-                size: 22,
+                size: 24,
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 4),
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
-              style: TextStyle(
-                fontSize: 12,
+              style: AppTypography.labelMedium.copyWith(
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
               ),
               child: Text(label),
             ),
@@ -253,8 +253,8 @@ class _CreateFAB extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: 54,
-        height: 54,
+        width: 56,
+        height: 56,
         decoration: BoxDecoration(
           color: AppColors.accentPrimary,
           shape: BoxShape.circle,
@@ -266,7 +266,7 @@ class _CreateFAB extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
       ),
     );
   }

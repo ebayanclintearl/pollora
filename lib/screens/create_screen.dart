@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_typography.dart';
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({super.key});
@@ -50,14 +51,7 @@ class _CreateScreenState extends State<CreateScreen> {
             // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Text(
-                'Create Poll',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
+              child: const Text('Create Poll', style: AppTypography.screenTitle),
             ),
 
             const SizedBox(height: 20),
@@ -101,24 +95,11 @@ class _CreateScreenState extends State<CreateScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  const Text(
-                    'OPTIONS',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textTertiary,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
+                  const Text('OPTIONS', style: AppTypography.labelSmall),
                   const Spacer(),
                   Text(
                     '${_optionControllers.length} / $_maxOptions',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textTertiary,
-                      letterSpacing: 0.3,
-                    ),
+                    style: AppTypography.labelSmall.copyWith(letterSpacing: 0.5),
                   ),
                 ],
               ),
@@ -153,7 +134,7 @@ class _CreateScreenState extends State<CreateScreen> {
             ),
           ),
           child: SizedBox(
-            height: 44,
+            height: 52,
             child: ElevatedButton(
               onPressed: () => HapticFeedback.mediumImpact(),
               style: ElevatedButton.styleFrom(
@@ -164,10 +145,9 @@ class _CreateScreenState extends State<CreateScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Publish Poll',
-                style: TextStyle(
-                  fontSize: 15,
+                style: AppTypography.titleSmall.copyWith(
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
@@ -239,24 +219,16 @@ class _OptionRow extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AppColors.surfaceInput,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
               controller: controller,
               maxLines: 1,
               maxLength: 40,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
+              style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: index < 2 ? 'Option ${index + 1}' : 'Option ${index + 1} · optional',
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textPlaceholder,
-                ),
+                hintStyle: AppTypography.titleSmall.copyWith(color: AppColors.textPlaceholder),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -311,14 +283,7 @@ class _AddOptionRow extends StatelessWidget {
               child: const Icon(Icons.add_rounded, color: AppColors.textTertiary, size: 16),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Add option',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
-              ),
-            ),
+            Text('Add option', style: AppTypography.titleSmall.copyWith(color: AppColors.textSecondary)),
           ],
         ),
       ),

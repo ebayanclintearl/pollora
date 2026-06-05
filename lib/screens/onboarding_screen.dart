@@ -265,7 +265,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 280),
                         curve: Curves.easeOut,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
                         width: active ? 22 : 7,
                         height: 7,
                         decoration: BoxDecoration(
@@ -301,8 +301,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         child: Text(
                           isLast ? 'Get Started' : 'Continue',
                           key: ValueKey(isLast),
-                          style: const TextStyle(
-                            fontSize: 16,
+                          style: AppTypography.titleMedium.copyWith(
                             fontWeight: FontWeight.w700,
                             color: Colors.white,
                           ),

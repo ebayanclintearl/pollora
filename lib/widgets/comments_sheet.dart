@@ -174,11 +174,11 @@ class _CommentsSheetState extends State<CommentsSheet> {
               child: Row(
                 children: [
                   const Icon(Icons.reply_rounded, size: 14, color: AppColors.textTertiary),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Replying to @$_replyingToUsername',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
                     ),
                   ),
                   GestureDetector(
@@ -204,7 +204,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   backgroundColor: Color(0xFF8B6914),
                   child: Text('C', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Container(
                     constraints: const BoxConstraints(minHeight: 44),
@@ -217,10 +217,10 @@ class _CommentsSheetState extends State<CommentsSheet> {
                       focusNode: _focusNode,
                       maxLength: 280,
                       maxLines: null,
-                      style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-                      decoration: const InputDecoration(
+                      style: AppTypography.bodyMedium,
+                      decoration: InputDecoration(
                         hintText: 'Add a comment…',
-                        hintStyle: TextStyle(fontSize: 14, color: AppColors.textTertiary),
+                        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
                         border: InputBorder.none,
                         counterText: '',
                         contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -230,7 +230,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: _hasText ? _submitComment : null,
                   child: AnimatedContainer(
@@ -336,7 +336,7 @@ class _CommentRowState extends State<_CommentRow> {
                       widget.comment.username,
                       style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     Text(
                       widget.comment.timestamp,
                       style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),

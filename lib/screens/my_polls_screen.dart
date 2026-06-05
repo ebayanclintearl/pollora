@@ -332,7 +332,7 @@ class _Segment extends StatelessWidget {
             children: [
               if (index == 1)
                 Padding(
-                  padding: const EdgeInsets.only(right: 5),
+                  padding: const EdgeInsets.only(right: 4),
                   child: Icon(
                     Icons.favorite_rounded,
                     size: 16,
@@ -447,23 +447,19 @@ class _FavoritesCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
         ),
         padding: const EdgeInsets.symmetric(vertical: 48),
-        child: const Column(
+        child: Column(
           children: [
-            Icon(Icons.favorite_border_rounded,
+            const Icon(Icons.favorite_border_rounded,
                 color: AppColors.textTertiary, size: 36),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               'No favorites yet',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textTertiary,
-              ),
+              style: AppTypography.titleSmall.copyWith(color: AppColors.textTertiary),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               'Heart a poll in the feed to save it here',
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+              style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary),
             ),
           ],
         ),
@@ -550,7 +546,7 @@ class _PollListRow extends StatelessWidget {
                           style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent),
                         ),
                         Text(' votes', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500)),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Container(
                           width: 3,
                           height: 3,
@@ -559,7 +555,7 @@ class _PollListRow extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '${poll.leading} leading',

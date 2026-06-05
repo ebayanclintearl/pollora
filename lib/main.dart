@@ -33,9 +33,40 @@ class PolloraApp extends StatelessWidget {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: const ColorScheme.dark(
-          primary: AppColors.accentPrimary,
-          surface: AppColors.surfaceCard,
-          onSurface: AppColors.textPrimary,
+          // Primary — indigo/purple accent
+          primary:              AppColors.accentPrimary,     // #5B4FE8
+          onPrimary:            Color(0xFFFFFFFF),
+          primaryContainer:     Color(0xFF2D2780),
+          onPrimaryContainer:   Color(0xFFCCC8FF),
+          // Secondary — lighter purple used for nav & badges
+          secondary:            AppColors.navActive,         // #8F86FF
+          onSecondary:          Color(0xFFFFFFFF),
+          secondaryContainer:   Color(0xFF26228A),
+          onSecondaryContainer: AppColors.textAccent,
+          // Tertiary — success green
+          tertiary:             AppColors.textSuccess,       // #6FCF97
+          onTertiary:           Color(0xFF003919),
+          tertiaryContainer:    Color(0xFF005228),
+          onTertiaryContainer:  Color(0xFF8DFCB4),
+          // Error
+          error:                AppColors.textDestructive,   // #FF6B6B
+          onError:              Color(0xFFFFFFFF),
+          errorContainer:       Color(0xFF8B0000),
+          onErrorContainer:     Color(0xFFFFDAD6),
+          // Surface & background roles
+          surface:              AppColors.surfaceCard,       // #1C1C1C
+          onSurface:            AppColors.textPrimary,       // #FFFFFF
+          surfaceVariant:       AppColors.surfaceElevated,   // #222222
+          onSurfaceVariant:     AppColors.textSecondary,     // #CCCCCC
+          // Borders & overlays
+          outline:              AppColors.borderDefault,     // #2E2E2E
+          outlineVariant:       AppColors.borderSubtle,      // #1E1E1E
+          scrim:                Color(0xFF000000),
+          // Inverse (used by SnackBar, Tooltip)
+          inverseSurface:       Color(0xFFF0EFFF),
+          onInverseSurface:     Color(0xFF1A1A2E),
+          inversePrimary:       Color(0xFF5B4FE8),
+          surfaceTint:          AppColors.accentPrimary,
         ),
         textTheme: GoogleFonts.interTextTheme(
           const TextTheme(

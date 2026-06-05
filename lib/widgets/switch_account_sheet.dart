@@ -70,7 +70,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                         onTap: () => Navigator.of(context).pop(),
                         behavior: HitTestBehavior.opaque,
                         child: Container(
-                          width: 32, height: 32,
+                          width: 44, height: 44,
                           decoration: const BoxDecoration(color: AppColors.surfaceElevated, shape: BoxShape.circle),
                           child: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 20),
                         ),
@@ -82,7 +82,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
 
                 // Account rows
                 ..._accounts.asMap().entries.map((e) => Padding(
-                  padding: EdgeInsets.only(bottom: e.key < _accounts.length - 1 ? 10 : 0),
+                  padding: EdgeInsets.only(bottom: e.key < _accounts.length - 1 ? 12 : 0),
                   child: _AccountRow(
                     account: e.value,
                     isSelected: e.key == _selectedIndex,
@@ -102,7 +102,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                       backgroundColor: AppColors.accentPrimary,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     child: Text(
                       'Switch to ${selected.name.split(' ').first}',

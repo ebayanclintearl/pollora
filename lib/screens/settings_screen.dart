@@ -134,10 +134,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onTap: () => HapticFeedback.mediumImpact(),
                     behavior: HitTestBehavior.opaque,
                     child: Container(
-                      height: 50,
+                      height: 52,
                       decoration: BoxDecoration(
                         color: AppColors.textDestructive.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -162,8 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Center(
                     child: Text(
                       'Pollora v1.0.0',
-                      style: TextStyle(
-                          fontSize: 12, color: AppColors.textTertiary),
+                      style: AppTypography.labelSmall,
                     ),
                   ),
                 ],

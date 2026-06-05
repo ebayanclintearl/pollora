@@ -232,7 +232,7 @@ class _FeedScreenState extends State<FeedScreen> {
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 13),
+                              contentPadding: EdgeInsets.symmetric(vertical: 12),
                             ),
                             cursorColor: AppColors.accentPrimary,
                           ),
@@ -346,17 +346,17 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             Row(
               children: [
                 CircleAvatar(
-                  radius: 17, backgroundColor: p.avatarColor,
+                  radius: 18, backgroundColor: p.avatarColor,
                   child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Row(
                     children: [
                       Text(p.userName, style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w500)),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Container(width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.textTertiary, shape: BoxShape.circle)),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Text(p.timestamp, style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary)),
                     ],
                   ),
@@ -408,7 +408,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
               );
             }),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Container(height: 1, color: AppColors.borderSubtle),
             const SizedBox(height: 12),
 
@@ -416,7 +416,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             Row(
               children: [
                 const Icon(Icons.how_to_vote_outlined, size: 16, color: AppColors.textTertiary),
-                const SizedBox(width: 5),
+                const SizedBox(width: 4),
                 Text('${_formatVotes(displayCount)} votes',
                     style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary)),
                 const Spacer(),
@@ -428,7 +428,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                       context: context,
                       isScrollControlled: true,
                       backgroundColor: Colors.transparent,
-                      barrierColor: Colors.black.withOpacity(0.5),
+                      barrierColor: Colors.black.withValues(alpha: 0.5),
                       builder: (_) => CommentsSheet(pollQuestion: widget.poll.question, commentCount: widget.poll.commentCount),
                     );
                   },
@@ -465,7 +465,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                   onTap: () => HapticFeedback.lightImpact(),
                   behavior: HitTestBehavior.opaque,
                   child: const Padding(
-                    padding: EdgeInsets.all(8),
+                    padding: EdgeInsets.all(10),
                     child: Icon(Icons.ios_share_rounded, size: 20, color: AppColors.textTertiary),
                   ),
                 ),
@@ -589,24 +589,24 @@ class _SkeletonCardState extends State<_SkeletonCard> with SingleTickerProviderS
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Container(width: 34, height: 34, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
-                const SizedBox(width: 10),
+                Container(width: 36, height: 36, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+                const SizedBox(width: 8),
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Container(width: 110, height: 10, decoration: r(5.0)),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 4),
                   Container(width: 65, height: 8, decoration: r(4.0)),
                 ]),
               ]),
-              const SizedBox(height: 14),
-              Container(width: double.infinity, height: 11, decoration: r(6.0)),
-              const SizedBox(height: 6),
-              Container(width: 170, height: 11, decoration: r(6.0)),
+              const SizedBox(height: 12),
+              Container(width: double.infinity, height: 12, decoration: r(6.0)),
+              const SizedBox(height: 8),
+              Container(width: 170, height: 12, decoration: r(6.0)),
               const SizedBox(height: 16),
               ...List.generate(3, (i) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Container(height: 52, decoration: r(8.0)),
               )),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Container(height: 1, color: AppColors.borderSubtle),
               const SizedBox(height: 12),
               Container(width: 90, height: 10, decoration: r(5.0)),

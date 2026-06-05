@@ -11,7 +11,7 @@ class MyPollsScreen extends StatefulWidget {
 }
 
 class _MyPollsScreenState extends State<MyPollsScreen> {
-  int _selectedTab = 0; // 0 = Your Polls, 1 = Favorites
+  int _selectedTab = 0;
 
   void _showSwitchAccountSheet() {
     showModalBottomSheet(
@@ -34,10 +34,9 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
           // ── Header ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, top + 16, 16, 8),
+              padding: EdgeInsets.fromLTRB(20, top + 20, 20, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
                     'Profile',
@@ -45,24 +44,24 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textPrimary,
-                      height: 1.1,
                     ),
                   ),
                   GestureDetector(
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
+                    behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
                         color: AppColors.surfaceElevated,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.settings_outlined,
-                        color: AppColors.textPrimary,
-                        size: 20,
+                        color: AppColors.textSecondary,
+                        size: 18,
                       ),
                     ),
                   ),
@@ -71,40 +70,267 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
             ),
           ),
 
+          // ── Profile Header ──
+          SliverToBoxAdapter(
+            child: GestureDetector(
+              onTap: _showSwitchAccountSheet,
+              behavior: HitTestBehavior.opaque,
+              child: const _ProfileHeader(),
+            ),
+          ),
+
+          // ── Stats Bar ──
+          const SliverToBoxAdapter(child: _StatsBar()),
+
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Profile Card
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: _showSwitchAccountSheet,
-                  child: const _ProfileCard(),
-                ),
-                const SizedBox(height: 12),
-
-                // Stats Row
-                const _StatsRow(),
-                const SizedBox(height: 20),
-
                 // Segmented control
                 _SegmentedControl(
                   selected: _selectedTab,
                   onChanged: (i) => setState(() => _selectedTab = i),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
                 // Tab content
-                if (_selectedTab == 0) ...[
-                  _PollListCard(),
-                ] else ...[
-                  _FavoritesCard(),
-                ],
+                if (_selectedTab == 0)
+                  const _PollListCard()
+                else
+                  const _FavoritesCard(),
               ]),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Profile Header — flat, no card background
+// ──────────────────────────────────────────────
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Avatar + name row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Avatar
+              Stack(
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF8B6914),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'C',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 26,
+                      height: 26,
+                      decoration: const BoxDecoration(
+                        color: AppColors.accentPrimary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.edit_rounded, color: Colors.white, size: 13),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(width: 18),
+
+              // Name block
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Clint',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      '@clint',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: const [
+                        Icon(Icons.calendar_today_rounded, size: 11, color: AppColors.textTertiary),
+                        SizedBox(width: 4),
+                        Text(
+                          'Joined May 2024',
+                          style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Edit Profile — full-width button below avatar row
+          GestureDetector(
+            onTap: () {},
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: double.infinity,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Center(
+                child: Text(
+                  'Edit Profile',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
+// Stats Bar — single card, 4 columns
+// ──────────────────────────────────────────────
+class _StatsBar extends StatelessWidget {
+  const _StatsBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: const IntrinsicHeight(
+          child: Row(
+            children: [
+              _StatCell(value: 8, label: 'Polls'),
+              _StatDivider(),
+              _StatCell(value: 1245, label: 'Votes'),
+              _StatDivider(),
+              _StatCell(value: 124, label: 'Followers'),
+              _StatDivider(),
+              _StatCell(value: 48, label: 'Following'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _formatStat(int n) {
+  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+  if (n >= 1000) {
+    final t = n ~/ 1000;
+    final r = (n % 1000).toString().padLeft(3, '0');
+    return '$t,$r';
+  }
+  return n.toString();
+}
+
+class _StatCell extends StatelessWidget {
+  final int value;
+  final String label;
+
+  const _StatCell({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: value.toDouble()),
+        duration: const Duration(milliseconds: 1100),
+        curve: Curves.easeOut,
+        builder: (context, animated, _) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                _formatStat(animated.round()),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  height: 1.1,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textTertiary,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      color: AppColors.borderDefault,
     );
   }
 }
@@ -192,28 +418,86 @@ class _Segment extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────
+// Poll List Card
+// ──────────────────────────────────────────────
+class _PollListCard extends StatelessWidget {
+  const _PollListCard();
+
+  static const List<_PollRow> _polls = [
+    _PollRow(
+      title: 'Who is the strongest?',
+      votes: '3,245',
+      leading: 'Escanor',
+      timestamp: '2d ago',
+    ),
+    _PollRow(
+      title: 'Which Devil Fruit is most useful?',
+      votes: '987',
+      leading: 'Gomo Gomo no Mi',
+      timestamp: '5d ago',
+    ),
+    _PollRow(
+      title: 'Which is your favorite Anime?',
+      votes: '2,541',
+      leading: 'One Piece',
+      timestamp: '1w ago',
+    ),
+    _PollRow(
+      title: 'Which character deserves more love?',
+      votes: '648',
+      leading: 'Killua',
+      timestamp: '2w ago',
+    ),
+    _PollRow(
+      title: 'Best anime battle of all time?',
+      votes: '5,103',
+      leading: 'Goku vs Vegeta',
+      timestamp: '2w ago',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        color: AppColors.surfaceCard,
+        child: Column(
+          children: _polls.asMap().entries.map((e) {
+            return _PollListRow(
+              poll: e.value,
+              showDivider: e.key < _polls.length - 1,
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────
 // Favorites Card
 // ──────────────────────────────────────────────
 class _FavoritesCard extends StatelessWidget {
-  _FavoritesCard();
+  const _FavoritesCard();
 
-  final List<_PollRow> _favorites = [
+  static const List<_PollRow> _favorites = [
     _PollRow(
       title: 'Who is the strongest?',
       votes: '1,246',
-      leading: 'Escanor leading',
+      leading: 'Escanor',
       timestamp: '2h ago',
     ),
     _PollRow(
       title: 'Which is your favorite Anime?',
       votes: '2,541',
-      leading: 'One Piece leading',
+      leading: 'One Piece',
       timestamp: '1d ago',
     ),
     _PollRow(
       title: 'Best anime battle of all time?',
       votes: '5,103',
-      leading: 'Goku vs Vegeta leading',
+      leading: 'Goku vs Vegeta',
       timestamp: '2d ago',
     ),
   ];
@@ -229,8 +513,7 @@ class _FavoritesCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: const Column(
           children: [
-            Icon(Icons.favorite_border_rounded,
-                color: AppColors.textTertiary, size: 36),
+            Icon(Icons.favorite_border_rounded, color: AppColors.textTertiary, size: 36),
             SizedBox(height: 12),
             Text(
               'No favorites yet',
@@ -270,326 +553,8 @@ class _FavoritesCard extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────
-// Profile Card
+// Poll row data
 // ──────────────────────────────────────────────
-class _ProfileCard extends StatefulWidget {
-  const _ProfileCard();
-
-  @override
-  State<_ProfileCard> createState() => _ProfileCardState();
-}
-
-class _ProfileCardState extends State<_ProfileCard> {
-  bool _following = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        decoration: const BoxDecoration(color: AppColors.surfaceCard),
-        child: Stack(
-          children: [
-            // Gradient overlay
-            Positioned.fill(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    stops: [0.4, 1.0],
-                    colors: [Colors.transparent, Color(0x662A2566)],
-                  ),
-                ),
-              ),
-            ),
-            // Content
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Avatar with edit badge
-                      Stack(
-                        children: [
-                          const CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Color(0xFF8B6914),
-                            child: Text(
-                              'C',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 22,
-                              height: 22,
-                              decoration: const BoxDecoration(
-                                color: AppColors.accentPrimary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.edit_rounded, color: Colors.white, size: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 14),
-                      // Name block
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Clint',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            const Text(
-                              '@clint',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: const [
-                                Icon(Icons.calendar_today_rounded, size: 11, color: AppColors.textSecondary),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Joined May 2024',
-                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Text.rich(TextSpan(children: [
-                                  TextSpan(text: '124', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                                  TextSpan(text: ' Followers', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                                ])),
-                                const SizedBox(width: 14),
-                                Text.rich(TextSpan(children: [
-                                  TextSpan(text: '48', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                                  TextSpan(text: ' Following', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                                ])),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Follow button
-                      GestureDetector(
-                        onTap: () => setState(() => _following = !_following),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: _following ? Colors.transparent : AppColors.accentPrimary,
-                            border: Border.all(
-                              color: _following ? AppColors.borderDefault : AppColors.accentPrimary,
-                            ),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            _following ? 'Following' : 'Follow',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: _following ? AppColors.textTertiary : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────
-// Stats Row
-// ──────────────────────────────────────────────
-class _StatsRow extends StatelessWidget {
-  const _StatsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            icon: Icons.bar_chart_rounded,
-            label: 'Polls Created',
-            value: '8',
-            delta: '+2 this week ↑',
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.how_to_vote_outlined,
-            label: 'Total Votes',
-            value: '1,245',
-            delta: '+312 this week ↑',
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String delta;
-
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.delta,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Icon badge
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceIconBadge,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: Colors.white, size: 18),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
-              height: 1.0,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textAccent,
-              height: 1.1,
-            ),
-          ),
-          if (delta.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              delta,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textSuccess,
-                height: 1.0,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────
-// Poll List Card
-// ──────────────────────────────────────────────
-class _PollListCard extends StatelessWidget {
-  _PollListCard();
-
-  final List<_PollRow> _polls = [
-    _PollRow(
-      title: 'Who is the strongest?',
-      votes: '3,245',
-      leading: 'Escanor leading',
-      timestamp: '2d ago',
-    ),
-    _PollRow(
-      title: 'Which Devil Fruit is most useful?',
-      votes: '987',
-      leading: 'Gomo Gomu no Mi leading',
-      timestamp: '5d ago',
-    ),
-    _PollRow(
-      title: 'Which is your favorite Anime?',
-      votes: '2,541',
-      leading: 'One Piece leading',
-      timestamp: '1w ago',
-    ),
-    _PollRow(
-      title: 'Which character deserves more love?',
-      votes: '648',
-      leading: 'Killua leading',
-      timestamp: '2w ago',
-    ),
-    _PollRow(
-      title: 'Best anime battle of all time?',
-      votes: '5,103',
-      leading: 'Goku vs 3ron leading',
-      timestamp: '2w ago',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        color: AppColors.surfaceCard,
-        child: Column(
-          children: _polls.asMap().entries.map((e) {
-            final i = e.key;
-            final poll = e.value;
-            final isLast = i == _polls.length - 1;
-            return _PollListRow(poll: poll, showDivider: !isLast);
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
 class _PollRow {
   final String title;
   final String votes;
@@ -604,6 +569,9 @@ class _PollRow {
   });
 }
 
+// ──────────────────────────────────────────────
+// Poll list row
+// ──────────────────────────────────────────────
 class _PollListRow extends StatelessWidget {
   final _PollRow poll;
   final bool showDivider;
@@ -626,6 +594,16 @@ class _PollListRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
+              // Leading dot accent
+              Container(
+                width: 8,
+                height: 8,
+                margin: const EdgeInsets.only(right: 12, top: 2),
+                decoration: const BoxDecoration(
+                  color: AppColors.accentPrimary,
+                  shape: BoxShape.circle,
+                ),
+              ),
               // Text block
               Expanded(
                 child: Column(
@@ -634,7 +612,7 @@ class _PollListRow extends StatelessWidget {
                     Text(
                       poll.title,
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
                         height: 1.3,
@@ -642,38 +620,41 @@ class _PollListRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 5),
                     Row(
                       children: [
-                        // Vote badge
+                        Text(
+                          poll.votes,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textAccent,
+                          ),
+                        ),
+                        const Text(
+                          ' votes',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentPrimaryMuted,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            '${poll.votes} votes',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textAccent,
-                              height: 1.0,
-                            ),
+                          width: 3,
+                          height: 3,
+                          decoration: const BoxDecoration(
+                            color: AppColors.textTertiary,
+                            shape: BoxShape.circle,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            '• ${poll.leading}',
+                            '${poll.leading} leading',
                             style: const TextStyle(
                               fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.textSecondary,
-                              height: 1.0,
+                              color: AppColors.textTertiary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -685,24 +666,19 @@ class _PollListRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Right block
-              Row(
+              // Timestamp + trailing icon
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     poll.timestamp,
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
+                      fontSize: 11,
                       color: AppColors.textTertiary,
-                      height: 1.0,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    trailingIcon,
-                    size: 16,
-                    color: trailingColor,
-                  ),
+                  const SizedBox(height: 4),
+                  Icon(trailingIcon, size: 15, color: trailingColor),
                 ],
               ),
             ],
@@ -711,7 +687,7 @@ class _PollListRow extends StatelessWidget {
         if (showDivider)
           Container(
             height: 1,
-            margin: const EdgeInsets.only(left: 16),
+            margin: const EdgeInsets.only(left: 36),
             color: AppColors.borderSubtle,
           ),
       ],
@@ -720,7 +696,7 @@ class _PollListRow extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────
-// Create New Poll Button
+// Create New Poll Button (unused, kept for reference)
 // ──────────────────────────────────────────────
 class _CreateNewPollButton extends StatelessWidget {
   const _CreateNewPollButton();
@@ -741,9 +717,9 @@ class _CreateNewPollButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children: [
             Icon(Icons.add_rounded, size: 16, color: AppColors.textAccent),
             SizedBox(width: 6),
             Text(

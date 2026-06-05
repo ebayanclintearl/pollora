@@ -329,7 +329,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 : SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (_, i) {
-                        if (i.isOdd) return const SizedBox(height: 12);
+                        if (i.isOdd) return const SizedBox(height: 16);
                         return _PollCard(poll: filtered[i ~/ 2]);
                       },
                       childCount: filtered.length * 2 - 1,
@@ -368,7 +368,7 @@ class _PollCardState extends State<_PollCard> {
       ),
       clipBehavior: Clip.hardEdge,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -416,7 +416,7 @@ class _PollCardState extends State<_PollCard> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // Question
             Text(
@@ -431,7 +431,7 @@ class _PollCardState extends State<_PollCard> {
 
             // Cover image
             if (p.coverAsset != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: AspectRatio(
@@ -441,7 +441,7 @@ class _PollCardState extends State<_PollCard> {
               ),
             ],
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // Options — capped at 3, expandable
             Builder(builder: (_) {
@@ -486,7 +486,7 @@ class _PollCardState extends State<_PollCard> {
               );
             }),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
             // Footer: vote count + actions
             Row(
@@ -593,7 +593,7 @@ class _PollOptionBar extends StatelessWidget {
               return ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: SizedBox(
-                  height: 40,
+                  height: 44,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -602,7 +602,7 @@ class _PollOptionBar extends StatelessWidget {
                         alignment: Alignment.centerLeft,
                         child: SizedBox(
                           width: fillWidth,
-                          height: 40,
+                          height: 44,
                           child: Container(
                             color: option.isLeading
                                 ? AppColors.pollBarLeading

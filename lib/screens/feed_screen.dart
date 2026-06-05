@@ -222,7 +222,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       Expanded(
                         child: Container(
                           height: 44,
-                          decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(12)),
+                          decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
                           child: TextField(
                             controller: _searchController,
                             focusNode: _searchFocus,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../app_colors.dart';
 import '../widgets/switch_account_sheet.dart';
 import 'settings_screen.dart';
@@ -14,11 +15,12 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
   int _selectedTab = 0;
 
   void _showSwitchAccountSheet() {
+    HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.6),
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (_) => const SwitchAccountSheet(),
     );
   }
@@ -352,7 +354,7 @@ class _Segment extends StatelessWidget {
     final isSelected = index == selected;
     return Expanded(
       child: GestureDetector(
-        onTap: () => onTap(index),
+        onTap: () { HapticFeedback.selectionClick(); onTap(index); },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
@@ -404,7 +406,7 @@ class _PollListCard extends StatelessWidget {
     _PollRow(
       title: 'Which Devil Fruit is most useful?',
       votes: '987',
-      leading: 'Gomo Gomo no Mi',
+      leading: 'Gomu Gomu no Mi',
       timestamp: '5d ago',
     ),
     _PollRow(
@@ -667,45 +669,3 @@ class _PollListRow extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────
-// Create New Poll Button (unused, kept for reference)
-// ──────────────────────────────────────────────
-class _CreateNewPollButton extends StatelessWidget {
-  const _CreateNewPollButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: TextButton(
-        onPressed: () {},
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_rounded, size: 16, color: AppColors.textAccent),
-            SizedBox(width: 6),
-            Text(
-              'Create New Poll',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textAccent,
-                height: 1.0,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -140,7 +140,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             ),
           ),
 
-          const Divider(height: 1, color: AppColors.borderSubtle),
+          const Divider(height: 1, color: AppColors.borderDefault),
 
           // Comments list
           Expanded(
@@ -195,7 +195,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
           // Input bar
           Container(
             decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.borderSubtle)),
+              border: Border(top: BorderSide(color: AppColors.borderDefault)),
               color: AppColors.surfaceModal,
             ),
             padding: EdgeInsets.fromLTRB(16, 10, 16, keyboardHeight > 0 ? keyboardHeight + 10 : bottom + 10),
@@ -331,12 +331,12 @@ class _CommentRowState extends State<_CommentRow> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Username + timestamp
+                // Username + timestamp — de-emphasised meta row
                 Row(
                   children: [
                     Text(
                       widget.comment.username,
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -345,12 +345,12 @@ class _CommentRowState extends State<_CommentRow> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
 
-                // Text
+                // Comment text — primary, readable
                 Text(
                   widget.comment.text,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.45),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: AppColors.textPrimary, height: 1.45),
                 ),
                 const SizedBox(height: 8),
 

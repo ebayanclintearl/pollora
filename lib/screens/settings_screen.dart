@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../app_colors.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -136,12 +137,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   // ── Sign Out — standalone destructive button ──
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () => HapticFeedback.mediumImpact(),
                     behavior: HitTestBehavior.opaque,
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                        color: AppColors.textDestructive.withOpacity(0.10),
+                        color: AppColors.textDestructive.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Row(
@@ -314,7 +315,7 @@ class _SettingsRow extends StatelessWidget {
     return Column(
       children: [
         GestureDetector(
-          onTap: onTap,
+          onTap: () { HapticFeedback.selectionClick(); onTap(); },
           behavior: HitTestBehavior.opaque,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
@@ -401,8 +402,8 @@ class _SettingsToggleRow extends StatelessWidget {
           ),
           Switch(
             value: value,
-            onChanged: onChanged,
-            activeColor: Colors.white,
+            onChanged: (v) { HapticFeedback.selectionClick(); onChanged(v); },
+            activeThumbColor: Colors.white,
             activeTrackColor: AppColors.accentPrimary,
             inactiveThumbColor: AppColors.textTertiary,
             inactiveTrackColor: AppColors.surfaceElevated,

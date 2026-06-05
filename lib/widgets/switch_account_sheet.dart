@@ -274,7 +274,7 @@ class _ActionRow extends StatelessWidget {
                   width: 34, height: 34,
                   decoration: BoxDecoration(
                     color: isDestructive
-                        ? AppColors.textDestructive.withOpacity(0.12)
+                        ? AppColors.textDestructive.withValues(alpha: 0.12)
                         : AppColors.surfaceInput,
                     borderRadius: BorderRadius.circular(10),
                   ),

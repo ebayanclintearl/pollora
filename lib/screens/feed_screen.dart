@@ -590,59 +590,77 @@ class _PollOptionBar extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final fillWidth = constraints.maxWidth * (option.percentage / 100);
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: SizedBox(
-                  height: 42,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      // Track
-                      Container(color: AppColors.pollBarTrack),
-                      // Fill
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 380),
-                          curve: Curves.easeOut,
-                          width: hasVoted ? fillWidth : 0,
-                          height: 42,
-                          color: option.isLeading
-                              ? AppColors.pollBarLeading
-                              : AppColors.pollBarOther,
-                        ),
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 42,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                foregroundDecoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  border: isVoted
+                      ? Border.all(color: AppColors.accentPrimary, width: 1.5)
+                      : Border.all(color: Colors.transparent, width: 1.5),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Track
+                    Container(color: AppColors.pollBarTrack),
+                    // Fill
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 380),
+                        curve: Curves.easeOut,
+                        width: hasVoted ? fillWidth : 0,
+                        height: 42,
+                        color: option.isLeading
+                            ? AppColors.pollBarLeading
+                            : AppColors.pollBarOther,
                       ),
-                      // Label + indicators
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                option.label,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textPrimary,
+                    ),
+                    // Label + percentage
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              option.label,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isVoted ? FontWeight.w700 : FontWeight.w500,
+                                color: AppColors.textPrimary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (hasVoted) ...[
+                            if (isVoted)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 5),
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 15,
+                                  color: Colors.white,
                                 ),
-                                overflow: TextOverflow.ellipsis,
+                              ),
+                            Text(
+                              '${option.percentage}%',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            if (hasVoted)
-                              Text(
-                                '${option.percentage}%',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               );
             },

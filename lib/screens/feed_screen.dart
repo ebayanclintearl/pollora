@@ -346,7 +346,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
               children: [
                 CircleAvatar(
                   radius: 17, backgroundColor: p.avatarColor,
-                  child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                  child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -366,7 +366,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             const SizedBox(height: 12),
 
             // ── Question ──
-            Text(p.question, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3)),
+            Text(p.question, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3)),
 
             const SizedBox(height: 12),
 
@@ -583,7 +583,7 @@ class _SkeletonCardState extends State<_SkeletonCard> with SingleTickerProviderS
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {
-        final c = AppColors.surfaceElevated.withOpacity(_anim.value);
+        final c = AppColors.surfaceElevated.withValues(alpha: _anim.value);
         final r = (v) => BoxDecoration(color: c, borderRadius: BorderRadius.circular(v));
         return Container(
           decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),

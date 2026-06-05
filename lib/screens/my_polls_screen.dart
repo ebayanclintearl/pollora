@@ -274,7 +274,7 @@ class _StatCell extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textTertiary,
                   height: 1.0,
@@ -647,7 +647,7 @@ class _PollListRow extends StatelessWidget {
                   Text(
                     poll.timestamp,
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: AppColors.textTertiary,
                     ),
                   ),

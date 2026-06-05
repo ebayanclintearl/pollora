@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'screens/splash_screen.dart';
@@ -35,10 +36,25 @@ class PolloraApp extends StatelessWidget {
           surface: AppColors.surfaceCard,
           onSurface: AppColors.textPrimary,
         ),
-        textTheme: const TextTheme(
-          bodyMedium: TextStyle(color: AppColors.textPrimary),
+        textTheme: GoogleFonts.interTextTheme(
+          const TextTheme(
+            displayLarge:  TextStyle(color: AppColors.textPrimary),
+            displayMedium: TextStyle(color: AppColors.textPrimary),
+            displaySmall:  TextStyle(color: AppColors.textPrimary),
+            headlineLarge: TextStyle(color: AppColors.textPrimary),
+            headlineMedium:TextStyle(color: AppColors.textPrimary),
+            headlineSmall: TextStyle(color: AppColors.textPrimary),
+            titleLarge:    TextStyle(color: AppColors.textPrimary),
+            titleMedium:   TextStyle(color: AppColors.textPrimary),
+            titleSmall:    TextStyle(color: AppColors.textPrimary),
+            bodyLarge:     TextStyle(color: AppColors.textPrimary),
+            bodyMedium:    TextStyle(color: AppColors.textPrimary),
+            bodySmall:     TextStyle(color: AppColors.textSecondary),
+            labelLarge:    TextStyle(color: AppColors.textPrimary),
+            labelMedium:   TextStyle(color: AppColors.textSecondary),
+            labelSmall:    TextStyle(color: AppColors.textTertiary),
+          ),
         ),
-        fontFamily: '.SF Pro Display',
         useMaterial3: true,
       ),
       home: const _AppEntry(),
@@ -213,7 +229,7 @@ class _NavTab extends StatelessWidget {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
@@ -244,7 +260,7 @@ class _CreateFAB extends StatelessWidget {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentPrimary.withOpacity(0.45),
+              color: AppColors.accentPrimary.withValues(alpha: 0.45),
               blurRadius: 18,
               offset: const Offset(0, 4),
             ),

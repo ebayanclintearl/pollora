@@ -104,7 +104,7 @@ class _CreateScreenState extends State<CreateScreen> {
                   const Text(
                     'OPTIONS',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textTertiary,
                       letterSpacing: 1.0,
@@ -114,7 +114,7 @@ class _CreateScreenState extends State<CreateScreen> {
                   Text(
                     '${_optionControllers.length} / $_maxOptions',
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textTertiary,
                       letterSpacing: 0.3,

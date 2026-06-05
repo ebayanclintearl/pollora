@@ -133,7 +133,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   ),
                   child: Text(
                     '${_comments.length}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textAccent),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textAccent),
                   ),
                 ),
               ],
@@ -321,7 +321,7 @@ class _CommentRowState extends State<_CommentRow> {
             backgroundColor: widget.comment.avatarColor,
             child: Text(
               widget.comment.avatarLabel,
-              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(width: 10),
@@ -341,7 +341,7 @@ class _CommentRowState extends State<_CommentRow> {
                     const SizedBox(width: 6),
                     Text(
                       widget.comment.timestamp,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textTertiary),
                     ),
                   ],
                 ),

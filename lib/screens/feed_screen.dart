@@ -515,7 +515,7 @@ class _PollOptionBar extends StatelessWidget {
                         curve: Curves.easeOut,
                         width: hasVoted ? fillWidth : 0,
                         height: 52,
-                        color: option.isLeading ? AppColors.pollBarLeading : AppColors.pollBarOther,
+                        color: isVoted ? AppColors.pollBarLeading : AppColors.pollBarOther,
                       ),
                     ),
                     Padding(

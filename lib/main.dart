@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
+import 'screens/splash_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/create_screen.dart';
 import 'screens/my_polls_screen.dart';
@@ -39,8 +40,31 @@ class PolloraApp extends StatelessWidget {
         fontFamily: '.SF Pro Display',
         useMaterial3: true,
       ),
-      home: const MainShell(),
+      home: const _AppEntry(),
     );
+  }
+}
+
+// ─────────────────────────────────────────────
+// App entry — shows splash then transitions to shell
+// ─────────────────────────────────────────────
+class _AppEntry extends StatefulWidget {
+  const _AppEntry();
+  @override
+  State<_AppEntry> createState() => _AppEntryState();
+}
+
+class _AppEntryState extends State<_AppEntry> {
+  bool _splashDone = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_splashDone) {
+      return SplashScreen(
+        onComplete: () => setState(() => _splashDone = true),
+      );
+    }
+    return const MainShell();
   }
 }
 

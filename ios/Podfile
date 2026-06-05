@@ -1,5 +1,4 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,5 +38,16 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    # Fix code-signing for xcframeworks (e.g. objective_c from google_fonts)
+    target.build_configurations.each do |config|
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+    end
+  end
+  # Sign all embedded frameworks so iOS device install doesn't reject them
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.xcconfigs.each do |config_name, config_file|
+      xcconfig_path = aggregate_target.xcconfig_path(config_name)
+      IO.write(xcconfig_path, IO.read(xcconfig_path).gsub('DT_TOOLCHAIN_DIR', 'TOOLCHAIN_DIR'))
+    end
   end
 end

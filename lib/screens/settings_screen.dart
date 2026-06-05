@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
               child: Row(
                 children: [
                   GestureDetector(
@@ -43,7 +43,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Text('Settings', style: AppTypography.sectionTitle),
+                  const Text('Settings', style: AppTypography.screenTitle),
                 ],
               ),
             ),
@@ -51,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // ── Scrollable body ──
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                 children: [
                   // ── Profile row ──
                   _ProfileRow(),

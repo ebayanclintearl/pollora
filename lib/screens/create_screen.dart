@@ -48,13 +48,17 @@ class _CreateScreenState extends State<CreateScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // Header — 44dp height matches Feed / Profile icon-button rows
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: const Text('Create Poll', style: AppTypography.screenTitle),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              child: SizedBox(
+                height: 44,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Create Poll', style: AppTypography.screenTitle),
+                ),
+              ),
             ),
-
-            const SizedBox(height: 20),
 
             // Question input — large, no label, always visible
             Padding(

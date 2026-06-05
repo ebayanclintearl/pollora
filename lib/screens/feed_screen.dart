@@ -192,7 +192,7 @@ class _FeedScreenState extends State<FeedScreen> {
             // ── Header ──
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, top + 20, 20, 0),
+                padding: EdgeInsets.fromLTRB(20, top + 20, 20, 20),
                 child: AnimatedCrossFade(
                   duration: const Duration(milliseconds: 220),
                   crossFadeState: _searchActive
@@ -207,7 +207,7 @@ class _FeedScreenState extends State<FeedScreen> {
                         onTap: _activateSearch,
                         behavior: HitTestBehavior.opaque,
                         child: Container(
-                          width: 38, height: 38,
+                          width: 44, height: 44,
                           decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
                           child: const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
                         ),
@@ -224,10 +224,10 @@ class _FeedScreenState extends State<FeedScreen> {
                             controller: _searchController,
                             focusNode: _searchFocus,
                             onChanged: (v) => setState(() => _searchQuery = v),
-                            style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
-                            decoration: const InputDecoration(
+                            style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
                               hintText: 'Search polls…',
-                              hintStyle: TextStyle(fontSize: 15, color: AppColors.textTertiary),
+                              hintStyle: AppTypography.titleSmall.copyWith(color: AppColors.textTertiary),
                               prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 20),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
@@ -241,7 +241,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _cancelSearch,
-                        child: const Text('Cancel', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textAccent)),
+                        child: Text('Cancel', style: AppTypography.titleSmall.copyWith(color: AppColors.textAccent)),
                       ),
                     ],
                   ),
@@ -252,7 +252,7 @@ class _FeedScreenState extends State<FeedScreen> {
             // ── Content: skeleton / empty / polls ──
             if (_isLoading)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => i.isOdd ? const SizedBox(height: 12) : const _SkeletonCard(),
@@ -267,7 +267,7 @@ class _FeedScreenState extends State<FeedScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => i.isOdd ? const SizedBox(height: 12) : _PollCard(poll: filtered[i ~/ 2]),

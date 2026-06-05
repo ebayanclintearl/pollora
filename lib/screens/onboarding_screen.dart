@@ -189,15 +189,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   child: GestureDetector(
                     onTap: isLast ? null : _skip,
                     behavior: HitTestBehavior.opaque,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 24),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
                         'Skip',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTypography.titleSmall.copyWith(color: AppColors.textSecondary),
                       ),
                     ),
                   ),

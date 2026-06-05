@@ -397,7 +397,6 @@ class _PollCardState extends State<_PollCard> {
                     ],
                   ),
                 ),
-                const Icon(Icons.more_horiz_rounded, color: AppColors.textTertiary, size: 18),
               ],
             ),
 

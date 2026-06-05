@@ -15,7 +15,6 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _ctrl;
   late Animation<double> _logoScale;
   late Animation<double> _logoOpacity;
-  late Animation<double> _taglineFade;
   late Animation<double> _exitFade;
 
   @override
@@ -50,14 +49,6 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(
         parent: _ctrl,
         curve: const Interval(0.0, 0.35, curve: Curves.easeOut),
-      ),
-    );
-
-    // Tagline fades in after logo settles (45% → 65%)
-    _taglineFade = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _ctrl,
-        curve: const Interval(0.45, 0.65, curve: Curves.easeOut),
       ),
     );
 
@@ -124,21 +115,6 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                     ),
 
-                    const SizedBox(height: 8),
-
-                    // Tagline
-                    FadeTransition(
-                      opacity: _taglineFade,
-                      child: const Text(
-                        'Vote. Discuss. Decide.',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textTertiary,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),

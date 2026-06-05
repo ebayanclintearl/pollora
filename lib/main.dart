@@ -95,35 +95,31 @@ class _PolloraBottomNav extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.navBackground,
         border: Border(
-          top: BorderSide(color: AppColors.borderSubtle, width: 1),
+          top: BorderSide(color: AppColors.borderSubtle, width: 0.5),
         ),
       ),
       child: SizedBox(
-        height: 83 + bottom,
+        height: 76 + bottom,
         child: Padding(
           padding: EdgeInsets.only(bottom: bottom),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Feed
               _NavTab(
                 index: 0,
                 currentIndex: currentIndex,
-                icon: Icons.menu_rounded,
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
                 label: 'Feed',
                 onTap: onTap,
               ),
-              // Create FAB
-              _CreateFAB(
-                isActive: currentIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              // Profile
+              _CreateFAB(onTap: () => onTap(1)),
               _NavTab(
                 index: 2,
                 currentIndex: currentIndex,
                 icon: Icons.person_outline_rounded,
+                activeIcon: Icons.person_rounded,
                 label: 'Profile',
                 onTap: onTap,
               ),
@@ -139,6 +135,7 @@ class _NavTab extends StatelessWidget {
   final int index;
   final int currentIndex;
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   final ValueChanged<int> onTap;
 
@@ -146,6 +143,7 @@ class _NavTab extends StatelessWidget {
     required this.index,
     required this.currentIndex,
     required this.icon,
+    required this.activeIcon,
     required this.label,
     required this.onTap,
   });
@@ -153,7 +151,6 @@ class _NavTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = index == currentIndex;
-    final color = isActive ? AppColors.navActive : AppColors.navInactive;
 
     return GestureDetector(
       onTap: () => onTap(index),
@@ -163,15 +160,29 @@ class _NavTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.surfaceElevated : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                isActive ? activeIcon : icon,
+                size: 22,
+                color: isActive ? AppColors.navActive : AppColors.navInactive,
+              ),
+            ),
+            const SizedBox(height: 3),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
               style: TextStyle(
                 fontSize: 11,
-                color: color,
-                fontWeight: FontWeight.w400,
+                color: isActive ? AppColors.navActive : AppColors.navInactive,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
               ),
+              child: Text(label),
             ),
           ],
         ),
@@ -181,44 +192,30 @@ class _NavTab extends StatelessWidget {
 }
 
 class _CreateFAB extends StatelessWidget {
-  final bool isActive;
   final VoidCallback onTap;
 
-  const _CreateFAB({required this.isActive, required this.onTap});
+  const _CreateFAB({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.accentPrimary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF5B4FE8).withOpacity(0.45),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 54,
+        height: 54,
+        decoration: BoxDecoration(
+          color: AppColors.accentPrimary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accentPrimary.withOpacity(0.45),
+              blurRadius: 18,
+              offset: const Offset(0, 4),
             ),
-            child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Create',
-            style: TextStyle(
-              fontSize: 10,
-              color: isActive ? AppColors.navActive : AppColors.navInactive,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ],
+          ],
+        ),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
     );
   }

@@ -21,7 +21,7 @@ class _PollData {
   final String question;
   final String? coverAsset;
   final List<_PollOption> options;
-  final String voteCount;
+  final int voteCount;
   final int commentCount;
 
   const _PollData({
@@ -54,7 +54,7 @@ const _polls = [
       _PollOption(label: 'Escanor', percentage: 67, isLeading: true),
       _PollOption(label: 'Zoro', percentage: 14, isLeading: false),
     ],
-    voteCount: '1,246 votes',
+    voteCount: 1246,
   ),
   _PollData(
     avatarColor: Color(0xFF8B4513),
@@ -68,7 +68,7 @@ const _polls = [
       _PollOption(label: 'Mera Mera no Mi', percentage: 33, isLeading: false),
       _PollOption(label: 'Hie Hie no Mi', percentage: 25, isLeading: false),
     ],
-    voteCount: '987 votes',
+    voteCount: 987,
   ),
   _PollData(
     avatarColor: Color(0xFF2B4D8B),
@@ -82,7 +82,7 @@ const _polls = [
       _PollOption(label: 'Bleach', percentage: 28, isLeading: false),
       _PollOption(label: 'Naruto', percentage: 21, isLeading: false),
     ],
-    voteCount: '2,541 votes',
+    voteCount: 2541,
   ),
   _PollData(
     avatarColor: Color(0xFF6B2B8B),
@@ -96,7 +96,7 @@ const _polls = [
       _PollOption(label: 'Naruto vs Sasuke', percentage: 35, isLeading: false),
       _PollOption(label: 'Ichigo vs Aizen', percentage: 17, isLeading: false),
     ],
-    voteCount: '5,103 votes',
+    voteCount: 5103,
   ),
   _PollData(
     avatarColor: Color(0xFF1A3A6B),
@@ -113,7 +113,7 @@ const _polls = [
       _PollOption(label: 'Alchemy – Fullmetal', percentage: 8, isLeading: false),
       _PollOption(label: 'Cursed Energy – Jujutsu', percentage: 4, isLeading: false),
     ],
-    voteCount: '8,742 votes',
+    voteCount: 8742,
   ),
   _PollData(
     avatarColor: Color(0xFF6B1A1A),
@@ -128,10 +128,18 @@ const _polls = [
       _PollOption(label: 'Attack on Titan', percentage: 18, isLeading: false),
       _PollOption(label: 'Demon Slayer', percentage: 13, isLeading: false),
     ],
-    voteCount: '3,891 votes',
+    voteCount: 3891,
   ),
 ];
 
+String _formatVotes(int n) {
+  if (n >= 1000) {
+    final t = n ~/ 1000;
+    final r = (n % 1000).toString().padLeft(3, '0');
+    return '$t,$r';
+  }
+  return n.toString();
+}
 
 // ─────────────────────────────────────────────
 // Feed Screen
@@ -190,69 +198,48 @@ class _FeedScreenState extends State<FeedScreen> {
           // ── Header ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, top + 16, 16, 12),
+              padding: EdgeInsets.fromLTRB(20, top + 20, 20, 0),
               child: AnimatedCrossFade(
                 duration: const Duration(milliseconds: 220),
                 crossFadeState: _searchActive
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
-                // Default header
                 firstChild: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Polls',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        height: 1.1,
+                    const Expanded(
+                      child: Text(
+                        'Polls',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
-                    Row(
-                      children: [
-                        // Search icon
-                        GestureDetector(
-                          onTap: _activateSearch,
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(
-                              color: AppColors.surfaceElevated,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.search_rounded,
-                              color: AppColors.textPrimary,
-                              size: 20,
-                            ),
-                          ),
+                    GestureDetector(
+                      onTap: _activateSearch,
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceElevated,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 10),
-                        const CircleAvatar(
-                          radius: 20,
-                          backgroundColor: Color(0xFF8B6914),
-                          child: Text(
-                            'C',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.search_rounded,
+                          color: AppColors.textSecondary,
+                          size: 19,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-                // Search header
                 secondChild: Row(
                   children: [
                     Expanded(
                       child: Container(
-                        height: 46,
+                        height: 44,
                         decoration: BoxDecoration(
                           color: AppColors.surfaceCard,
                           borderRadius: BorderRadius.circular(12),
@@ -261,31 +248,21 @@ class _FeedScreenState extends State<FeedScreen> {
                           controller: _searchController,
                           focusNode: _searchFocus,
                           onChanged: (v) => setState(() => _searchQuery = v),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: AppColors.textPrimary,
-                          ),
+                          style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
                           decoration: const InputDecoration(
-                            hintText: 'Search polls...',
-                            hintStyle: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.textTertiary,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search_rounded,
-                              color: AppColors.textTertiary,
-                              size: 20,
-                            ),
+                            hintText: 'Search polls…',
+                            hintStyle: TextStyle(fontSize: 15, color: AppColors.textTertiary),
+                            prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 19),
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.symmetric(vertical: 14),
+                            contentPadding: EdgeInsets.symmetric(vertical: 13),
                           ),
                           cursorColor: AppColors.accentPrimary,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     GestureDetector(
                       onTap: _cancelSearch,
                       child: const Text(
@@ -305,22 +282,18 @@ class _FeedScreenState extends State<FeedScreen> {
 
           // ── Poll list ──
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
             sliver: filtered.isEmpty
                 ? SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 60),
                       child: Column(
                         children: [
-                          const Icon(Icons.search_off_rounded,
-                              color: AppColors.textTertiary, size: 40),
+                          const Icon(Icons.search_off_rounded, color: AppColors.textTertiary, size: 40),
                           const SizedBox(height: 12),
                           Text(
                             'No results for "$_searchQuery"',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: AppColors.textTertiary,
-                            ),
+                            style: const TextStyle(fontSize: 15, color: AppColors.textTertiary),
                           ),
                         ],
                       ),
@@ -329,7 +302,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 : SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (_, i) {
-                        if (i.isOdd) return const SizedBox(height: 16);
+                        if (i.isOdd) return const SizedBox(height: 12);
                         return _PollCard(poll: filtered[i ~/ 2]);
                       },
                       childCount: filtered.length * 2 - 1,
@@ -343,7 +316,7 @@ class _FeedScreenState extends State<FeedScreen> {
 }
 
 // ─────────────────────────────────────────────
-// Poll Card (stateful — owns favorite toggle)
+// Poll Card
 // ─────────────────────────────────────────────
 class _PollCard extends StatefulWidget {
   final _PollData poll;
@@ -356,11 +329,16 @@ class _PollCard extends StatefulWidget {
 class _PollCardState extends State<_PollCard> {
   bool _favorited = false;
   bool _optionsExpanded = false;
+  int? _votedIndex;
   static const int _previewCount = 3;
 
   @override
   Widget build(BuildContext context) {
     final p = widget.poll;
+    final displayCount = _votedIndex != null
+        ? p.voteCount + 1
+        : p.voteCount;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
@@ -368,72 +346,79 @@ class _PollCardState extends State<_PollCard> {
       ),
       clipBehavior: Clip.hardEdge,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // ── Card header: avatar · username · timestamp ──
             Row(
               children: [
                 CircleAvatar(
-                  radius: 20,
+                  radius: 17,
                   backgroundColor: p.avatarColor,
                   child: Text(
                     p.avatarLabel,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 13,
+                      fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
                       Text(
                         p.userName,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
-                          height: 1.2,
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 3,
+                        height: 3,
+                        decoration: const BoxDecoration(
+                          color: AppColors.textTertiary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       Text(
                         p.timestamp,
                         style: const TextStyle(
                           fontSize: 13,
                           color: AppColors.textTertiary,
-                          height: 1.0,
                         ),
                       ),
                     ],
                   ),
                 ),
-
+                const Icon(Icons.more_horiz_rounded, color: AppColors.textTertiary, size: 18),
               ],
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
-            // Question
+            // ── Question ──
             Text(
               p.question,
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textPrimary,
-                height: 1.3,
+                height: 1.35,
               ),
             ),
 
-            // Cover image
+            // ── Cover image ──
             if (p.coverAsset != null) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: Image.asset(p.coverAsset!, fit: BoxFit.cover),
@@ -441,9 +426,9 @@ class _PollCardState extends State<_PollCard> {
               ),
             ],
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
-            // Options — capped at 3, expandable
+            // ── Options ──
             Builder(builder: (_) {
               final hasMore = p.options.length > _previewCount;
               final visible = _optionsExpanded || !hasMore
@@ -455,18 +440,23 @@ class _PollCardState extends State<_PollCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ...visible.asMap().entries.map((e) => Padding(
-                        padding: EdgeInsets.only(
-                            bottom: e.key < visible.length - 1 ? 8 : 0),
-                        child: _PollOptionBar(option: e.value),
-                      )),
+                    padding: EdgeInsets.only(bottom: e.key < visible.length - 1 ? 6 : 0),
+                    child: GestureDetector(
+                      onTap: () => setState(() => _votedIndex = e.key),
+                      child: _PollOptionBar(
+                        option: e.value,
+                        isVoted: _votedIndex == e.key,
+                        hasVoted: _votedIndex != null,
+                      ),
+                    ),
+                  )),
                   if (hasMore && !_optionsExpanded) ...[
                     const SizedBox(height: 8),
                     GestureDetector(
                       onTap: () => setState(() => _optionsExpanded = true),
                       behavior: HitTestBehavior.opaque,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 7),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: AppColors.accentPrimaryMuted,
                           borderRadius: BorderRadius.circular(999),
@@ -488,15 +478,21 @@ class _PollCardState extends State<_PollCard> {
 
             const SizedBox(height: 14),
 
-            // Footer: vote count + actions
+            // ── Divider ──
+            Container(height: 1, color: AppColors.borderSubtle),
+            const SizedBox(height: 12),
+
+            // ── Footer ──
             Row(
               children: [
+                const Icon(Icons.how_to_vote_outlined, size: 14, color: AppColors.textTertiary),
+                const SizedBox(width: 5),
                 Text(
-                  p.voteCount,
+                  '${_formatVotes(displayCount)} votes',
                   style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textAccent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
                   ),
                 ),
                 const Spacer(),
@@ -514,10 +510,10 @@ class _PollCardState extends State<_PollCard> {
                   ),
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Row(
                       children: [
-                        const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.textTertiary),
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: AppColors.textTertiary),
                         const SizedBox(width: 4),
                         Text(
                           '${widget.poll.commentCount}',
@@ -527,32 +523,28 @@ class _PollCardState extends State<_PollCard> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 // Favorite
                 GestureDetector(
                   onTap: () => setState(() => _favorited = !_favorited),
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Icon(
                       _favorited ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                      size: 20,
+                      size: 18,
                       color: _favorited ? const Color(0xFFFF5C7A) : AppColors.textTertiary,
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 // Share
                 GestureDetector(
                   onTap: () {},
                   behavior: HitTestBehavior.opaque,
                   child: const Padding(
-                    padding: EdgeInsets.all(6),
-                    child: Icon(
-                      Icons.ios_share_rounded,
-                      size: 20,
-                      color: AppColors.textTertiary,
-                    ),
+                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    child: Icon(Icons.ios_share_rounded, size: 18, color: AppColors.textTertiary),
                   ),
                 ),
               ],
@@ -569,18 +561,26 @@ class _PollCardState extends State<_PollCard> {
 // ─────────────────────────────────────────────
 class _PollOptionBar extends StatelessWidget {
   final _PollOption option;
-  const _PollOptionBar({super.key, required this.option});
+  final bool isVoted;
+  final bool hasVoted;
+
+  const _PollOptionBar({
+    super.key,
+    required this.option,
+    required this.isVoted,
+    required this.hasVoted,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Square option image (if present)
         if (option.imageAsset != null) ...[
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: SizedBox(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               child: Image.asset(option.imageAsset!, fit: BoxFit.cover),
             ),
           ),
@@ -591,41 +591,54 @@ class _PollOptionBar extends StatelessWidget {
             builder: (context, constraints) {
               final fillWidth = constraints.maxWidth * (option.percentage / 100);
               return ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
                 child: SizedBox(
-                  height: 44,
+                  height: 42,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
+                      // Track
                       Container(color: AppColors.pollBarTrack),
+                      // Fill
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: fillWidth,
-                          height: 44,
-                          child: Container(
-                            color: option.isLeading
-                                ? AppColors.pollBarLeading
-                                : AppColors.pollBarOther,
-                          ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 380),
+                          curve: Curves.easeOut,
+                          width: hasVoted ? fillWidth : 0,
+                          height: 42,
+                          color: option.isLeading
+                              ? AppColors.pollBarLeading
+                              : AppColors.pollBarOther,
                         ),
                       ),
-                      Positioned(
-                        left: 12,
-                        top: 0,
-                        bottom: 0,
-                        right: 8,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            option.label,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary,
+                      // Label + indicators
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                option.label,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                            const SizedBox(width: 8),
+                            if (hasVoted)
+                              Text(
+                                '${option.percentage}%',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ],
@@ -633,19 +646,6 @@ class _PollOptionBar extends StatelessWidget {
                 ),
               );
             },
-          ),
-        ),
-        const SizedBox(width: 10),
-        SizedBox(
-          width: 40,
-          child: Text(
-            '${option.percentage}%',
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
           ),
         ),
       ],

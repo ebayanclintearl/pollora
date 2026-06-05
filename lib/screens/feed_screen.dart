@@ -352,7 +352,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                 Expanded(
                   child: Row(
                     children: [
-                      Text(p.userName, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                      Text(p.userName, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
                       const SizedBox(width: 6),
                       Container(width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.textTertiary, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
@@ -366,7 +366,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             const SizedBox(height: 12),
 
             // ── Question ──
-            Text(p.question, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.35)),
+            Text(p.question, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary, height: 1.3)),
 
             const SizedBox(height: 12),
 

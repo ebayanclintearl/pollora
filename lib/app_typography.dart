@@ -78,28 +78,28 @@ abstract final class AppTypography {
   // Body
   // ─────────────────────────────────────────────
 
-  /// Body Large — 16sp w400 — onboarding subtitles
+  /// Body Large — 16sp w500 — onboarding subtitles
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 16,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.5,
     letterSpacing: 0.5,
     color: AppColors.textSecondary,
   );
 
-  /// Body Medium — 14sp w400 — comment text, input text
+  /// Body Medium — 14sp w500 — comment text, input text
   static const TextStyle bodyMedium = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.43,
     letterSpacing: 0.25,
     color: AppColors.textPrimary,
   );
 
-  /// Body Small — 13sp w400 — username, timestamp, meta text
+  /// Body Small — 13sp w500 — username, timestamp, meta text
   static const TextStyle bodySmall = TextStyle(
     fontSize: 13,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.38,
     letterSpacing: 0.4,
     color: AppColors.textSecondary,

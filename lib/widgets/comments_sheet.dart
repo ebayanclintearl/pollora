@@ -339,7 +339,7 @@ class _CommentRowState extends State<_CommentRow> {
                     const SizedBox(width: 6),
                     Text(
                       widget.comment.timestamp,
-                      style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400),
+                      style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),

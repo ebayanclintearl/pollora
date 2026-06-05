@@ -549,7 +549,7 @@ class _PollListRow extends StatelessWidget {
                           poll.votes,
                           style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent),
                         ),
-                        Text(' votes', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400)),
+                        Text(' votes', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500)),
                         const SizedBox(width: 6),
                         Container(
                           width: 3,
@@ -563,7 +563,7 @@ class _PollListRow extends StatelessWidget {
                         Expanded(
                           child: Text(
                             '${poll.leading} leading',
-                            style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400),
+                            style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -580,7 +580,7 @@ class _PollListRow extends StatelessWidget {
                 children: [
                   Text(
                     poll.timestamp,
-                    style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400),
+                    style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 4),
                   Icon(trailingIcon, size: 16, color: trailingColor),

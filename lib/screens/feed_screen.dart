@@ -27,12 +27,20 @@ class FeedScreen extends ConsumerStatefulWidget {
 class _FeedScreenState extends ConsumerState<FeedScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
+  final ScrollController _scrollController = ScrollController();
+
   bool _searchActive = false;
   bool _isLoading = true;
+  bool _headerVisible = true;
+  double _lastScrollOffset = 0;
+
+  // Minimum scroll delta before reacting — prevents jitter on tiny movements.
+  static const double _scrollThreshold = 6.0;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     Future.delayed(const Duration(milliseconds: 1600), () {
       if (mounted) setState(() => _isLoading = false);
     });
@@ -40,13 +48,41 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   @override
   void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    // Always keep header visible while search is open.
+    if (_searchActive) return;
+
+    final offset = _scrollController.offset;
+    final delta = offset - _lastScrollOffset;
+    _lastScrollOffset = offset;
+
+    // Snap back when the user bounces to the very top.
+    if (offset <= 0) {
+      if (!_headerVisible) setState(() => _headerVisible = true);
+      return;
+    }
+
+    // Scroll DOWN → hide. Scroll UP → show.
+    if (delta > _scrollThreshold && _headerVisible) {
+      setState(() => _headerVisible = false);
+    } else if (delta < -_scrollThreshold && !_headerVisible) {
+      setState(() => _headerVisible = true);
+    }
+  }
+
   void _activateSearch() {
-    setState(() => _searchActive = true);
+    setState(() {
+      _searchActive = true;
+      _headerVisible = true; // pin header while searching
+    });
     Future.delayed(
         const Duration(milliseconds: 50), () => _searchFocus.requestFocus());
   }
@@ -69,127 +105,154 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
+    // Total height reserved for the floating header.
+    const double contentH = 44;
+    final double headerH =
+        top + AppSpacing.screenTop + contentH + AppSpacing.screenTop;
+
     final searchQuery = ref.watch(searchQueryProvider);
     final feedPolls = ref.watch(feedPollsProvider);
     final suggestions = ref.watch(searchSuggestionsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: RefreshIndicator(
-        onRefresh: _onRefresh,
-        color: AppColors.accentPrimary,
-        backgroundColor: AppColors.surfaceCard,
-        strokeWidth: 2.5,
-        displacement: 60,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // ── Header ──────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                    AppSpacing.screenH,
-                    top + AppSpacing.screenTop,
-                    AppSpacing.screenH,
-                    AppSpacing.screenTop),
-                child: AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 220),
-                  crossFadeState: _searchActive
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  firstChild: Row(
-                    children: [
-                      const Expanded(
-                        child:
-                            Text('Polls', style: AppTypography.screenTitle),
+      body: Stack(
+        children: [
+          // ── Scrollable feed ───────────────────
+          RefreshIndicator(
+            onRefresh: _onRefresh,
+            color: AppColors.accentPrimary,
+            backgroundColor: AppColors.surfaceCard,
+            strokeWidth: 2.5,
+            displacement: headerH + 8,
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Reserve space under the floating header.
+                SliverToBoxAdapter(child: SizedBox(height: headerH)),
+
+                // ── Content ─────────────────────
+                if (_isLoading)
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => i.isOdd
+                            ? Container(
+                                height: 1, color: AppColors.borderSubtle)
+                            : const _SkeletonCard(),
+                        childCount: 7,
                       ),
-                      GestureDetector(
-                        onTap: _activateSearch,
-                        behavior: HitTestBehavior.opaque,
-                        child: const SizedBox(
-                          width: AppIconSizes.touchTarget,
-                          height: AppIconSizes.touchTarget,
-                          child: Icon(Icons.search_rounded,
-                              color: AppColors.textSecondary,
-                              size: AppIconSizes.control),
-                        ),
+                    ),
+                  )
+                else if (_searchActive && searchQuery.isNotEmpty)
+                  _buildSuggestions(context, suggestions, searchQuery)
+                else if (feedPolls.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _EmptyState(query: ''),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (_, i) => i.isOdd
+                            ? Container(
+                                height: 1, color: AppColors.borderSubtle)
+                            : _FeedItem(pollId: feedPolls[i ~/ 2].id),
+                        childCount: feedPolls.length * 2 - 1,
                       ),
-                    ],
+                    ),
                   ),
-                  secondChild: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocus,
-                          onChanged: (v) {
-                            ref.read(searchQueryProvider.notifier).state = v;
-                          },
-                          style: AppTypography.titleSmall
-                              .copyWith(color: AppColors.textPrimary),
-                          decoration: InputDecoration(
-                            fillColor: AppColors.surfaceElevated,
-                            hintText: 'Search polls and people…',
-                            hintStyle: AppTypography.titleSmall
-                                .copyWith(color: AppColors.textTertiary),
-                            prefixIcon: const Icon(Icons.search_rounded,
-                                color: AppColors.textTertiary,
-                                size: AppIconSizes.control),
-                            contentPadding:
-                                const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          cursorColor: AppColors.accentPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      GestureDetector(
-                        onTap: _cancelSearch,
-                        child: Text(
-                          'Cancel',
-                          style: AppTypography.titleSmall
-                              .copyWith(color: AppColors.textAccent),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              ],
+            ),
+          ),
+
+          // ── Floating header ───────────────────
+          // Slides up on scroll-down, slides back on scroll-up.
+          AnimatedSlide(
+            offset: _headerVisible ? Offset.zero : const Offset(0, -1),
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: AnimatedOpacity(
+              opacity: _headerVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: _buildHeader(context, top),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Floating header widget ─────────────────
+  Widget _buildHeader(BuildContext context, double top) {
+    return Container(
+      color: AppColors.background,
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenH,
+        top + AppSpacing.screenTop,
+        AppSpacing.screenH,
+        AppSpacing.screenTop,
+      ),
+      child: AnimatedCrossFade(
+        duration: const Duration(milliseconds: 220),
+        crossFadeState: _searchActive
+            ? CrossFadeState.showSecond
+            : CrossFadeState.showFirst,
+        firstChild: Row(
+          children: [
+            const Expanded(
+              child: Text('Polls', style: AppTypography.screenTitle),
+            ),
+            GestureDetector(
+              onTap: _activateSearch,
+              behavior: HitTestBehavior.opaque,
+              child: const SizedBox(
+                width: AppIconSizes.touchTarget,
+                height: AppIconSizes.touchTarget,
+                child: Icon(Icons.search_rounded,
+                    color: AppColors.textSecondary,
+                    size: AppIconSizes.control),
               ),
             ),
-
-            // ── Content ─────────────────────────
-            if (_isLoading)
-              SliverPadding(
-                padding: const EdgeInsets.only(bottom: 100),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) => i.isOdd
-                        ? Container(
-                            height: 1, color: AppColors.borderSubtle)
-                        : const _SkeletonCard(),
-                    childCount: 7,
-                  ),
+          ],
+        ),
+        secondChild: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocus,
+                onChanged: (v) =>
+                    ref.read(searchQueryProvider.notifier).state = v,
+                style: AppTypography.titleSmall
+                    .copyWith(color: AppColors.textPrimary),
+                decoration: InputDecoration(
+                  fillColor: AppColors.surfaceElevated,
+                  hintText: 'Search polls and people…',
+                  hintStyle: AppTypography.titleSmall
+                      .copyWith(color: AppColors.textTertiary),
+                  prefixIcon: const Icon(Icons.search_rounded,
+                      color: AppColors.textTertiary,
+                      size: AppIconSizes.control),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 12),
                 ),
-              )
-            else if (_searchActive && searchQuery.isNotEmpty)
-              _buildSuggestions(context, suggestions, searchQuery)
-            else if (feedPolls.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyState(query: ''),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.only(bottom: 100),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) => i.isOdd
-                        ? Container(
-                            height: 1, color: AppColors.borderSubtle)
-                        : _FeedItem(pollId: feedPolls[i ~/ 2].id),
-                    childCount: feedPolls.length * 2 - 1,
-                  ),
-                ),
+                cursorColor: AppColors.accentPrimary,
               ),
+            ),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: _cancelSearch,
+              child: Text(
+                'Cancel',
+                style: AppTypography.titleSmall
+                    .copyWith(color: AppColors.textAccent),
+              ),
+            ),
           ],
         ),
       ),

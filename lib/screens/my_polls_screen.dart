@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
@@ -39,7 +40,11 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
           // ── Header ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(AppSpacing.screenH, top + AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.screenTop),
+              padding: EdgeInsets.fromLTRB(
+                  AppSpacing.screenH,
+                  top + AppSpacing.screenTop,
+                  AppSpacing.screenH,
+                  AppSpacing.screenTop),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -50,12 +55,12 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                     ),
                     behavior: HitTestBehavior.opaque,
                     child: const SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget,
                       child: Icon(
                         Icons.settings_outlined,
                         color: AppColors.textSecondary,
-                        size: 24,
+                        size: AppIconSizes.control,
                       ),
                     ),
                   ),
@@ -145,19 +150,20 @@ class _ProfileHeader extends StatelessWidget {
               const SizedBox(width: 16),
 
               // Name block
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 4),
-                    const Text('Clint', style: AppTypography.profileName),
-                    const SizedBox(height: 2),
-                    const Text('@clint', style: AppTypography.bodySmall),
-                    const SizedBox(height: 8),
-                    const Row(
+                    SizedBox(height: 4),
+                    Text('Clint', style: AppTypography.profileName),
+                    SizedBox(height: 2),
+                    Text('@clint', style: AppTypography.bodySmall),
+                    SizedBox(height: 8),
+                    Row(
                       children: [
                         Icon(Icons.calendar_today_rounded,
-                            size: 14, color: AppColors.textTertiary),
+                            size: AppIconSizes.inline,
+                            color: AppColors.textTertiary),
                         SizedBox(width: 4),
                         Text(
                           'Joined May 2024',
@@ -275,7 +281,7 @@ class _SegmentedControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 44,
+      height: AppIconSizes.touchTarget,
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
         borderRadius: BorderRadius.circular(AppRadius.segment),
@@ -317,7 +323,10 @@ class _Segment extends StatelessWidget {
     final isSelected = index == selected;
     return Expanded(
       child: GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); onTap(index); },
+        onTap: () {
+          HapticFeedback.selectionClick();
+          onTap(index);
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
@@ -333,14 +342,14 @@ class _Segment extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 4),
                   child: Icon(
                     Icons.favorite_rounded,
-                    size: 16,
-                    color: isSelected ? Colors.white : AppColors.textTertiary,
+                    size: AppIconSizes.inline,
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
                   ),
                 ),
               Text(
                 label,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? Colors.white : AppColors.textTertiary,
+                  color: isSelected ? Colors.white : AppColors.textSecondary,
                 ),
               ),
             ],
@@ -448,16 +457,18 @@ class _FavoritesCard extends StatelessWidget {
         child: Column(
           children: [
             const Icon(Icons.favorite_border_rounded,
-                color: AppColors.textTertiary, size: 36),
+                color: AppColors.textTertiary, size: AppIconSizes.empty),
             const SizedBox(height: 12),
             Text(
               'No favorites yet',
-              style: AppTypography.titleSmall.copyWith(color: AppColors.textTertiary),
+              style: AppTypography.titleSmall
+                  .copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 4),
             Text(
               'Heart a poll in the feed to save it here',
-              style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary),
+              style: AppTypography.labelMedium
+                  .copyWith(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -473,8 +484,6 @@ class _FavoritesCard extends StatelessWidget {
             return _PollListRow(
               poll: e.value,
               showDivider: e.key < _favorites.length - 1,
-              trailingIcon: Icons.favorite_rounded,
-              trailingColor: const Color(0xFFFF5C7A),
             );
           }).toList(),
         ),
@@ -506,15 +515,10 @@ class _PollRow {
 class _PollListRow extends StatelessWidget {
   final _PollRow poll;
   final bool showDivider;
-  final IconData trailingIcon;
-  final Color trailingColor;
 
   const _PollListRow({
-    super.key,
     required this.poll,
     required this.showDivider,
-    this.trailingIcon = Icons.chevron_right_rounded,
-    this.trailingColor = AppColors.textTertiary,
   });
 
   @override
@@ -532,7 +536,8 @@ class _PollListRow extends StatelessWidget {
                   children: [
                     Text(
                       poll.title,
-                      style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600),
+                      style: AppTypography.titleSmall
+                          .copyWith(fontWeight: FontWeight.w700),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -541,15 +546,20 @@ class _PollListRow extends StatelessWidget {
                       children: [
                         Text(
                           poll.votes,
-                          style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent),
+                          style: AppTypography.labelMedium.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600),
                         ),
-                        Text(' votes', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500)),
+                        Text(' votes',
+                            style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600)),
                         const SizedBox(width: 8),
                         Container(
                           width: 3,
                           height: 3,
                           decoration: const BoxDecoration(
-                            color: AppColors.textTertiary,
+                            color: AppColors.textSecondary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -557,7 +567,9 @@ class _PollListRow extends StatelessWidget {
                         Expanded(
                           child: Text(
                             '${poll.leading} leading',
-                            style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),
+                            style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -574,10 +586,14 @@ class _PollListRow extends StatelessWidget {
                 children: [
                   Text(
                     poll.timestamp,
-                    style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),
+                    style: AppTypography.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
-                  Icon(trailingIcon, size: 16, color: trailingColor),
+                  const Icon(Icons.chevron_right_rounded,
+                      size: AppIconSizes.inline,
+                      color: AppColors.textSecondary),
                 ],
               ),
             ],
@@ -593,4 +609,3 @@ class _PollListRow extends StatelessWidget {
     );
   }
 }
-

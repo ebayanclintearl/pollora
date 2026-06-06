@@ -108,13 +108,12 @@ class _SplashScreenState extends State<SplashScreen>
                         'Pollora',
                         style: TextStyle(
                           fontSize: 32,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w800,
                           color: AppColors.textPrimary,
-                          letterSpacing: -0.5,
+                          letterSpacing: 0,
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),

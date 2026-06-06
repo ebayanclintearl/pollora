@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
+import 'app_icon_sizes.dart';
 import 'app_radius.dart';
 import 'app_theme.dart';
 import 'app_typography.dart';
@@ -124,7 +125,8 @@ class _PolloraBottomNav extends StatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: 76 + bottom,   // 76 = 2×AppSpacing.x10 − 4 (icon 24 + label 12 + gaps)
+        height: 76 +
+            bottom, // 76 = 2×AppSpacing.x10 − 4 (icon 24 + label 12 + gaps)
         child: Padding(
           padding: EdgeInsets.only(bottom: bottom),
           child: Row(
@@ -190,12 +192,13 @@ class _NavTab extends StatelessWidget {
               curve: Curves.easeOut,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               decoration: BoxDecoration(
-                color: isActive ? AppColors.surfaceElevated : Colors.transparent,
+                color:
+                    isActive ? AppColors.surfaceElevated : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Icon(
                 isActive ? activeIcon : icon,
-                size: 24,
+                size: AppIconSizes.nav,
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
               ),
             ),
@@ -204,7 +207,7 @@ class _NavTab extends StatelessWidget {
               duration: const Duration(milliseconds: 200),
               style: AppTypography.labelMedium.copyWith(
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
               ),
               child: Text(label),
             ),
@@ -239,7 +242,11 @@ class _CreateFAB extends StatelessWidget {
             ),
           ],
         ),
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
+        child: const Icon(
+          Icons.add_rounded,
+          color: Colors.white,
+          size: AppIconSizes.nav,
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_typography.dart';
 
@@ -194,7 +195,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
                         'Skip',
-                        style: AppTypography.titleSmall.copyWith(color: AppColors.textSecondary),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: AppColors.textSecondary),
                       ),
                     ),
                   ),
@@ -466,7 +468,7 @@ class _AskIllustration extends StatelessWidget {
             child: const Icon(
               Icons.how_to_vote_rounded,
               color: Colors.white,
-              size: 38,
+              size: AppIconSizes.illustration,
             ),
           ),
         ],
@@ -555,8 +557,7 @@ class _ResultsIllustration extends StatelessWidget {
           children: [
             // Live badge
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.surfaceElevated,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -641,7 +642,7 @@ class _ChartBar extends StatelessWidget {
                   child: Center(
                     child: Icon(
                       Icons.star_rounded,
-                      size: 15,
+                      size: AppIconSizes.inline,
                       color: Colors.white,
                     ),
                   ),
@@ -734,7 +735,7 @@ class _DecisionIllustration extends StatelessWidget {
                 ),
                 child: Icon(
                   Icons.person_rounded,
-                  size: 20,
+                  size: AppIconSizes.control,
                   color: color,
                 ),
               ),
@@ -762,7 +763,7 @@ class _DecisionIllustration extends StatelessWidget {
               child: const Icon(
                 Icons.check_rounded,
                 color: Colors.white,
-                size: 36,
+                size: AppIconSizes.illustration,
               ),
             ),
           ),
@@ -791,8 +792,8 @@ class _NetworkPainter extends CustomPainter {
       final dir = (center - node);
       final len = dir.distance;
       final unit = dir / len;
-      final start = node + unit * 24;   // leave gap for node circle
-      final end = center - unit * 42;   // leave gap for center circle
+      final start = node + unit * 24; // leave gap for node circle
+      final end = center - unit * 42; // leave gap for center circle
       canvas.drawLine(start, end, paint);
     }
   }

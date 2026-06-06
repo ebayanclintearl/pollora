@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
@@ -24,19 +25,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.x3),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.screenH,
+                  AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.x3),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
                     behavior: HitTestBehavior.opaque,
                     child: const SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget,
                       child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         color: AppColors.textSecondary,
-                        size: 24,
+                        size: AppIconSizes.control,
                       ),
                     ),
                   ),
@@ -49,7 +51,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // ── Scrollable body ──
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH, AppSpacing.x8),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenH, 0, AppSpacing.screenH, AppSpacing.x8),
                 children: [
                   // ── Profile row ──
                   _ProfileRow(),
@@ -134,14 +137,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Container(
                       height: 52,
                       decoration: BoxDecoration(
-                        color: AppColors.textDestructive.withValues(alpha: 0.10),
+                        color:
+                            AppColors.textDestructive.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(AppRadius.card),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Icon(Icons.logout_rounded,
-                              color: AppColors.textDestructive, size: 18),
+                              color: AppColors.textDestructive,
+                              size: AppIconSizes.control),
                           const SizedBox(width: 8),
                           Text(
                             'Sign Out',
@@ -212,7 +217,9 @@ class _ProfileRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Clint', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700)),
+                Text('Clint',
+                    style: AppTypography.titleMedium
+                        .copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 const Text('@clint', style: AppTypography.bodySmall),
               ],
@@ -220,7 +227,7 @@ class _ProfileRow extends StatelessWidget {
           ),
           // Chevron
           const Icon(Icons.chevron_right_rounded,
-              color: AppColors.textTertiary, size: 20),
+              color: AppColors.textTertiary, size: AppIconSizes.control),
         ],
       ),
     );
@@ -286,19 +293,23 @@ class _SettingsRow extends StatelessWidget {
     return Column(
       children: [
         GestureDetector(
-          onTap: () { HapticFeedback.selectionClick(); onTap(); },
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
           behavior: HitTestBehavior.opaque,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(icon, size: 20, color: AppColors.textSecondary),
+                Icon(icon,
+                    size: AppIconSizes.control, color: AppColors.textSecondary),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(label, style: AppTypography.titleSmall),
                 ),
                 const Icon(Icons.chevron_right_rounded,
-                    size: 20, color: AppColors.textTertiary),
+                    size: AppIconSizes.control, color: AppColors.textTertiary),
               ],
             ),
           ),
@@ -336,14 +347,18 @@ class _SettingsToggleRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.textSecondary),
+          Icon(icon,
+              size: AppIconSizes.control, color: AppColors.textSecondary),
           const SizedBox(width: 14),
           Expanded(
             child: Text(label, style: AppTypography.titleSmall),
           ),
           Switch(
             value: value,
-            onChanged: (v) { HapticFeedback.selectionClick(); onChanged(v); },
+            onChanged: (v) {
+              HapticFeedback.selectionClick();
+              onChanged(v);
+            },
             activeThumbColor: Colors.white,
             activeTrackColor: AppColors.accentPrimary,
             inactiveThumbColor: AppColors.textTertiary,

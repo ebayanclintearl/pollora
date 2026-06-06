@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
@@ -34,7 +35,9 @@ class _CreateScreenState extends State<CreateScreen> {
   void initState() {
     super.initState();
     _questionController.addListener(_onQuestionChanged);
-    for (final c in _optionControllers) c.addListener(_updatePublishState);
+    for (final c in _optionControllers) {
+      c.addListener(_updatePublishState);
+    }
   }
 
   @override
@@ -42,8 +45,12 @@ class _CreateScreenState extends State<CreateScreen> {
     _pageController.dispose();
     _questionController.dispose();
     _questionFocus.dispose();
-    for (final c in _optionControllers) c.dispose();
-    for (final f in _optionFocuses) f.dispose();
+    for (final c in _optionControllers) {
+      c.dispose();
+    }
+    for (final f in _optionFocuses) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -55,7 +62,8 @@ class _CreateScreenState extends State<CreateScreen> {
 
   void _updatePublishState() {
     final q = _questionController.text.trim().isNotEmpty;
-    final opts = _optionControllers.where((c) => c.text.trim().isNotEmpty).length;
+    final opts =
+        _optionControllers.where((c) => c.text.trim().isNotEmpty).length;
     final can = q && opts >= 2;
     if (can != _canPublish) setState(() => _canPublish = can);
   }
@@ -74,7 +82,9 @@ class _CreateScreenState extends State<CreateScreen> {
 
   void _goToStep1() {
     HapticFeedback.lightImpact();
-    for (final f in _optionFocuses) f.unfocus();
+    for (final f in _optionFocuses) {
+      f.unfocus();
+    }
     _pageController.animateToPage(0,
         duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     setState(() => _currentStep = 0);
@@ -152,7 +162,7 @@ class _CreateScreenState extends State<CreateScreen> {
       padding: const EdgeInsets.fromLTRB(
           AppSpacing.screenH, AppSpacing.screenTop, AppSpacing.screenH, 0),
       child: SizedBox(
-        height: 44,
+        height: AppIconSizes.touchTarget,
         child: Row(
           children: [
             // Back button — only on step 2
@@ -164,13 +174,17 @@ class _CreateScreenState extends State<CreateScreen> {
                       onTap: _goToStep1,
                       behavior: HitTestBehavior.opaque,
                       child: const SizedBox(
-                        width: 44,
-                        height: 44,
+                        width: AppIconSizes.touchTarget,
+                        height: AppIconSizes.touchTarget,
                         child: Icon(Icons.arrow_back_ios_new_rounded,
-                            color: AppColors.textSecondary, size: 20),
+                            color: AppColors.textSecondary,
+                            size: AppIconSizes.control),
                       ),
                     )
-                  : const SizedBox(key: ValueKey('none'), width: 44, height: 44),
+                  : const SizedBox(
+                      key: ValueKey('none'),
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget),
             ),
             const SizedBox(width: 4),
             // Title
@@ -189,7 +203,7 @@ class _CreateScreenState extends State<CreateScreen> {
             const SizedBox(width: 4),
             // Step dots
             SizedBox(
-              width: 44,
+              width: AppIconSizes.touchTarget,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -291,7 +305,7 @@ class _CreateScreenState extends State<CreateScreen> {
               const Spacer(),
               Text(
                 '${_optionControllers.length} / $_maxOptions',
-                style: AppTypography.labelSmall.copyWith(letterSpacing: 0.5),
+                style: AppTypography.labelSmall,
               ),
             ],
           ),
@@ -300,8 +314,7 @@ class _CreateScreenState extends State<CreateScreen> {
         // Options
         Expanded(
           child: ListView(
-            keyboardDismissBehavior:
-                ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.fromLTRB(
                 AppSpacing.screenH, 4, AppSpacing.screenH, 24),
             children: [
@@ -336,7 +349,7 @@ class _CreateScreenState extends State<CreateScreen> {
             backgroundColor: AppColors.accentPrimary,
             disabledBackgroundColor: AppColors.surfaceElevated,
             foregroundColor: Colors.white,
-            disabledForegroundColor: AppColors.textTertiary,
+            disabledForegroundColor: AppColors.textSecondary,
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.button),
@@ -438,7 +451,7 @@ class _OptionRow extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.textTertiary,
+              color: AppColors.textSecondary,
             ),
           ),
         ),
@@ -449,10 +462,12 @@ class _OptionRow extends StatelessWidget {
             focusNode: focusNode,
             maxLines: 1,
             maxLength: 40,
-            textInputAction:
-                isLast && !canAddMore ? TextInputAction.done : TextInputAction.next,
+            textInputAction: isLast && !canAddMore
+                ? TextInputAction.done
+                : TextInputAction.next,
             onSubmitted: (_) => onSubmitted(),
-            style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
+            style:
+                AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
             decoration: InputDecoration(
               hintText: index < 2
                   ? 'Option ${index + 1}'
@@ -474,14 +489,14 @@ class _OptionRow extends StatelessWidget {
             },
             behavior: HitTestBehavior.opaque,
             child: const SizedBox(
-              width: 44,
+              width: AppIconSizes.touchTarget,
               height: 52,
               child: Icon(Icons.close_rounded,
-                  size: 18, color: AppColors.textTertiary),
+                  size: AppIconSizes.control, color: AppColors.textSecondary),
             ),
           )
         else
-          const SizedBox(width: 44),
+          const SizedBox(width: AppIconSizes.touchTarget),
       ],
     );
   }
@@ -500,7 +515,7 @@ class _AddOptionRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
             Container(
@@ -511,7 +526,7 @@ class _AddOptionRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(Icons.add_rounded,
-                  color: AppColors.textTertiary, size: 16),
+                  color: AppColors.textSecondary, size: AppIconSizes.inline),
             ),
             const SizedBox(width: 8),
             Text('Add option',

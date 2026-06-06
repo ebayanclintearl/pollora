@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_typography.dart';
 
@@ -15,9 +16,18 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
   int _selectedIndex = 0;
 
   final List<_Account> _accounts = const [
-    _Account(name: 'Clint',         handle: '@clint',  label: 'C', color: Color(0xFF8B6914)),
-    _Account(name: 'Naruto Uzumaki',handle: '@naruto', label: 'N', color: Color(0xFFCC5500)),
-    _Account(name: 'Goku Son',      handle: '@goku',   label: 'G', color: Color(0xFF2B4D8B)),
+    _Account(
+        name: 'Clint', handle: '@clint', label: 'C', color: Color(0xFF8B6914)),
+    _Account(
+        name: 'Naruto Uzumaki',
+        handle: '@naruto',
+        label: 'N',
+        color: Color(0xFFCC5500)),
+    _Account(
+        name: 'Goku Son',
+        handle: '@goku',
+        label: 'G',
+        color: Color(0xFF2B4D8B)),
   ];
 
   void _selectAccount(int i) {
@@ -45,7 +55,8 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
             decoration: const BoxDecoration(
               color: AppColors.surfaceModal,
               borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border(top: BorderSide(color: AppColors.borderDefault, width: 0.5)),
+              border: Border(
+                  top: BorderSide(color: AppColors.borderDefault, width: 0.5)),
             ),
             padding: EdgeInsets.fromLTRB(16, 8, 16, bottom + 16),
             child: Column(
@@ -53,8 +64,11 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
               children: [
                 // Drag handle
                 Container(
-                  width: 36, height: 4,
-                  decoration: BoxDecoration(color: const Color(0xFF5A5A5A), borderRadius: BorderRadius.circular(AppRadius.pill)),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF5A5A5A),
+                      borderRadius: BorderRadius.circular(AppRadius.pill)),
                 ),
                 const SizedBox(height: 16),
 
@@ -63,7 +77,9 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                   alignment: Alignment.center,
                   children: [
                     Center(
-                      child: Text('Switch Account', style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w700)),
+                      child: Text('Switch Account',
+                          style: AppTypography.titleMedium
+                              .copyWith(fontWeight: FontWeight.w700)),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
@@ -71,9 +87,14 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                         onTap: () => Navigator.of(context).pop(),
                         behavior: HitTestBehavior.opaque,
                         child: Container(
-                          width: 44, height: 44,
-                          decoration: const BoxDecoration(color: AppColors.surfaceElevated, shape: BoxShape.circle),
-                          child: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 20),
+                          width: AppIconSizes.touchTarget,
+                          height: AppIconSizes.touchTarget,
+                          decoration: const BoxDecoration(
+                              color: AppColors.surfaceElevated,
+                              shape: BoxShape.circle),
+                          child: const Icon(Icons.close_rounded,
+                              color: AppColors.textSecondary,
+                              size: AppIconSizes.control),
                         ),
                       ),
                     ),
@@ -83,13 +104,14 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
 
                 // Account rows
                 ..._accounts.asMap().entries.map((e) => Padding(
-                  padding: EdgeInsets.only(bottom: e.key < _accounts.length - 1 ? 12 : 0),
-                  child: _AccountRow(
-                    account: e.value,
-                    isSelected: e.key == _selectedIndex,
-                    onTap: () => _selectAccount(e.key),
-                  ),
-                )),
+                      padding: EdgeInsets.only(
+                          bottom: e.key < _accounts.length - 1 ? 12 : 0),
+                      child: _AccountRow(
+                        account: e.value,
+                        isSelected: e.key == _selectedIndex,
+                        onTap: () => _selectAccount(e.key),
+                      ),
+                    )),
 
                 const SizedBox(height: 16),
 
@@ -103,11 +125,14 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                       backgroundColor: AppColors.accentPrimary,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button)),
                     ),
                     child: Text(
                       'Switch to ${selected.name.split(' ').first}',
-                      style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700, color: Colors.white),
+                      style: AppTypography.titleSmall.copyWith(
+                          fontWeight: FontWeight.w700, color: Colors.white),
                     ),
                   ),
                 ),
@@ -173,7 +198,8 @@ class _AccountRow extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _AccountRow({required this.account, required this.isSelected, required this.onTap});
+  const _AccountRow(
+      {required this.account, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +213,9 @@ class _AccountRow extends StatelessWidget {
           color: AppColors.surfaceElevated,
           borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
-            color: isSelected ? AppColors.accentPrimaryBorder : AppColors.borderSubtle,
+            color: isSelected
+                ? AppColors.accentPrimaryBorder
+                : AppColors.borderSubtle,
             width: isSelected ? 1.5 : 0.8,
           ),
         ),
@@ -200,7 +228,11 @@ class _AccountRow extends StatelessWidget {
               backgroundColor: account.color,
               child: Text(
                 account.label,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700, height: 1),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    height: 1),
               ),
             ),
             const SizedBox(width: 12),
@@ -210,11 +242,12 @@ class _AccountRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(account.name,
-                    style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w600)),
+                      style: AppTypography.titleSmall
+                          .copyWith(fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(account.handle,
-                    style: AppTypography.bodySmall,
-                    overflow: TextOverflow.ellipsis),
+                      style: AppTypography.bodySmall,
+                      overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -222,17 +255,22 @@ class _AccountRow extends StatelessWidget {
             // Selection indicator
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: 24, height: 24,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? AppColors.accentPrimary : Colors.transparent,
+                color:
+                    isSelected ? AppColors.accentPrimary : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? AppColors.accentPrimary : const Color(0xFF555555),
+                  color: isSelected
+                      ? AppColors.accentPrimary
+                      : AppColors.borderDefault,
                   width: 1.8,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
+                  ? const Icon(Icons.check_rounded,
+                      color: Colors.white, size: AppIconSizes.inline)
                   : null,
             ),
           ],
@@ -270,23 +308,32 @@ class _ActionRow extends StatelessWidget {
             child: Row(
               children: [
                 Icon(icon,
-                  color: isDestructive ? AppColors.textDestructive : AppColors.textSecondary,
-                  size: 20),
+                    color: isDestructive
+                        ? AppColors.textDestructive
+                        : AppColors.textSecondary,
+                    size: AppIconSizes.control),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(title,
-                    style: AppTypography.titleSmall.copyWith(
-                      color: isDestructive ? AppColors.textDestructive : AppColors.textPrimary,
-                    )),
+                      style: AppTypography.titleSmall.copyWith(
+                        color: isDestructive
+                            ? AppColors.textDestructive
+                            : AppColors.textPrimary,
+                      )),
                 ),
                 if (!isDestructive)
-                  const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textTertiary),
+                  const Icon(Icons.chevron_right_rounded,
+                      size: AppIconSizes.control,
+                      color: AppColors.textTertiary),
               ],
             ),
           ),
         ),
         if (showDivider)
-          Container(height: 1, margin: const EdgeInsets.only(left: 60, right: 14), color: AppColors.borderSubtle),
+          Container(
+              height: 1,
+              margin: const EdgeInsets.only(left: 60, right: 14),
+              color: AppColors.borderSubtle),
       ],
     );
   }

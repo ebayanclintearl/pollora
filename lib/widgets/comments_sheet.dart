@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_typography.dart';
 
 class CommentsSheet extends StatefulWidget {
   final String pollQuestion;
   final int commentCount;
-  const CommentsSheet({super.key, required this.pollQuestion, required this.commentCount});
+  const CommentsSheet(
+      {super.key, required this.pollQuestion, required this.commentCount});
 
   @override
   State<CommentsSheet> createState() => _CommentsSheetState();
@@ -21,14 +23,34 @@ class _CommentsSheetState extends State<CommentsSheet> {
   bool _hasText = false;
 
   final List<_Comment> _comments = [
-    _Comment(avatarLabel: 'RZ', avatarColor: Color(0xFF1A6B3C), username: 'RoronoaZoro',
-        text: 'Escanor is clearly the strongest, no debate!', timestamp: '2h ago', likes: 14),
-    _Comment(avatarLabel: 'MD', avatarColor: Color(0xFF8B4513), username: 'MonkeyDLuffy',
-        text: "I'd put Zoro higher honestly 🔥", timestamp: '3h ago', likes: 8),
-    _Comment(avatarLabel: 'IC', avatarColor: Color(0xFF2B4D8B), username: 'Ichigo',
-        text: 'The gap between Escanor and Ban is way too big', timestamp: '5h ago', likes: 5),
-    _Comment(avatarLabel: 'GK', avatarColor: Color(0xFF6B2B8B), username: 'GokuSon',
-        text: 'Ban with full power is seriously underrated though', timestamp: '8h ago', likes: 3),
+    const _Comment(
+        avatarLabel: 'RZ',
+        avatarColor: Color(0xFF1A6B3C),
+        username: 'RoronoaZoro',
+        text: 'Escanor is clearly the strongest, no debate!',
+        timestamp: '2h ago',
+        likes: 14),
+    const _Comment(
+        avatarLabel: 'MD',
+        avatarColor: Color(0xFF8B4513),
+        username: 'MonkeyDLuffy',
+        text: "I'd put Zoro higher honestly 🔥",
+        timestamp: '3h ago',
+        likes: 8),
+    const _Comment(
+        avatarLabel: 'IC',
+        avatarColor: Color(0xFF2B4D8B),
+        username: 'Ichigo',
+        text: 'The gap between Escanor and Ban is way too big',
+        timestamp: '5h ago',
+        likes: 5),
+    const _Comment(
+        avatarLabel: 'GK',
+        avatarColor: Color(0xFF6B2B8B),
+        username: 'GokuSon',
+        text: 'Ban with full power is seriously underrated though',
+        timestamp: '8h ago',
+        likes: 3),
   ];
 
   @override
@@ -78,7 +100,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
       _replyingToIndex = index;
     });
     _controller.clear();
-    Future.delayed(const Duration(milliseconds: 50), () => _focusNode.requestFocus());
+    Future.delayed(
+        const Duration(milliseconds: 50), () => _focusNode.requestFocus());
   }
 
   void _cancelReply() {
@@ -109,10 +132,11 @@ class _CommentsSheetState extends State<CommentsSheet> {
         children: [
           // Drag handle
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             margin: const EdgeInsets.only(top: 10, bottom: 14),
             decoration: BoxDecoration(
-              color: const Color(0xFF444444),
+              color: AppColors.borderDefault,
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
@@ -125,14 +149,16 @@ class _CommentsSheetState extends State<CommentsSheet> {
                 const Text('Comments', style: AppTypography.titleMedium),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.accentPrimaryMuted,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     '${_comments.length}',
-                    style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent),
+                    style: AppTypography.labelMedium
+                        .copyWith(color: AppColors.textAccent),
                   ),
                 ),
               ],
@@ -148,11 +174,15 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_bubble_outline_rounded, color: AppColors.textTertiary, size: 48),
+                        Icon(Icons.chat_bubble_outline_rounded,
+                            color: AppColors.textTertiary,
+                            size: AppIconSizes.empty),
                         SizedBox(height: 12),
-                        Text('No comments yet', style: AppTypography.titleSmall),
+                        Text('No comments yet',
+                            style: AppTypography.titleSmall),
                         SizedBox(height: 4),
-                        Text('Be the first to comment', style: AppTypography.labelMedium),
+                        Text('Be the first to comment',
+                            style: AppTypography.labelMedium),
                       ],
                     ),
                   )
@@ -162,7 +192,8 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     itemBuilder: (_, i) => _CommentRow(
                       comment: _comments[i],
                       onReply: () => _startReply(_comments[i].username, i),
-                      onDelete: _comments[i].isOwn ? () => _deleteComment(i) : null,
+                      onDelete:
+                          _comments[i].isOwn ? () => _deleteComment(i) : null,
                     ),
                   ),
           ),
@@ -174,18 +205,28 @@ class _CommentsSheetState extends State<CommentsSheet> {
               color: AppColors.surfaceElevated,
               child: Row(
                 children: [
-                  const Icon(Icons.reply_rounded, size: 14, color: AppColors.textTertiary),
+                  const Icon(Icons.reply_rounded,
+                      size: AppIconSizes.inline, color: AppColors.textTertiary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Replying to @$_replyingToUsername',
-                      style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.labelMedium
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ),
                   GestureDetector(
                     onTap: _cancelReply,
                     behavior: HitTestBehavior.opaque,
-                    child: const Icon(Icons.close_rounded, size: 16, color: AppColors.textTertiary),
+                    child: const SizedBox(
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget,
+                      child: Center(
+                        child: Icon(Icons.close_rounded,
+                            size: AppIconSizes.inline,
+                            color: AppColors.textTertiary),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -197,18 +238,25 @@ class _CommentsSheetState extends State<CommentsSheet> {
               border: Border(top: BorderSide(color: AppColors.borderDefault)),
               color: AppColors.surfaceModal,
             ),
-            padding: EdgeInsets.fromLTRB(16, 10, 16, keyboardHeight > 0 ? keyboardHeight + 10 : bottom + 10),
+            padding: EdgeInsets.fromLTRB(16, 10, 16,
+                keyboardHeight > 0 ? keyboardHeight + 10 : bottom + 10),
             child: Row(
               children: [
                 const CircleAvatar(
                   radius: 16,
                   backgroundColor: Color(0xFF8B6914),
-                  child: Text('C', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text('C',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Container(
-                    constraints: const BoxConstraints(minHeight: 44),
+                    constraints: const BoxConstraints(
+                      minHeight: AppIconSizes.touchTarget,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceInput,
                       borderRadius: BorderRadius.circular(AppRadius.input),
@@ -221,10 +269,12 @@ class _CommentsSheetState extends State<CommentsSheet> {
                       style: AppTypography.bodyMedium,
                       decoration: InputDecoration(
                         hintText: 'Add a comment…',
-                        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
+                        hintStyle: AppTypography.bodyMedium
+                            .copyWith(color: AppColors.textPlaceholder),
                         border: InputBorder.none,
                         counterText: '',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
                       ),
                       cursorColor: AppColors.accentPrimary,
                       onSubmitted: (_) => _submitComment(),
@@ -236,15 +286,17 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   onTap: _hasText ? _submitComment : null,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
-                    width: 44,
-                    height: 44,
+                    width: AppIconSizes.touchTarget,
+                    height: AppIconSizes.touchTarget,
                     decoration: BoxDecoration(
-                      color: _hasText ? AppColors.accentPrimary : AppColors.surfaceElevated,
+                      color: _hasText
+                          ? AppColors.accentPrimary
+                          : AppColors.surfaceElevated,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.arrow_upward_rounded,
-                      size: 18,
+                      size: AppIconSizes.control,
                       color: _hasText ? Colors.white : AppColors.textTertiary,
                     ),
                   ),
@@ -292,7 +344,6 @@ class _CommentRow extends StatefulWidget {
   final VoidCallback? onDelete;
 
   const _CommentRow({
-    super.key,
     required this.comment,
     required this.onReply,
     this.onDelete,
@@ -310,7 +361,8 @@ class _CommentRowState extends State<_CommentRow> {
     final likes = widget.comment.likes + (_liked ? 1 : 0);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: 18, left: widget.comment.isReply ? 28 : 0),
+      padding:
+          EdgeInsets.only(bottom: 18, left: widget.comment.isReply ? 28 : 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -320,7 +372,10 @@ class _CommentRowState extends State<_CommentRow> {
             backgroundColor: widget.comment.avatarColor,
             child: Text(
               widget.comment.avatarLabel,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(width: 10),
@@ -335,12 +390,15 @@ class _CommentRowState extends State<_CommentRow> {
                   children: [
                     Text(
                       widget.comment.username,
-                      style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.labelMedium
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       widget.comment.timestamp,
-                      style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500),
+                      style: AppTypography.labelMedium.copyWith(
+                          color: AppColors.textTertiary,
+                          fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -353,60 +411,68 @@ class _CommentRowState extends State<_CommentRow> {
                 ),
                 const SizedBox(height: 8),
 
-                // Actions row — 44dp min height for thumb target
+                // Actions row — 48dp minimum touch target.
                 SizedBox(
-                  height: 44,
+                  height: AppIconSizes.touchTarget,
                   child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Like
-                    GestureDetector(
-                      onTap: () => setState(() => _liked = !_liked),
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                            size: 16,
-                            color: _liked ? const Color(0xFFFF5C7A) : AppColors.textTertiary,
-                          ),
-                          if (likes > 0) ...[
-                            const SizedBox(width: 4),
-                            Text(
-                              '$likes',
-                              style: AppTypography.labelMedium.copyWith(
-                                color: _liked ? const Color(0xFFFF5C7A) : AppColors.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-
-                    // Reply
-                    GestureDetector(
-                      onTap: widget.onReply,
-                      behavior: HitTestBehavior.opaque,
-                      child: Text(
-                        'Reply',
-                        style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary),
-                      ),
-                    ),
-
-                    // Delete (own comments only)
-                    if (widget.onDelete != null) ...[
-                      const SizedBox(width: 16),
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Like
                       GestureDetector(
-                        onTap: widget.onDelete,
+                        onTap: () => setState(() => _liked = !_liked),
                         behavior: HitTestBehavior.opaque,
-                        child: Text(
-                          'Delete',
-                          style: AppTypography.labelMedium.copyWith(color: AppColors.textDestructive),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _liked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              size: AppIconSizes.inline,
+                              color: _liked
+                                  ? const Color(0xFFFF5C7A)
+                                  : AppColors.textTertiary,
+                            ),
+                            if (likes > 0) ...[
+                              const SizedBox(width: 4),
+                              Text(
+                                '$likes',
+                                style: AppTypography.labelMedium.copyWith(
+                                  color: _liked
+                                      ? const Color(0xFFFF5C7A)
+                                      : AppColors.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
+                      const SizedBox(width: 16),
+
+                      // Reply
+                      GestureDetector(
+                        onTap: widget.onReply,
+                        behavior: HitTestBehavior.opaque,
+                        child: Text(
+                          'Reply',
+                          style: AppTypography.labelMedium
+                              .copyWith(color: AppColors.textTertiary),
+                        ),
+                      ),
+
+                      // Delete (own comments only)
+                      if (widget.onDelete != null) ...[
+                        const SizedBox(width: 16),
+                        GestureDetector(
+                          onTap: widget.onDelete,
+                          behavior: HitTestBehavior.opaque,
+                          child: Text(
+                            'Delete',
+                            style: AppTypography.labelMedium
+                                .copyWith(color: AppColors.textDestructive),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
                   ),
                 ),
               ],

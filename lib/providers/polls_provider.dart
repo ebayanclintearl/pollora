@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/poll.dart';
-import '../models/user.dart';
 import 'users_provider.dart';
 
 // ── Initial feed data ─────────────────────────
@@ -183,34 +182,13 @@ class PollsNotifier extends StateNotifier<List<Poll>> {
     }).toList();
   }
 
-  /// Reposts a poll to the top of the feed with a "shared by" banner.
-  void shareToFeed(String pollId, AppUser sharedBy) {
-    final originalIdx =
-        state.indexWhere((p) => p.id == pollId && p.sharedBy == null);
-    if (originalIdx == -1) return;
-
-    final original = state[originalIdx];
-    if (original.author.id == sharedBy.id) return; // can't share own poll
-
-    final sharedId = 'shared_${pollId}_${sharedBy.id}';
-    if (state.any((p) => p.id == sharedId)) return; // already shared
-
-    final sharedPoll = Poll(
-      id: sharedId,
-      author: original.author,
-      question: original.question,
-      options: original.options,
-      createdAt: DateTime.now(),
-      commentCount: original.commentCount,
-      shareCount: original.shareCount,
-      sharedBy: sharedBy,
-    );
-
-    final updated = List<Poll>.from(state);
-    updated[originalIdx] =
-        original.copyWith(shareCount: original.shareCount + 1);
-    updated.insert(0, sharedPoll);
-    state = updated;
+  /// Called when the user taps the native share button.
+  /// Increments the share count so the UI reflects the action.
+  void incrementShare(String pollId) {
+    state = state.map((poll) {
+      if (poll.id != pollId) return poll;
+      return poll.copyWith(shareCount: poll.shareCount + 1);
+    }).toList();
   }
 }
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../widgets/comments_sheet.dart';
-import '../widgets/share_sheet.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -239,64 +239,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 }
 
 // ─────────────────────────────────────────────
-// Feed Item — shared banner + poll card
+// Feed Item
 // ─────────────────────────────────────────────
-class _FeedItem extends ConsumerWidget {
+class _FeedItem extends StatelessWidget {
   final String pollId;
   const _FeedItem({required this.pollId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final polls = ref.watch(pollsProvider);
-    Poll? poll;
-    for (final p in polls) {
-      if (p.id == pollId) {
-        poll = p;
-        break;
-      }
-    }
-    if (poll == null) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (poll.sharedBy != null) _SharedBanner(user: poll.sharedBy!),
-        _PollCard(pollId: pollId),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Shared banner — "↺ Clint shared"
-// ─────────────────────────────────────────────
-class _SharedBanner extends StatelessWidget {
-  final AppUser user;
-  const _SharedBanner({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 10, 0, 4),
-      child: Row(
-        children: [
-          const Icon(Icons.repeat_rounded,
-              size: 13, color: AppColors.textTertiary),
-          const SizedBox(width: 6),
-          Text(
-            '${user.name} shared',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textTertiary,
-              height: 1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _PollCard(pollId: pollId);
 }
 
 // ─────────────────────────────────────────────
@@ -562,14 +512,11 @@ class _PollCardState extends ConsumerState<_PollCard>
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    barrierColor:
-                        Colors.black.withValues(alpha: 0.6),
-                    builder: (_) =>
-                        ShareSheet(pollId: widget.pollId),
+                  ref.read(pollsProvider.notifier)
+                      .incrementShare(widget.pollId);
+                  Share.share(
+                    '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
+                    subject: p.question,
                   );
                 },
                 behavior: HitTestBehavior.opaque,

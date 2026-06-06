@@ -8,8 +8,8 @@ import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../models/poll.dart';
 import '../providers/polls_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../widgets/comments_sheet.dart';
-import '../widgets/share_sheet.dart';
 
 class PollDetailScreen extends ConsumerWidget {
   final String pollId;
@@ -429,12 +429,10 @@ class _PollActionsState extends ConsumerState<_PollActions>
           label: '${poll.shareCount}',
           onTap: () {
             HapticFeedback.lightImpact();
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              barrierColor: Colors.black.withValues(alpha: 0.6),
-              builder: (_) => ShareSheet(pollId: poll.id),
+            ref.read(pollsProvider.notifier).incrementShare(poll.id);
+            Share.share(
+              '${poll.question}\n\nhttps://pollora.app/poll/${poll.id}',
+              subject: poll.question,
             );
           },
         ),

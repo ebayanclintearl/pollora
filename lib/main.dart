@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app_colors.dart';
 import 'app_theme.dart';
+import 'models/user.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/create_screen.dart';
 import 'screens/my_polls_screen.dart';
+import 'screens/user_profile_screen.dart';
+import 'screens/poll_detail_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +21,7 @@ void main() {
     statusBarIconBrightness: Brightness.light,
     statusBarBrightness: Brightness.dark,
   ));
-  runApp(const PolloraApp());
+  runApp(const ProviderScope(child: PolloraApp()));
 }
 
 class PolloraApp extends StatelessWidget {
@@ -30,6 +34,20 @@ class PolloraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
       home: const _AppEntry(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/user-profile':
+            final user = settings.arguments as AppUser;
+            return MaterialPageRoute(
+                builder: (_) => UserProfileScreen(user: user));
+          case '/poll-detail':
+            final pollId = settings.arguments as String;
+            return MaterialPageRoute(
+                builder: (_) => PollDetailScreen(pollId: pollId));
+          default:
+            return null;
+        }
+      },
     );
   }
 }

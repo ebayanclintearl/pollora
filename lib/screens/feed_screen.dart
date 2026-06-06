@@ -1,176 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/comments_sheet.dart';
+import '../widgets/share_sheet.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
-
-// ─────────────────────────────────────────────
-// Data models
-// ─────────────────────────────────────────────
-class _PollOption {
-  final String label;
-  final int percentage;
-  final bool isLeading;
-  const _PollOption(
-      {required this.label, required this.percentage, required this.isLeading});
-}
-
-class _PollData {
-  final Color avatarColor;
-  final String avatarLabel;
-  final String userName;
-  final String timestamp;
-  final String question;
-  final List<_PollOption> options;
-  final int voteCount;
-  final int commentCount;
-
-  const _PollData({
-    required this.avatarColor,
-    required this.avatarLabel,
-    required this.userName,
-    required this.timestamp,
-    required this.question,
-    required this.options,
-    required this.voteCount,
-    this.commentCount = 0,
-  });
-}
-
-// ─────────────────────────────────────────────
-// Sample data
-// ─────────────────────────────────────────────
-const _polls = [
-  _PollData(
-    avatarColor: Color(0xFF1A6B3C),
-    avatarLabel: 'RZ',
-    userName: 'RoronoaZoro',
-    commentCount: 12,
-    timestamp: '2h ago',
-    question: 'Who is the strongest?',
-    options: [
-      _PollOption(label: 'Ban', percentage: 19, isLeading: false),
-      _PollOption(label: 'Escanor', percentage: 67, isLeading: true),
-      _PollOption(label: 'Zoro', percentage: 14, isLeading: false),
-    ],
-    voteCount: 1246,
-  ),
-  _PollData(
-    avatarColor: Color(0xFF8B4513),
-    avatarLabel: 'MD',
-    userName: 'MonkeyDLuffy',
-    commentCount: 7,
-    timestamp: '6h ago',
-    question: 'Which Devil Fruit is the most useful?',
-    options: [
-      _PollOption(label: 'Gomu Gomu no Mi', percentage: 42, isLeading: true),
-      _PollOption(label: 'Mera Mera no Mi', percentage: 33, isLeading: false),
-      _PollOption(label: 'Hie Hie no Mi', percentage: 25, isLeading: false),
-    ],
-    voteCount: 987,
-  ),
-  _PollData(
-    avatarColor: Color(0xFF2B4D8B),
-    avatarLabel: 'IC',
-    userName: 'Ichigo',
-    commentCount: 23,
-    timestamp: '1d ago',
-    question: 'Which is your favorite Anime?',
-    options: [
-      _PollOption(label: 'One Piece', percentage: 51, isLeading: true),
-      _PollOption(label: 'Bleach', percentage: 28, isLeading: false),
-      _PollOption(label: 'Naruto', percentage: 21, isLeading: false),
-    ],
-    voteCount: 2541,
-  ),
-  _PollData(
-    avatarColor: Color(0xFF6B2B8B),
-    avatarLabel: 'GK',
-    userName: 'GokuSon',
-    commentCount: 41,
-    timestamp: '2d ago',
-    question: 'Best anime battle of all time?',
-    options: [
-      _PollOption(label: 'Goku vs Vegeta', percentage: 48, isLeading: true),
-      _PollOption(label: 'Naruto vs Sasuke', percentage: 35, isLeading: false),
-      _PollOption(label: 'Ichigo vs Aizen', percentage: 17, isLeading: false),
-    ],
-    voteCount: 5103,
-  ),
-  _PollData(
-    avatarColor: Color(0xFF1A3A6B),
-    avatarLabel: 'KL',
-    userName: 'KilluaZ',
-    commentCount: 8,
-    timestamp: '3d ago',
-    question: 'Who has the best power system in anime?',
-    options: [
-      _PollOption(
-          label: 'Nen – Hunter x Hunter', percentage: 34, isLeading: true),
-      _PollOption(
-          label: 'Devil Fruits – One Piece', percentage: 22, isLeading: false),
-      _PollOption(label: 'Chakra – Naruto', percentage: 19, isLeading: false),
-      _PollOption(
-          label: 'Quirks – My Hero Academia', percentage: 13, isLeading: false),
-      _PollOption(
-          label: 'Alchemy – Fullmetal', percentage: 8, isLeading: false),
-      _PollOption(
-          label: 'Cursed Energy – Jujutsu', percentage: 4, isLeading: false),
-    ],
-    voteCount: 8742,
-  ),
-  _PollData(
-    avatarColor: Color(0xFF6B1A1A),
-    avatarLabel: 'ER',
-    userName: 'ErenYeager',
-    commentCount: 5,
-    timestamp: '4d ago',
-    question: 'Which anime had the best ending?',
-    options: [
-      _PollOption(
-          label: 'Fullmetal Alchemist: Brotherhood',
-          percentage: 41,
-          isLeading: true),
-      _PollOption(label: 'Steins;Gate', percentage: 28, isLeading: false),
-      _PollOption(label: 'Attack on Titan', percentage: 18, isLeading: false),
-      _PollOption(label: 'Demon Slayer', percentage: 13, isLeading: false),
-    ],
-    voteCount: 3891,
-  ),
-];
-
-String _formatVotes(int n) {
-  if (n >= 1000) {
-    final t = n ~/ 1000;
-    final r = (n % 1000).toString().padLeft(3, '0');
-    return '$t,$r';
-  }
-  return n.toString();
-}
+import '../models/poll.dart';
+import '../models/user.dart';
+import '../providers/follow_provider.dart';
+import '../providers/polls_provider.dart';
+import '../providers/search_provider.dart';
 
 // ─────────────────────────────────────────────
 // Feed Screen
 // ─────────────────────────────────────────────
-class FeedScreen extends StatefulWidget {
+class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
+
   @override
-  State<FeedScreen> createState() => _FeedScreenState();
+  ConsumerState<FeedScreen> createState() => _FeedScreenState();
 }
 
-class _FeedScreenState extends State<FeedScreen> {
+class _FeedScreenState extends ConsumerState<FeedScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
   bool _searchActive = false;
-  String _searchQuery = '';
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Simulate initial load — shows skeleton cards
     Future.delayed(const Duration(milliseconds: 1600), () {
       if (mounted) setState(() => _isLoading = false);
     });
@@ -192,10 +54,8 @@ class _FeedScreenState extends State<FeedScreen> {
   void _cancelSearch() {
     _searchController.clear();
     _searchFocus.unfocus();
-    setState(() {
-      _searchActive = false;
-      _searchQuery = '';
-    });
+    ref.read(searchQueryProvider.notifier).state = '';
+    setState(() => _searchActive = false);
   }
 
   Future<void> _onRefresh() async {
@@ -205,21 +65,13 @@ class _FeedScreenState extends State<FeedScreen> {
     if (mounted) setState(() => _isLoading = false);
   }
 
-  List<_PollData> get _filtered {
-    if (_searchQuery.isEmpty) return _polls;
-    return _polls
-        .where(
-          (p) =>
-              p.question.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              p.userName.toLowerCase().contains(_searchQuery.toLowerCase()),
-        )
-        .toList();
-  }
-
+  // ── Build ──────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    final filtered = _filtered;
+    final searchQuery = ref.watch(searchQueryProvider);
+    final feedPolls = ref.watch(feedPollsProvider);
+    final suggestions = ref.watch(searchSuggestionsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -232,7 +84,7 @@ class _FeedScreenState extends State<FeedScreen> {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // ── Header ──
+            // ── Header ──────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -248,7 +100,8 @@ class _FeedScreenState extends State<FeedScreen> {
                   firstChild: Row(
                     children: [
                       const Expanded(
-                        child: Text('Polls', style: AppTypography.screenTitle),
+                        child:
+                            Text('Polls', style: AppTypography.screenTitle),
                       ),
                       GestureDetector(
                         onTap: _activateSearch,
@@ -269,12 +122,14 @@ class _FeedScreenState extends State<FeedScreen> {
                         child: TextField(
                           controller: _searchController,
                           focusNode: _searchFocus,
-                          onChanged: (v) => setState(() => _searchQuery = v),
+                          onChanged: (v) {
+                            ref.read(searchQueryProvider.notifier).state = v;
+                          },
                           style: AppTypography.titleSmall
                               .copyWith(color: AppColors.textPrimary),
                           decoration: InputDecoration(
                             fillColor: AppColors.surfaceElevated,
-                            hintText: 'Search polls…',
+                            hintText: 'Search polls and people…',
                             hintStyle: AppTypography.titleSmall
                                 .copyWith(color: AppColors.textTertiary),
                             prefixIcon: const Icon(Icons.search_rounded,
@@ -289,9 +144,11 @@ class _FeedScreenState extends State<FeedScreen> {
                       const SizedBox(width: 12),
                       GestureDetector(
                         onTap: _cancelSearch,
-                        child: Text('Cancel',
-                            style: AppTypography.titleSmall
-                                .copyWith(color: AppColors.textAccent)),
+                        child: Text(
+                          'Cancel',
+                          style: AppTypography.titleSmall
+                              .copyWith(color: AppColors.textAccent),
+                        ),
                       ),
                     ],
                   ),
@@ -299,23 +156,26 @@ class _FeedScreenState extends State<FeedScreen> {
               ),
             ),
 
-            // ── Content: skeleton / empty / polls ──
+            // ── Content ─────────────────────────
             if (_isLoading)
               SliverPadding(
                 padding: const EdgeInsets.only(bottom: 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => i.isOdd
-                        ? Container(height: 1, color: AppColors.borderSubtle)
+                        ? Container(
+                            height: 1, color: AppColors.borderSubtle)
                         : const _SkeletonCard(),
                     childCount: 7,
                   ),
                 ),
               )
-            else if (filtered.isEmpty)
-              SliverFillRemaining(
+            else if (_searchActive && searchQuery.isNotEmpty)
+              _buildSuggestions(context, suggestions, searchQuery)
+            else if (feedPolls.isEmpty)
+              const SliverFillRemaining(
                 hasScrollBody: false,
-                child: _EmptyState(query: _searchQuery),
+                child: _EmptyState(query: ''),
               )
             else
               SliverPadding(
@@ -323,9 +183,10 @@ class _FeedScreenState extends State<FeedScreen> {
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => i.isOdd
-                        ? Container(height: 1, color: AppColors.borderSubtle)
-                        : _PollCard(poll: filtered[i ~/ 2]),
-                    childCount: filtered.length * 2 - 1,
+                        ? Container(
+                            height: 1, color: AppColors.borderSubtle)
+                        : _FeedItem(pollId: feedPolls[i ~/ 2].id),
+                    childCount: feedPolls.length * 2 - 1,
                   ),
                 ),
               ),
@@ -334,23 +195,124 @@ class _FeedScreenState extends State<FeedScreen> {
       ),
     );
   }
+
+  // ── Search suggestions sliver ──────────────
+  Widget _buildSuggestions(
+      BuildContext context, List<SearchItem> items, String query) {
+    if (items.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: _EmptyState(query: query),
+      );
+    }
+
+    final users =
+        items.whereType<UserSearchItem>().toList();
+    final polls =
+        items.whereType<PollSearchItem>().toList();
+
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
+      sliver: SliverList(
+        delegate: SliverChildListDelegate([
+          if (users.isNotEmpty) ...[
+            const _SuggestionHeader('People'),
+            ...users.map((item) => _UserSuggestionRow(
+                  user: item.user,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed('/user-profile', arguments: item.user),
+                )),
+            const SizedBox(height: 8),
+          ],
+          if (polls.isNotEmpty) ...[
+            const _SuggestionHeader('Polls'),
+            ...polls.map((item) => _PollSuggestionRow(
+                  poll: item.poll,
+                  onTap: () => Navigator.of(context)
+                      .pushNamed('/poll-detail', arguments: item.poll.id),
+                )),
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Feed Item — shared banner + poll card
+// ─────────────────────────────────────────────
+class _FeedItem extends ConsumerWidget {
+  final String pollId;
+  const _FeedItem({required this.pollId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final polls = ref.watch(pollsProvider);
+    Poll? poll;
+    for (final p in polls) {
+      if (p.id == pollId) {
+        poll = p;
+        break;
+      }
+    }
+    if (poll == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (poll.sharedBy != null) _SharedBanner(user: poll.sharedBy!),
+        _PollCard(pollId: pollId),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Shared banner — "↺ Clint shared"
+// ─────────────────────────────────────────────
+class _SharedBanner extends StatelessWidget {
+  final AppUser user;
+  const _SharedBanner({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 10, 0, 4),
+      child: Row(
+        children: [
+          const Icon(Icons.repeat_rounded,
+              size: 13, color: AppColors.textTertiary),
+          const SizedBox(width: 6),
+          Text(
+            '${user.name} shared',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textTertiary,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────
 // Poll Card
 // ─────────────────────────────────────────────
-class _PollCard extends StatefulWidget {
-  final _PollData poll;
-  const _PollCard({required this.poll});
+class _PollCard extends ConsumerStatefulWidget {
+  final String pollId;
+  const _PollCard({required this.pollId});
+
   @override
-  State<_PollCard> createState() => _PollCardState();
+  ConsumerState<_PollCard> createState() => _PollCardState();
 }
 
-class _PollCardState extends State<_PollCard>
+class _PollCardState extends ConsumerState<_PollCard>
     with SingleTickerProviderStateMixin {
-  bool _favorited = false;
   bool _optionsExpanded = false;
-  int? _votedIndex;
   static const int _previewCount = 3;
 
   late AnimationController _heartCtrl;
@@ -374,21 +336,25 @@ class _PollCardState extends State<_PollCard>
     super.dispose();
   }
 
-  void _onVote(int index) {
-    HapticFeedback.selectionClick();
-    setState(() => _votedIndex = index);
-  }
-
-  void _toggleFavorite() {
-    HapticFeedback.lightImpact();
-    setState(() => _favorited = !_favorited);
-    _heartCtrl.forward(from: 0);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final p = widget.poll;
-    final displayCount = _votedIndex != null ? p.voteCount + 1 : p.voteCount;
+    final polls = ref.watch(pollsProvider);
+    Poll? poll;
+    for (final p in polls) {
+      if (p.id == widget.pollId) {
+        poll = p;
+        break;
+      }
+    }
+    if (poll == null) return const SizedBox.shrink();
+    final p = poll; // non-null alias — safe to use inside closures
+
+    final hasMore = p.options.length > _previewCount;
+    final visible = _optionsExpanded || !hasMore
+        ? p.options
+        : p.options.sublist(0, _previewCount);
+    final hidden =
+        hasMore && !_optionsExpanded ? p.options.length - _previewCount : 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -398,109 +364,129 @@ class _PollCardState extends State<_PollCard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Header ──
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: p.avatarColor,
-                child: Text(p.avatarLabel,
+          // ── Author row — tappable ────────────
+          GestureDetector(
+            onTap: () => Navigator.of(context)
+                .pushNamed('/user-profile', arguments: p.author),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: p.author.avatarColor,
+                  child: Text(
+                    p.author.avatarLabel,
                     style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Row(
-                  children: [
-                    Text(p.userName,
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        p.author.name,
                         style: AppTypography.labelMedium.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w700)),
-                    const SizedBox(width: 6),
-                    Container(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
                         width: 2,
                         height: 2,
                         decoration: const BoxDecoration(
                             color: AppColors.textTertiary,
-                            shape: BoxShape.circle)),
-                    const SizedBox(width: 6),
-                    Text(p.timestamp,
+                            shape: BoxShape.circle),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        p.timeAgo,
                         style: AppTypography.labelMedium
-                            .copyWith(color: AppColors.textTertiary)),
-                  ],
+                            .copyWith(color: AppColors.textTertiary),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           const SizedBox(height: 8),
 
-          // ── Question ──
+          // ── Question ─────────────────────────
           Text(p.question, style: AppTypography.cardTitle),
 
           const SizedBox(height: 16),
 
-          // ── Options ──
-          Builder(builder: (_) {
-            final hasMore = p.options.length > _previewCount;
-            final visible = _optionsExpanded || !hasMore
-                ? p.options
-                : p.options.sublist(0, _previewCount);
-            final hidden = hasMore ? p.options.length - _previewCount : 0;
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...visible.asMap().entries.map((e) => Padding(
-                      padding: EdgeInsets.only(
-                          bottom: e.key < visible.length - 1 ? 8 : 0),
-                      child: GestureDetector(
-                        onTap: () => _onVote(e.key),
-                        child: _PollOptionBar(
-                          option: e.value,
-                          isVoted: _votedIndex == e.key,
-                          hasVoted: _votedIndex != null,
-                        ),
+          // ── Options ──────────────────────────
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...visible.asMap().entries.map((e) => Padding(
+                    padding: EdgeInsets.only(
+                        bottom: e.key < visible.length - 1 ? 8 : 0),
+                    child: GestureDetector(
+                      onTap: () {
+                        if (p.isVoted) return;
+                        HapticFeedback.selectionClick();
+                        ref
+                            .read(pollsProvider.notifier)
+                            .vote(widget.pollId, e.value.id);
+                      },
+                      child: _PollOptionBar(
+                        option: e.value,
+                        totalVotes: p.totalVotes,
+                        isVoted: p.votedOptionId == e.value.id,
+                        hasVoted: p.isVoted,
                       ),
-                    )),
-                if (hasMore && !_optionsExpanded) ...[
-                  const SizedBox(height: 8),
-                  GestureDetector(
-                    onTap: () => setState(() => _optionsExpanded = true),
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                          color: AppColors.accentPrimaryMuted,
-                          borderRadius: BorderRadius.circular(AppRadius.pill)),
-                      child: Text(
-                          '+$hidden more option${hidden > 1 ? 's' : ''}',
-                          style: AppTypography.labelMedium
-                              .copyWith(color: AppColors.textAccent)),
+                    ),
+                  )),
+              if (hasMore && !_optionsExpanded) ...[
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () =>
+                      setState(() => _optionsExpanded = true),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                        color: AppColors.accentPrimaryMuted,
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.pill)),
+                    child: Text(
+                      '+$hidden more option${hidden > 1 ? 's' : ''}',
+                      style: AppTypography.labelMedium
+                          .copyWith(color: AppColors.textAccent),
                     ),
                   ),
-                ],
+                ),
               ],
-            );
-          }),
+            ],
+          ),
 
           const SizedBox(height: 12),
           Container(height: 1, color: AppColors.borderSubtle),
           const SizedBox(height: 12),
 
-          // ── Footer ──
+          // ── Footer ───────────────────────────
           Row(
             children: [
               const Icon(Icons.how_to_vote_outlined,
-                  size: AppIconSizes.inline, color: AppColors.textTertiary),
+                  size: AppIconSizes.inline,
+                  color: AppColors.textTertiary),
               const SizedBox(width: 4),
-              Text('${_formatVotes(displayCount)} votes',
-                  style: AppTypography.labelMedium.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600)),
+              Text(
+                '${_fmtVotes(p.totalVotes)} votes',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
               // Comments
               GestureDetector(
@@ -510,10 +496,12 @@ class _PollCardState extends State<_PollCard>
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
-                    barrierColor: Colors.black.withValues(alpha: 0.5),
+                    barrierColor:
+                        Colors.black.withValues(alpha: 0.5),
                     builder: (_) => CommentsSheet(
-                        pollQuestion: widget.poll.question,
-                        commentCount: widget.poll.commentCount),
+                      pollQuestion: p.question,
+                      commentCount: p.commentCount,
+                    ),
                   );
                 },
                 behavior: HitTestBehavior.opaque,
@@ -523,7 +511,8 @@ class _PollCardState extends State<_PollCard>
                     minHeight: AppIconSizes.touchTarget,
                   ),
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -531,16 +520,24 @@ class _PollCardState extends State<_PollCard>
                           size: AppIconSizes.control,
                           color: AppColors.textTertiary),
                       const SizedBox(width: 4),
-                      Text('${widget.poll.commentCount}',
-                          style: AppTypography.labelMedium
-                              .copyWith(color: AppColors.textTertiary)),
+                      Text(
+                        '${p.commentCount}',
+                        style: AppTypography.labelMedium
+                            .copyWith(color: AppColors.textTertiary),
+                      ),
                     ],
                   ),
                 ),
               ),
               // Favorite with bounce
               GestureDetector(
-                onTap: _toggleFavorite,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  ref
+                      .read(pollsProvider.notifier)
+                      .toggleFavorite(widget.pollId);
+                  _heartCtrl.forward(from: 0);
+                },
                 behavior: HitTestBehavior.opaque,
                 child: SizedBox(
                   width: AppIconSizes.touchTarget,
@@ -549,11 +546,11 @@ class _PollCardState extends State<_PollCard>
                     child: ScaleTransition(
                       scale: _heartScale,
                       child: Icon(
-                        _favorited
+                        p.isFavorited
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
                         size: AppIconSizes.control,
-                        color: _favorited
+                        color: p.isFavorited
                             ? const Color(0xFFFF5C7A)
                             : AppColors.textTertiary,
                       ),
@@ -563,7 +560,18 @@ class _PollCardState extends State<_PollCard>
               ),
               // Share
               GestureDetector(
-                onTap: () => HapticFeedback.lightImpact(),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    barrierColor:
+                        Colors.black.withValues(alpha: 0.6),
+                    builder: (_) =>
+                        ShareSheet(pollId: widget.pollId),
+                  );
+                },
                 behavior: HitTestBehavior.opaque,
                 child: const SizedBox(
                   width: AppIconSizes.touchTarget,
@@ -583,33 +591,51 @@ class _PollCardState extends State<_PollCard>
   }
 }
 
+String _fmtVotes(int n) {
+  if (n >= 1000) {
+    final t = n ~/ 1000;
+    final r = (n % 1000).toString().padLeft(3, '0');
+    return '$t,$r';
+  }
+  return n.toString();
+}
+
 // ─────────────────────────────────────────────
 // Poll Option Bar
 // ─────────────────────────────────────────────
 class _PollOptionBar extends StatelessWidget {
-  final _PollOption option;
+  final PollOption option;
+  final int totalVotes;
   final bool isVoted;
   final bool hasVoted;
 
-  const _PollOptionBar(
-      {required this.option, required this.isVoted, required this.hasVoted});
+  const _PollOptionBar({
+    required this.option,
+    required this.totalVotes,
+    required this.isVoted,
+    required this.hasVoted,
+  });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final fillWidth = constraints.maxWidth * (option.percentage / 100);
+      builder: (_, constraints) {
+        final fillWidth =
+            constraints.maxWidth * option.percentage(totalVotes);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           height: 48,
           decoration: BoxDecoration(
             color: AppColors.pollBarTrack,
-            borderRadius: BorderRadius.circular(AppRadius.pollBar),
+            borderRadius:
+                BorderRadius.circular(AppRadius.pollBar),
           ),
           foregroundDecoration: isVoted
               ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.pollBar),
-                  border: Border.all(color: AppColors.accentPrimary, width: 1.5),
+                  borderRadius:
+                      BorderRadius.circular(AppRadius.pollBar),
+                  border: Border.all(
+                      color: AppColors.accentPrimary, width: 1.5),
                 )
               : null,
           clipBehavior: Clip.hardEdge,
@@ -629,15 +655,17 @@ class _PollOptionBar extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                        option.label,
+                        option.text,
                         style: AppTypography.titleSmall.copyWith(
-                          fontWeight:
-                              isVoted ? FontWeight.w700 : FontWeight.w600,
+                          fontWeight: isVoted
+                              ? FontWeight.w700
+                              : FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -647,14 +675,19 @@ class _PollOptionBar extends StatelessWidget {
                       if (isVoted)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
-                          child: Icon(Icons.check_circle_rounded,
-                              size: AppIconSizes.inline, color: Colors.white),
+                          child: Icon(
+                              Icons.check_circle_rounded,
+                              size: AppIconSizes.inline,
+                              color: Colors.white),
                         ),
-                      Text('${option.percentage}%',
-                          style: AppTypography.bodySmall.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                              letterSpacing: 0)),
+                      Text(
+                        '${option.percentageInt(totalVotes)}%',
+                        style: AppTypography.bodySmall.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          letterSpacing: 0,
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -668,10 +701,178 @@ class _PollOptionBar extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
+// Search suggestion widgets
+// ─────────────────────────────────────────────
+class _SuggestionHeader extends StatelessWidget {
+  final String title;
+  const _SuggestionHeader(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 8, AppSpacing.screenH, 4),
+      child: Text(
+        title,
+        style: AppTypography.labelSmall.copyWith(
+          letterSpacing: 0.8,
+          color: AppColors.textTertiary,
+        ),
+      ),
+    );
+  }
+}
+
+class _UserSuggestionRow extends ConsumerWidget {
+  final AppUser user;
+  final VoidCallback onTap;
+  const _UserSuggestionRow({required this.user, required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isFollowing = ref.watch(isFollowingProvider(user.id));
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenH, vertical: 9),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: user.avatarColor,
+              child: Text(
+                user.avatarLabel,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      height: 1.2,
+                    ),
+                  ),
+                  Text(user.handle, style: AppTypography.bodySmall),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                ref.read(followProvider.notifier).toggle(user.id);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isFollowing
+                      ? Colors.transparent
+                      : AppColors.accentPrimary,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                  border: isFollowing
+                      ? Border.all(color: const Color(0xFF3A3A3A))
+                      : null,
+                ),
+                child: Text(
+                  isFollowing ? 'Following' : 'Follow',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isFollowing
+                        ? AppColors.textPrimary
+                        : Colors.white,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PollSuggestionRow extends StatelessWidget {
+  final Poll poll;
+  final VoidCallback onTap;
+  const _PollSuggestionRow({required this.poll, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenH, vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.surfaceElevated,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.bar_chart_rounded,
+                  size: 20, color: AppColors.textSecondary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    poll.question,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                      height: 1.2,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${poll.author.handle} · ${_fmtVotes(poll.totalVotes)} votes',
+                    style: AppTypography.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right_rounded,
+                size: 16, color: AppColors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
 // Skeleton Card
 // ─────────────────────────────────────────────
 class _SkeletonCard extends StatefulWidget {
   const _SkeletonCard();
+
   @override
   State<_SkeletonCard> createState() => _SkeletonCardState();
 }
@@ -702,11 +903,12 @@ class _SkeletonCardState extends State<_SkeletonCard>
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {
-        final c = AppColors.surfaceElevated.withValues(alpha: _anim.value);
-        BoxDecoration skeletonDecoration(double radius) => BoxDecoration(
-              color: c,
-              borderRadius: BorderRadius.circular(radius),
-            );
+        final c =
+            AppColors.surfaceElevated.withValues(alpha: _anim.value);
+
+        BoxDecoration sk(double r) =>
+            BoxDecoration(color: c, borderRadius: BorderRadius.circular(r));
+
         return Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.screenH,
@@ -723,29 +925,26 @@ class _SkeletonCardState extends State<_SkeletonCard>
                         BoxDecoration(color: c, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
                 Container(
-                    width: 120, height: 9, decoration: skeletonDecoration(4.0)),
+                    width: 120, height: 9, decoration: sk(4)),
               ]),
               const SizedBox(height: 8),
               Container(
                   width: double.infinity,
                   height: 12,
-                  decoration: skeletonDecoration(6.0)),
+                  decoration: sk(6)),
               const SizedBox(height: 8),
-              Container(
-                  width: 170, height: 12, decoration: skeletonDecoration(6.0)),
+              Container(width: 170, height: 12, decoration: sk(6)),
               const SizedBox(height: 16),
               ...List.generate(
                   3,
                   (i) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
-                        child: Container(
-                            height: 48, decoration: skeletonDecoration(8.0)),
+                        child: Container(height: 48, decoration: sk(8)),
                       )),
               const SizedBox(height: 12),
               Container(height: 1, color: AppColors.borderSubtle),
               const SizedBox(height: 12),
-              Container(
-                  width: 90, height: 10, decoration: skeletonDecoration(5.0)),
+              Container(width: 90, height: 10, decoration: sk(5)),
             ],
           ),
         );
@@ -783,7 +982,9 @@ class _EmptyState extends StatelessWidget {
                   color: AppColors.surfaceElevated, shape: BoxShape.circle),
             ),
             Icon(
-              isSearch ? Icons.search_off_rounded : Icons.bar_chart_rounded,
+              isSearch
+                  ? Icons.search_off_rounded
+                  : Icons.bar_chart_rounded,
               size: AppIconSizes.empty,
               color: AppColors.textTertiary,
             ),
@@ -791,17 +992,17 @@ class _EmptyState extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(
-          isSearch ? 'No polls found' : 'Nothing here yet',
-          style:
-              AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
+          isSearch ? 'No results found' : 'Nothing here yet',
+          style: AppTypography.titleMedium
+              .copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
           isSearch
-              ? '"$query" didn\'t match any polls'
+              ? '"$query" didn\'t match anything'
               : 'Pull down to refresh',
-          style:
-              AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
+          style: AppTypography.bodyMedium
+              .copyWith(color: AppColors.textTertiary),
           textAlign: TextAlign.center,
         ),
       ],

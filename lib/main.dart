@@ -12,6 +12,7 @@ import 'screens/create_screen.dart';
 import 'screens/my_polls_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/poll_detail_screen.dart';
+import 'screens/follow_list_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +45,10 @@ class PolloraApp extends StatelessWidget {
             final pollId = settings.arguments as String;
             return MaterialPageRoute(
                 builder: (_) => PollDetailScreen(pollId: pollId));
+          case '/follow-list':
+            final mode = settings.arguments as FollowListMode;
+            return MaterialPageRoute(
+                builder: (_) => FollowListScreen(mode: mode));
           default:
             return null;
         }

@@ -10,6 +10,7 @@ import '../models/poll.dart';
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
 import '../widgets/switch_account_sheet.dart';
+import 'follow_list_screen.dart';
 import 'settings_screen.dart';
 
 class MyPollsScreen extends ConsumerStatefulWidget {
@@ -237,9 +238,23 @@ class _StatsRow extends ConsumerWidget {
             _VerticalDivider(),
             _StatCell(value: user.votesReceived, label: 'Votes'),
             _VerticalDivider(),
-            _StatCell(value: user.followersCount, label: 'Followers'),
+            _StatCell(
+              value: user.followersCount,
+              label: 'Followers',
+              onTap: () => Navigator.of(context).pushNamed(
+                '/follow-list',
+                arguments: FollowListMode.followers,
+              ),
+            ),
             _VerticalDivider(),
-            _StatCell(value: user.followingCount, label: 'Following'),
+            _StatCell(
+              value: user.followingCount,
+              label: 'Following',
+              onTap: () => Navigator.of(context).pushNamed(
+                '/follow-list',
+                arguments: FollowListMode.following,
+              ),
+            ),
           ],
         ),
       ),
@@ -271,26 +286,53 @@ String _formatStat(int n) {
 class _StatCell extends StatelessWidget {
   final int value;
   final String label;
+  final VoidCallback? onTap;
 
-  const _StatCell({required this.value, required this.label});
+  const _StatCell({
+    required this.value,
+    required this.label,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: value.toDouble()),
-        duration: const Duration(milliseconds: 900),
-        curve: Curves.easeOut,
-        builder: (_, animated, __) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _formatStat(animated.round()),
-              style: AppTypography.statValue,
-            ),
-            const SizedBox(height: 3),
-            Text(label, style: AppTypography.statLabel),
-          ],
+      child: GestureDetector(
+        onTap: onTap != null
+            ? () {
+                HapticFeedback.selectionClick();
+                onTap!();
+              }
+            : null,
+        behavior: HitTestBehavior.opaque,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: value.toDouble()),
+          duration: const Duration(milliseconds: 900),
+          curve: Curves.easeOut,
+          builder: (_, animated, __) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _formatStat(animated.round()),
+                style: AppTypography.statValue,
+              ),
+              const SizedBox(height: 3),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(label, style: AppTypography.statLabel),
+                  if (onTap != null) ...[
+                    const SizedBox(width: 2),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 11,
+                      color: AppColors.textTertiary,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

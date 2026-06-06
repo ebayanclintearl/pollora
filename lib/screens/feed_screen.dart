@@ -502,13 +502,12 @@ class _PollOptionBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.pollBar),
                   border: isVoted
                       ? Border.all(color: AppColors.accentPrimary, width: 1.5)
-                      : Border.all(color: Colors.transparent, width: 1.5),
+                      : Border.all(color: AppColors.borderDefault, width: 1),
                 ),
                 clipBehavior: Clip.hardEdge,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(color: AppColors.pollBarTrack),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: AnimatedContainer(

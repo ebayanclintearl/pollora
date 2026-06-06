@@ -211,7 +211,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     constraints: const BoxConstraints(minHeight: 44),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceInput,
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      borderRadius: BorderRadius.circular(AppRadius.input),
                     ),
                     child: TextField(
                       controller: _controller,

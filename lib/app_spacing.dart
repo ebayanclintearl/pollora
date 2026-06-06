@@ -23,7 +23,7 @@ abstract final class AppSpacing {
   // ── Semantic aliases ───────────────────────────────
 
   /// Left/right inset for full-width screen content.
-  static const double screenH     = x5;   // 20
+  static const double screenH     = x4;   // 16
 
   /// Top offset below the status bar (added to SafeArea top).
   static const double screenTop   = x5;   // 20

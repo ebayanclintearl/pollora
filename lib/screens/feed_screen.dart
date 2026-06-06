@@ -218,25 +218,19 @@ class _FeedScreenState extends State<FeedScreen> {
                   secondChild: Row(
                     children: [
                       Expanded(
-                        child: Container(
-                          height: 44,
-                          decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(AppRadius.input)),
-                          child: TextField(
-                            controller: _searchController,
-                            focusNode: _searchFocus,
-                            onChanged: (v) => setState(() => _searchQuery = v),
-                            style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: 'Search polls…',
-                              hintStyle: AppTypography.titleSmall.copyWith(color: AppColors.textTertiary),
-                              prefixIcon: Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 20),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(vertical: 12),
-                            ),
-                            cursorColor: AppColors.accentPrimary,
+                        child: TextField(
+                          controller: _searchController,
+                          focusNode: _searchFocus,
+                          onChanged: (v) => setState(() => _searchQuery = v),
+                          style: AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
+                          decoration: InputDecoration(
+                            fillColor: AppColors.surfaceElevated,
+                            hintText: 'Search polls…',
+                            hintStyle: AppTypography.titleSmall.copyWith(color: AppColors.textTertiary),
+                            prefixIcon: const Icon(Icons.search_rounded, color: AppColors.textTertiary, size: 20),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
                           ),
+                          cursorColor: AppColors.accentPrimary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -253,10 +247,12 @@ class _FeedScreenState extends State<FeedScreen> {
             // ── Content: skeleton / empty / polls ──
             if (_isLoading)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH, 100),
+                padding: const EdgeInsets.only(bottom: 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, i) => i.isOdd ? const SizedBox(height: AppSpacing.itemGap) : const _SkeletonCard(),
+                    (_, i) => i.isOdd
+                        ? Container(height: 1, color: AppColors.borderSubtle)
+                        : const _SkeletonCard(),
                     childCount: 7,
                   ),
                 ),
@@ -268,10 +264,12 @@ class _FeedScreenState extends State<FeedScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH, 100),
+                padding: const EdgeInsets.only(bottom: 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, i) => i.isOdd ? const SizedBox(height: 12) : _PollCard(poll: filtered[i ~/ 2]),
+                    (_, i) => i.isOdd
+                        ? Container(height: 1, color: AppColors.borderSubtle)
+                        : _PollCard(poll: filtered[i ~/ 2]),
                     childCount: filtered.length * 2 - 1,
                   ),
                 ),
@@ -335,11 +333,11 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
     final p = widget.poll;
     final displayCount = _votedIndex != null ? p.voteCount + 1 : p.voteCount;
 
-    return Container(
-      decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(AppRadius.card)),
-      clipBehavior: Clip.hardEdge,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.cardPad),
+    return Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenH,
+          vertical: AppSpacing.cardPad,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -347,30 +345,30 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
             Row(
               children: [
                 CircleAvatar(
-                  radius: 18, backgroundColor: p.avatarColor,
-                  child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+                  radius: 16, backgroundColor: p.avatarColor,
+                  child: Text(p.avatarLabel, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Row(
                     children: [
-                      Text(p.userName, style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w500)),
-                      const SizedBox(width: 8),
-                      Container(width: 3, height: 3, decoration: const BoxDecoration(color: AppColors.textTertiary, shape: BoxShape.circle)),
-                      const SizedBox(width: 8),
-                      Text(p.timestamp, style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary)),
+                      Text(p.userName, style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w500)),
+                      const SizedBox(width: 6),
+                      Container(width: 2, height: 2, decoration: const BoxDecoration(color: AppColors.textTertiary, shape: BoxShape.circle)),
+                      const SizedBox(width: 6),
+                      Text(p.timestamp, style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary)),
                     ],
                   ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             // ── Question ──
             Text(p.question, style: AppTypography.cardTitle),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // ── Options ──
             Builder(builder: (_) {
@@ -398,7 +396,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                       onTap: () => setState(() => _optionsExpanded = true),
                       behavior: HitTestBehavior.opaque,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(color: AppColors.accentPrimaryMuted, borderRadius: BorderRadius.circular(AppRadius.pill)),
                         child: Text('+$hidden more option${hidden > 1 ? 's' : ''}',
                             style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent)),
@@ -419,7 +417,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                 const Icon(Icons.how_to_vote_outlined, size: 16, color: AppColors.textTertiary),
                 const SizedBox(width: 4),
                 Text('${_formatVotes(displayCount)} votes',
-                    style: AppTypography.labelMedium.copyWith(color: AppColors.textSecondary)),
+                    style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.w400)),
                 const Spacer(),
                 // Comments
                 GestureDetector(
@@ -438,7 +436,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                     padding: const EdgeInsets.all(10),
                     child: Row(
                       children: [
-                        const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: AppColors.textTertiary),
+                        const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.textTertiary),
                         const SizedBox(width: 4),
                         Text('${widget.poll.commentCount}', style: AppTypography.labelMedium.copyWith(color: AppColors.textTertiary)),
                       ],
@@ -467,14 +465,13 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                   behavior: HitTestBehavior.opaque,
                   child: const Padding(
                     padding: EdgeInsets.all(10),
-                    child: Icon(Icons.ios_share_rounded, size: 20, color: AppColors.textTertiary),
+                    child: Icon(Icons.ios_share_rounded, size: 18, color: AppColors.textTertiary),
                   ),
                 ),
               ],
             ),
           ],
         ),
-      ),
     );
   }
 }
@@ -535,8 +532,8 @@ class _PollOptionBar extends StatelessWidget {
                           if (hasVoted) ...[
                             if (isVoted)
                               const Padding(
-                                padding: EdgeInsets.only(right: 5),
-                                child: Icon(Icons.check_circle_rounded, size: 15, color: Colors.white),
+                                padding: EdgeInsets.only(right: 4),
+                                child: Icon(Icons.check_circle_rounded, size: 16, color: Colors.white),
                               ),
                             Text('${option.percentage}%',
                                 style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w700, color: AppColors.textPrimary, letterSpacing: 0)),
@@ -582,22 +579,20 @@ class _SkeletonCardState extends State<_SkeletonCard> with SingleTickerProviderS
       builder: (_, __) {
         final c = AppColors.surfaceElevated.withValues(alpha: _anim.value);
         final r = (v) => BoxDecoration(color: c, borderRadius: BorderRadius.circular(v));
-        return Container(
-          decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(AppRadius.card)),
-          padding: const EdgeInsets.all(AppSpacing.cardPad),
+        return Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenH,
+            vertical: AppSpacing.cardPad,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(children: [
-                Container(width: 36, height: 36, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
+                Container(width: 32, height: 32, decoration: BoxDecoration(color: c, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Container(width: 110, height: 10, decoration: r(5.0)),
-                  const SizedBox(height: 4),
-                  Container(width: 65, height: 8, decoration: r(4.0)),
-                ]),
+                Container(width: 120, height: 9, decoration: r(4.0)),
               ]),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Container(width: double.infinity, height: 12, decoration: r(6.0)),
               const SizedBox(height: 8),
               Container(width: 170, height: 12, decoration: r(6.0)),

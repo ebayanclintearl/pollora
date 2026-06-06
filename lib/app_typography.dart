@@ -47,12 +47,12 @@ abstract final class AppTypography {
   // Title
   // ─────────────────────────────────────────────
 
-  /// Title Medium — 16sp w600 — card headlines (poll question)
+  /// Title Medium — 18sp w700 — card headlines (poll question)
   static const TextStyle cardTitle = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    height: 1.4,
-    letterSpacing: 0,
+    fontSize: 18,
+    fontWeight: FontWeight.w700,
+    height: 1.3,
+    letterSpacing: -0.2,
     color: AppColors.textPrimary,
   );
 

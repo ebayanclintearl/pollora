@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../widgets/comments_sheet.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
+import '../app_spacing.dart';
 import '../app_typography.dart';
 
 // ─────────────────────────────────────────────
@@ -192,7 +194,7 @@ class _FeedScreenState extends State<FeedScreen> {
             // ── Header ──
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(20, top + 20, 20, 20),
+                padding: EdgeInsets.fromLTRB(AppSpacing.screenH, top + AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.screenTop),
                 child: AnimatedCrossFade(
                   duration: const Duration(milliseconds: 220),
                   crossFadeState: _searchActive
@@ -218,7 +220,7 @@ class _FeedScreenState extends State<FeedScreen> {
                       Expanded(
                         child: Container(
                           height: 44,
-                          decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
+                          decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(AppRadius.input)),
                           child: TextField(
                             controller: _searchController,
                             focusNode: _searchFocus,
@@ -251,10 +253,10 @@ class _FeedScreenState extends State<FeedScreen> {
             // ── Content: skeleton / empty / polls ──
             if (_isLoading)
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH, 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
-                    (_, i) => i.isOdd ? const SizedBox(height: 12) : const _SkeletonCard(),
+                    (_, i) => i.isOdd ? const SizedBox(height: AppSpacing.itemGap) : const _SkeletonCard(),
                     childCount: 7,
                   ),
                 ),
@@ -266,7 +268,7 @@ class _FeedScreenState extends State<FeedScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH, 100),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (_, i) => i.isOdd ? const SizedBox(height: 12) : _PollCard(poll: filtered[i ~/ 2]),
@@ -334,10 +336,10 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
     final displayCount = _votedIndex != null ? p.voteCount + 1 : p.voteCount;
 
     return Container(
-      decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(AppRadius.card)),
       clipBehavior: Clip.hardEdge,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.cardPad),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -397,7 +399,7 @@ class _PollCardState extends State<_PollCard> with SingleTickerProviderStateMixi
                       behavior: HitTestBehavior.opaque,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        decoration: BoxDecoration(color: AppColors.accentPrimaryMuted, borderRadius: BorderRadius.circular(999)),
+                        decoration: BoxDecoration(color: AppColors.accentPrimaryMuted, borderRadius: BorderRadius.circular(AppRadius.pill)),
                         child: Text('+$hidden more option${hidden > 1 ? 's' : ''}',
                             style: AppTypography.labelMedium.copyWith(color: AppColors.textAccent)),
                       ),
@@ -495,9 +497,9 @@ class _PollOptionBar extends StatelessWidget {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 height: 52,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(AppRadius.pollBar)),
                 foregroundDecoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.pollBar),
                   border: isVoted
                       ? Border.all(color: AppColors.accentPrimary, width: 1.5)
                       : Border.all(color: Colors.transparent, width: 1.5),
@@ -582,8 +584,8 @@ class _SkeletonCardState extends State<_SkeletonCard> with SingleTickerProviderS
         final c = AppColors.surfaceElevated.withValues(alpha: _anim.value);
         final r = (v) => BoxDecoration(color: c, borderRadius: BorderRadius.circular(v));
         return Container(
-          decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(16)),
-          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(color: AppColors.surfaceCard, borderRadius: BorderRadius.circular(AppRadius.card)),
+          padding: const EdgeInsets.all(AppSpacing.cardPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

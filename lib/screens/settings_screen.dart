@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
+import '../app_spacing.dart';
 import '../app_typography.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -22,7 +24,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.x3),
               child: Row(
                 children: [
                   GestureDetector(
@@ -47,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // ── Scrollable body ──
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 0, AppSpacing.screenH, AppSpacing.x8),
                 children: [
                   // ── Profile row ──
                   _ProfileRow(),
@@ -133,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       height: 52,
                       decoration: BoxDecoration(
                         color: AppColors.textDestructive.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.card),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -178,10 +180,10 @@ class _ProfileRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.cardPad),
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Row(
         children: [
@@ -254,7 +256,7 @@ class _SettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         color: AppColors.surfaceCard,
         child: Column(children: children),

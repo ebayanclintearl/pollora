@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
+import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../widgets/switch_account_sheet.dart';
 import 'settings_screen.dart';
@@ -37,7 +39,7 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
           // ── Header ──
           SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(20, top + 20, 20, 20),
+              padding: EdgeInsets.fromLTRB(AppSpacing.screenH, top + AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.screenTop),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -187,7 +189,7 @@ class _StatsBar extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceCard,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: const IntrinsicHeight(
@@ -276,7 +278,7 @@ class _SegmentedControl extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.segment),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
@@ -320,7 +322,7 @@ class _Segment extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           decoration: BoxDecoration(
             color: isSelected ? AppColors.accentPrimary : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Row(
@@ -391,7 +393,7 @@ class _PollListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         color: AppColors.surfaceCard,
         child: Column(
@@ -440,7 +442,7 @@ class _FavoritesCard extends StatelessWidget {
       return Container(
         decoration: BoxDecoration(
           color: AppColors.surfaceCard,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: Column(
@@ -463,7 +465,7 @@ class _FavoritesCard extends StatelessWidget {
     }
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       child: Container(
         color: AppColors.surfaceCard,
         child: Column(

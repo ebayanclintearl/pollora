@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
 import '../app_typography.dart';
 
 class CommentsSheet extends StatefulWidget {
@@ -112,7 +113,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
             margin: const EdgeInsets.only(top: 10, bottom: 14),
             decoration: BoxDecoration(
               color: const Color(0xFF444444),
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
           ),
 
@@ -127,7 +128,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.accentPrimaryMuted,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     '${_comments.length}',
@@ -210,7 +211,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
                     constraints: const BoxConstraints(minHeight: 44),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceInput,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                     child: TextField(
                       controller: _controller,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
 import '../app_typography.dart';
 
 class SwitchAccountSheet extends StatefulWidget {
@@ -53,7 +54,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                 // Drag handle
                 Container(
                   width: 36, height: 4,
-                  decoration: BoxDecoration(color: const Color(0xFF5A5A5A), borderRadius: BorderRadius.circular(999)),
+                  decoration: BoxDecoration(color: const Color(0xFF5A5A5A), borderRadius: BorderRadius.circular(AppRadius.pill)),
                 ),
                 const SizedBox(height: 16),
 
@@ -102,7 +103,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                       backgroundColor: AppColors.accentPrimary,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
                     ),
                     child: Text(
                       'Switch to ${selected.name.split(' ').first}',
@@ -117,7 +118,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.surfaceElevated,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.card),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
                   clipBehavior: Clip.antiAlias,
@@ -184,7 +185,7 @@ class _AccountRow extends StatelessWidget {
         curve: Curves.easeOutCubic,
         decoration: BoxDecoration(
           color: AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           border: Border.all(
             color: isSelected ? AppColors.accentPrimaryBorder : AppColors.borderSubtle,
             width: isSelected ? 1.5 : 0.8,

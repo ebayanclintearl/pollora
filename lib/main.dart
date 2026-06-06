@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_radius.dart';
+import 'app_theme.dart';
 import 'app_typography.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -29,66 +30,7 @@ class PolloraApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pollora',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: const ColorScheme.dark(
-          // Primary — indigo/purple accent
-          primary:              AppColors.accentPrimary,     // #5B4FE8
-          onPrimary:            Color(0xFFFFFFFF),
-          primaryContainer:     Color(0xFF2D2780),
-          onPrimaryContainer:   Color(0xFFCCC8FF),
-          // Secondary — lighter purple used for nav & badges
-          secondary:            AppColors.navActive,         // #8F86FF
-          onSecondary:          Color(0xFFFFFFFF),
-          secondaryContainer:   Color(0xFF26228A),
-          onSecondaryContainer: AppColors.textAccent,
-          // Tertiary — success green
-          tertiary:             AppColors.textSuccess,       // #6FCF97
-          onTertiary:           Color(0xFF003919),
-          tertiaryContainer:    Color(0xFF005228),
-          onTertiaryContainer:  Color(0xFF8DFCB4),
-          // Error
-          error:                AppColors.textDestructive,   // #FF6B6B
-          onError:              Color(0xFFFFFFFF),
-          errorContainer:       Color(0xFF8B0000),
-          onErrorContainer:     Color(0xFFFFDAD6),
-          // Surface & background roles
-          surface:              AppColors.surfaceCard,       // #1C1C1C
-          onSurface:            AppColors.textPrimary,       // #FFFFFF
-          surfaceVariant:       AppColors.surfaceElevated,   // #222222
-          onSurfaceVariant:     AppColors.textSecondary,     // #CCCCCC
-          // Borders & overlays
-          outline:              AppColors.borderDefault,     // #2E2E2E
-          outlineVariant:       AppColors.borderSubtle,      // #1E1E1E
-          scrim:                Color(0xFF000000),
-          // Inverse (used by SnackBar, Tooltip)
-          inverseSurface:       Color(0xFFF0EFFF),
-          onInverseSurface:     Color(0xFF1A1A2E),
-          inversePrimary:       Color(0xFF5B4FE8),
-          surfaceTint:          AppColors.accentPrimary,
-        ),
-        textTheme: GoogleFonts.interTextTheme(
-          const TextTheme(
-            displayLarge:  TextStyle(color: AppColors.textPrimary),
-            displayMedium: TextStyle(color: AppColors.textPrimary),
-            displaySmall:  TextStyle(color: AppColors.textPrimary),
-            headlineLarge: TextStyle(color: AppColors.textPrimary),
-            headlineMedium:TextStyle(color: AppColors.textPrimary),
-            headlineSmall: TextStyle(color: AppColors.textPrimary),
-            titleLarge:    TextStyle(color: AppColors.textPrimary),
-            titleMedium:   TextStyle(color: AppColors.textPrimary),
-            titleSmall:    TextStyle(color: AppColors.textPrimary),
-            bodyLarge:     TextStyle(color: AppColors.textPrimary),
-            bodyMedium:    TextStyle(color: AppColors.textPrimary),
-            bodySmall:     TextStyle(color: AppColors.textSecondary),
-            labelLarge:    TextStyle(color: AppColors.textPrimary),
-            labelMedium:   TextStyle(color: AppColors.textSecondary),
-            labelSmall:    TextStyle(color: AppColors.textTertiary),
-          ),
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.dark,
       home: const _AppEntry(),
     );
   }
@@ -182,7 +124,7 @@ class _PolloraBottomNav extends StatelessWidget {
         ),
       ),
       child: SizedBox(
-        height: 76 + bottom,
+        height: 76 + bottom,   // 76 = 2×AppSpacing.x10 − 4 (icon 24 + label 12 + gaps)
         child: Padding(
           padding: EdgeInsets.only(bottom: bottom),
           child: Row(
@@ -249,7 +191,7 @@ class _NavTab extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               decoration: BoxDecoration(
                 color: isActive ? AppColors.surfaceElevated : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Icon(
                 isActive ? activeIcon : icon,

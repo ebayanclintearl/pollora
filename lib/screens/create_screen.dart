@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
+import '../app_spacing.dart';
 import '../app_typography.dart';
 
 class CreateScreen extends StatefulWidget {
@@ -50,7 +52,7 @@ class _CreateScreenState extends State<CreateScreen> {
           children: [
             // Header — 44dp height matches Feed / Profile icon-button rows
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.screenTop),
               child: SizedBox(
                 height: 44,
                 child: Align(
@@ -62,7 +64,7 @@ class _CreateScreenState extends State<CreateScreen> {
 
             // Question input — large, no label, always visible
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH),
               child: TextField(
                 controller: _questionController,
                 minLines: 1,
@@ -96,7 +98,7 @@ class _CreateScreenState extends State<CreateScreen> {
 
             // Options section header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH),
               child: Row(
                 children: [
                   const Text('OPTIONS', style: AppTypography.labelSmall),
@@ -146,7 +148,7 @@ class _CreateScreenState extends State<CreateScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.button),
                 ),
               ),
               child: Text(
@@ -204,7 +206,7 @@ class _OptionRow extends StatelessWidget {
           height: 28,
           decoration: BoxDecoration(
             color: AppColors.surfaceElevated,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           alignment: Alignment.center,
           child: Text(
@@ -223,7 +225,7 @@ class _OptionRow extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               color: AppColors.surfaceInput,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.button),
             ),
             child: TextField(
               controller: controller,
@@ -282,7 +284,7 @@ class _AddOptionRow extends StatelessWidget {
               height: 28,
               decoration: BoxDecoration(
                 color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: const Icon(Icons.add_rounded, color: AppColors.textTertiary, size: 16),
             ),

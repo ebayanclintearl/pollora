@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_radius.dart';
 import '../app_typography.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -272,7 +273,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           color: active
                               ? AppColors.accentPrimary
                               : AppColors.surfaceElevated,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                         ),
                       );
                     }),
@@ -291,7 +292,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         elevation: 0,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.card),
                         ),
                       ),
                       child: AnimatedSwitcher(
@@ -558,7 +559,7 @@ class _ResultsIllustration extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 color: AppColors.surfaceElevated,
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -615,7 +616,7 @@ class _ChartBar extends StatelessWidget {
           height: 52,
           decoration: BoxDecoration(
             color: AppColors.pollBarTrack,
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(AppRadius.card),
           ),
           clipBehavior: Clip.hardEdge,
           child: Stack(

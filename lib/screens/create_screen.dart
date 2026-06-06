@@ -93,6 +93,10 @@ class _CreateScreenState extends State<CreateScreen> {
     });
   }
 
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   void _addOption() {
     if (_optionControllers.length >= _maxOptions) return;
     final ctrl = TextEditingController()..addListener(_updatePublishState);
@@ -123,10 +127,8 @@ class _CreateScreenState extends State<CreateScreen> {
   void _onOptionSubmitted(int index) {
     if (index < _optionControllers.length - 1) {
       _optionFocuses[index + 1].requestFocus();
-    } else if (_optionControllers.length < _maxOptions) {
-      _addOption();
     } else {
-      _optionFocuses[index].unfocus();
+      _dismissKeyboard();
     }
   }
 
@@ -135,23 +137,27 @@ class _CreateScreenState extends State<CreateScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            _buildProgress(),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildStep1(),
-                  _buildStep2(),
-                ],
+      body: GestureDetector(
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.translucent,
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildProgress(),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildStep1(),
+                    _buildStep2(),
+                  ],
+                ),
               ),
-            ),
-            _buildBottomBar(),
-          ],
+              _buildBottomBar(),
+            ],
+          ),
         ),
       ),
     );
@@ -254,8 +260,9 @@ class _CreateScreenState extends State<CreateScreen> {
             minLines: 3,
             maxLines: 6,
             maxLength: 120,
-            textInputAction: TextInputAction.next,
-            onSubmitted: (_) => _goToStep2(),
+            textInputAction: TextInputAction.done,
+            onTapOutside: (_) => _dismissKeyboard(),
+            onSubmitted: (_) => _dismissKeyboard(),
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w600,
@@ -379,7 +386,6 @@ class _CreateScreenState extends State<CreateScreen> {
         focusNode: _optionFocuses[i],
         canRemove: i >= 2,
         isLast: i == _optionControllers.length - 1,
-        canAddMore: _optionControllers.length < _maxOptions,
         onRemove: () => _removeOption(i),
         onSubmitted: () => _onOptionSubmitted(i),
       ));
@@ -419,7 +425,6 @@ class _OptionRow extends StatelessWidget {
   final FocusNode focusNode;
   final bool canRemove;
   final bool isLast;
-  final bool canAddMore;
   final VoidCallback onRemove;
   final VoidCallback onSubmitted;
 
@@ -429,7 +434,6 @@ class _OptionRow extends StatelessWidget {
     required this.focusNode,
     required this.canRemove,
     required this.isLast,
-    required this.canAddMore,
     required this.onRemove,
     required this.onSubmitted,
   });
@@ -462,9 +466,9 @@ class _OptionRow extends StatelessWidget {
             focusNode: focusNode,
             maxLines: 1,
             maxLength: 40,
-            textInputAction: isLast && !canAddMore
-                ? TextInputAction.done
-                : TextInputAction.next,
+            textInputAction:
+                isLast ? TextInputAction.done : TextInputAction.next,
+            onTapOutside: (_) => FocusScope.of(context).unfocus(),
             onSubmitted: (_) => onSubmitted(),
             style:
                 AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),

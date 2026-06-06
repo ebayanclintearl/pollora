@@ -47,17 +47,13 @@ class _MyPollsScreenState extends State<MyPollsScreen> {
                       MaterialPageRoute(builder: (_) => const SettingsScreen()),
                     ),
                     behavior: HitTestBehavior.opaque,
-                    child: Container(
+                    child: const SizedBox(
                       width: 44,
                       height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.settings_outlined,
                         color: AppColors.textSecondary,
-                        size: 20,
+                        size: 24,
                       ),
                     ),
                   ),

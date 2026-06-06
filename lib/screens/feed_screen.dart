@@ -206,10 +206,9 @@ class _FeedScreenState extends State<FeedScreen> {
                       GestureDetector(
                         onTap: _activateSearch,
                         behavior: HitTestBehavior.opaque,
-                        child: Container(
+                        child: const SizedBox(
                           width: 44, height: 44,
-                          decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
-                          child: const Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 20),
+                          child: Icon(Icons.search_rounded, color: AppColors.textSecondary, size: 24),
                         ),
                       ),
                     ],

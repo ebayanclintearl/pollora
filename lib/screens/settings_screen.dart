@@ -22,27 +22,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.of(context).pop(),
                     behavior: HitTestBehavior.opaque,
-                    child: Container(
+                    child: const SizedBox(
                       width: 44,
                       height: 44,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceElevated,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new_rounded,
                         color: AppColors.textSecondary,
-                        size: 20,
+                        size: 24,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   const Text('Settings', style: AppTypography.screenTitle),
                 ],
               ),
@@ -55,7 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   // ── Profile row ──
                   _ProfileRow(),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
 
                   // ── Account ──
                   const _SectionLabel('Account'),
@@ -68,7 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // ── Preferences ──
                   const _SectionLabel('Preferences'),
@@ -83,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // ── Support ──
                   const _SectionLabel('Support'),
@@ -108,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
 
                   // ── Legal ──
                   const _SectionLabel('Legal'),
@@ -127,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
                   // ── Sign Out — standalone destructive button ──
                   GestureDetector(
@@ -156,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
 
                   // ── App version ──
                   const Center(

@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app_colors.dart';
-import 'app_icon_sizes.dart';
-import 'app_radius.dart';
 import 'app_theme.dart';
-import 'app_typography.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/feed_screen.dart';
@@ -118,20 +115,17 @@ class _PolloraBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.navBackground,
         border: Border(
-          top: BorderSide(color: AppColors.borderSubtle, width: 0.5),
+          top: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.6), width: 0.5),
         ),
       ),
       child: SizedBox(
-        height: 76 +
-            bottom, // 76 = 2×AppSpacing.x10 − 4 (icon 24 + label 12 + gaps)
+        height: 58 + bottom,
         child: Padding(
           padding: EdgeInsets.only(bottom: bottom),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _NavTab(
                 index: 0,
@@ -179,35 +173,30 @@ class _NavTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isActive = index == currentIndex;
 
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 80,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTap(index),
+        behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-              decoration: BoxDecoration(
-                color:
-                    isActive ? AppColors.surfaceElevated : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
               child: Icon(
                 isActive ? activeIcon : icon,
-                size: AppIconSizes.nav,
+                key: ValueKey(isActive),
+                size: 24,
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
-              style: AppTypography.labelMedium.copyWith(
+              duration: const Duration(milliseconds: 180),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? AppColors.navActive : AppColors.navInactive,
-                fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                height: 1,
               ),
               child: Text(label),
             ),
@@ -228,24 +217,22 @@ class _CreateFAB extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: AppColors.accentPrimary,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accentPrimary.withValues(alpha: 0.45),
-              blurRadius: 18,
-              offset: const Offset(0, 4),
+      child: SizedBox(
+        width: 72,
+        child: Center(
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: AppColors.accentPrimary,
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-        child: const Icon(
-          Icons.add_rounded,
-          color: Colors.white,
-          size: AppIconSizes.nav,
+            child: const Icon(
+              Icons.add_rounded,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
         ),
       ),
     );

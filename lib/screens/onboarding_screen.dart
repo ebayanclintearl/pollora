@@ -119,18 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _onPageScroll() {
     if (!_pageCtrl.hasClients) return;
     final pos = _pageCtrl.page ?? 0;
-
-    // Fully settled on page 1
-    if ((pos - 1.0).abs() < 0.005) {
-      if (!_barsPlayed) {
-        _barsPlayed = true;
-        Future.delayed(const Duration(milliseconds: 160), () {
-          if (mounted && _currentPage == 1) _barsCtrl.forward(from: 0);
-        });
-      }
-    }
-
-    // Moved away from page 1 — reset so bars replay on next visit
+    // Reset bars when user swipes away from page 1 so they replay on re-visit
     if ((pos - 1.0).abs() > 0.4 && _barsPlayed) {
       _barsPlayed = false;
       _barsCtrl.reset();
@@ -148,6 +137,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   void _onPageChanged(int page) {
     setState(() => _currentPage = page);
     _contentCtrl.forward(from: 0);
+    // Trigger bar animation directly when landing on page 1 — no scroll-position polling needed
+    if (page == 1 && !_barsPlayed) {
+      _barsPlayed = true;
+      _barsCtrl.forward(from: 0);
+    }
   }
 
   void _nextPage() {
@@ -429,7 +423,7 @@ class _AskIllustration extends StatelessWidget {
             left: 18,
             child: _OptionBubble(
               label: 'A',
-              color: Color(0xFF4A9D6F),
+              color: Color(0xFF5B4FE8),
             ),
           ),
           // Option bubble — top right
@@ -438,7 +432,7 @@ class _AskIllustration extends StatelessWidget {
             right: 18,
             child: _OptionBubble(
               label: 'B',
-              color: Color(0xFFE07B2A),
+              color: Color(0xFF7B6FFF),
             ),
           ),
           // Option bubble — bottom center
@@ -446,7 +440,7 @@ class _AskIllustration extends StatelessWidget {
             bottom: 22,
             child: _OptionBubble(
               label: 'C',
-              color: Color(0xFF5B7FD6),
+              color: Color(0xFF9D94FF),
             ),
           ),
 
@@ -694,14 +688,14 @@ class _DecisionIllustration extends StatelessWidget {
     const size = Size(252, 252);
     final nodes = _nodePositions(size);
 
-    // Distinct muted colors for each person node
+    // Purple family — cohesive single-accent illustrations
     const nodeColors = [
-      Color(0xFF4A9D6F),
-      Color(0xFFE07B2A),
-      Color(0xFF5B7FD6),
-      Color(0xFF9B59B6),
-      Color(0xFFE74C6F),
-      Color(0xFF2EADB5),
+      Color(0xFF5B4FE8),
+      Color(0xFF6A5EF0),
+      Color(0xFF7B6FFF),
+      Color(0xFF8C80FF),
+      Color(0xFF9D94FF),
+      Color(0xFF6658EB),
     ];
 
     return SizedBox(

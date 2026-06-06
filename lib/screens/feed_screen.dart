@@ -601,17 +601,17 @@ class _PollOptionBar extends StatelessWidget {
         final fillWidth = constraints.maxWidth * (option.percentage / 100);
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          height: 52,
+          height: 48,
           decoration: BoxDecoration(
             color: AppColors.pollBarTrack,
             borderRadius: BorderRadius.circular(AppRadius.pollBar),
           ),
-          foregroundDecoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.pollBar),
-            border: isVoted
-                ? Border.all(color: AppColors.accentPrimary, width: 1.5)
-                : Border.all(color: AppColors.borderDefault, width: 1),
-          ),
+          foregroundDecoration: isVoted
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.pollBar),
+                  border: Border.all(color: AppColors.accentPrimary, width: 1.5),
+                )
+              : null,
           clipBehavior: Clip.hardEdge,
           child: Stack(
             fit: StackFit.expand,
@@ -619,10 +619,10 @@ class _PollOptionBar extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 380),
-                  curve: Curves.easeOut,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOutCubic,
                   width: hasVoted ? fillWidth : 0,
-                  height: 52,
+                  height: 48,
                   color: isVoted
                       ? AppColors.pollBarLeading
                       : AppColors.pollBarOther,
@@ -739,7 +739,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
                   (i) => Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Container(
-                            height: 52, decoration: skeletonDecoration(8.0)),
+                            height: 48, decoration: skeletonDecoration(8.0)),
                       )),
               const SizedBox(height: 12),
               Container(height: 1, color: AppColors.borderSubtle),

@@ -264,18 +264,18 @@ class _CreateScreenState extends State<CreateScreen> {
             onTapOutside: (_) => _dismissKeyboard(),
             onSubmitted: (_) => _dismissKeyboard(),
             style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontSize: 19,
+              fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
-              height: 1.35,
+              height: 1.45,
             ),
             decoration: const InputDecoration(
               hintText: 'Ask your question…',
               hintStyle: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w600,
+                fontSize: 19,
+                fontWeight: FontWeight.w500,
                 color: AppColors.textPlaceholder,
-                height: 1.35,
+                height: 1.45,
               ),
               counterText: '',
               contentPadding:

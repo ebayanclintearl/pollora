@@ -31,6 +31,8 @@ class Poll {
   final String? votedOptionId;
   // Non-null = this is a reshared copy; holds the user who shared it
   final AppUser? sharedBy;
+  // Optional cover image — local file path (picked from gallery)
+  final String? coverImagePath;
 
   const Poll({
     required this.id,
@@ -43,6 +45,7 @@ class Poll {
     this.isFavorited = false,
     this.votedOptionId,
     this.sharedBy,
+    this.coverImagePath,
   });
 
   int get totalVotes => options.fold(0, (sum, o) => sum + o.votes);
@@ -64,6 +67,7 @@ class Poll {
     int? commentCount,
     int? shareCount,
     AppUser? sharedBy,
+    String? coverImagePath,
   }) =>
       Poll(
         id: id,
@@ -76,5 +80,6 @@ class Poll {
         isFavorited: isFavorited ?? this.isFavorited,
         votedOptionId: votedOptionId ?? this.votedOptionId,
         sharedBy: sharedBy ?? this.sharedBy,
+        coverImagePath: coverImagePath ?? this.coverImagePath,
       );
 }

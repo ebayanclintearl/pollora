@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -432,6 +433,21 @@ class _PollCardState extends ConsumerState<_PollCard>
 
           // ── Question ─────────────────────────
           Text(p.question, style: AppTypography.cardTitle),
+
+          // ── Cover image (optional) ────────────
+          if (p.coverImagePath != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.file(
+                  File(p.coverImagePath!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 16),
 

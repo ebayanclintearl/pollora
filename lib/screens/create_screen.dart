@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -34,6 +36,9 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     TextEditingController(),
   ];
   final List<FocusNode> _optionFocuses = [FocusNode(), FocusNode()];
+
+  String? _coverImagePath;
+  final _imagePicker = ImagePicker();
 
   bool _questionFilled = false;
   bool _canPublish = false;
@@ -127,6 +132,21 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     _updatePublishState();
   }
 
+  Future<void> _pickCoverImage() async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked != null && mounted) {
+      setState(() => _coverImagePath = picked.path);
+    }
+  }
+
+  void _removeCoverImage() {
+    HapticFeedback.lightImpact();
+    setState(() => _coverImagePath = null);
+  }
+
   void _onOptionSubmitted(int index) {
     if (index < _optionControllers.length - 1) {
       _optionFocuses[index + 1].requestFocus();
@@ -163,6 +183,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
       question: _questionController.text.trim(),
       options: options,
       createdAt: now,
+      coverImagePath: _coverImagePath,
     );
 
     ref.read(pollsProvider.notifier).addPoll(poll);
@@ -197,6 +218,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
       _questionFilled = false;
       _canPublish = false;
       _publishing = false;
+      _coverImagePath = null;
     });
   }
 
@@ -359,6 +381,14 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                 style: AppTypography.labelSmall,
               ),
             ),
+          ),
+          const SizedBox(height: 28),
+          const Text('COVER IMAGE', style: AppTypography.labelSmall),
+          const SizedBox(height: 12),
+          _CoverImagePicker(
+            imagePath: _coverImagePath,
+            onPick: _pickCoverImage,
+            onRemove: _removeCoverImage,
           ),
         ],
       ),
@@ -579,6 +609,128 @@ class _OptionRow extends StatelessWidget {
           )
         else
           const SizedBox(width: AppIconSizes.touchTarget),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Cover image picker  (16:9, optional)
+// ─────────────────────────────────────────────
+class _CoverImagePicker extends StatelessWidget {
+  final String? imagePath;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  const _CoverImagePicker({
+    required this.imagePath,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: imagePath != null
+          ? _Preview(imagePath: imagePath!, onRemove: onRemove)
+          : _Placeholder(onPick: onPick),
+    );
+  }
+}
+
+class _Placeholder extends StatelessWidget {
+  final VoidCallback onPick;
+  const _Placeholder({required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPick,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(
+            color: AppColors.borderDefault,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.accentPrimaryMuted,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.add_photo_alternate_outlined,
+                color: AppColors.textAccent,
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Add cover image',
+              style: AppTypography.titleSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Optional · 16:9',
+              style: AppTypography.labelSmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Preview extends StatelessWidget {
+  final String imagePath;
+  final VoidCallback onRemove;
+  const _Preview({required this.imagePath, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          child: Image.file(
+            File(imagePath),
+            fit: BoxFit.cover,
+          ),
+        ),
+        // Remove button top-right
+        Positioned(
+          top: 8,
+          right: 8,
+          child: GestureDetector(
+            onTap: onRemove,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

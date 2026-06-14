@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../models/poll.dart';
+import '../providers/polls_provider.dart';
+import '../providers/users_provider.dart';
 
-class CreateScreen extends StatefulWidget {
-  const CreateScreen({super.key});
+class CreateScreen extends ConsumerStatefulWidget {
+  /// Called after a poll is published — used by the shell to switch to the feed.
+  final VoidCallback? onPublished;
+
+  const CreateScreen({super.key, this.onPublished});
 
   @override
-  State<CreateScreen> createState() => _CreateScreenState();
+  ConsumerState<CreateScreen> createState() => _CreateScreenState();
 }
 
-class _CreateScreenState extends State<CreateScreen> {
+class _CreateScreenState extends ConsumerState<CreateScreen> {
   static const int _maxOptions = 6;
 
   final _pageController = PageController();
@@ -30,6 +37,7 @@ class _CreateScreenState extends State<CreateScreen> {
 
   bool _questionFilled = false;
   bool _canPublish = false;
+  bool _publishing = false;
 
   @override
   void initState() {
@@ -38,6 +46,7 @@ class _CreateScreenState extends State<CreateScreen> {
     for (final c in _optionControllers) {
       c.addListener(_updatePublishState);
     }
+
   }
 
   @override
@@ -45,12 +54,8 @@ class _CreateScreenState extends State<CreateScreen> {
     _pageController.dispose();
     _questionController.dispose();
     _questionFocus.dispose();
-    for (final c in _optionControllers) {
-      c.dispose();
-    }
-    for (final f in _optionFocuses) {
-      f.dispose();
-    }
+    for (final c in _optionControllers) { c.dispose(); }
+    for (final f in _optionFocuses) { f.dispose(); }
     super.dispose();
   }
 
@@ -82,9 +87,7 @@ class _CreateScreenState extends State<CreateScreen> {
 
   void _goToStep1() {
     HapticFeedback.lightImpact();
-    for (final f in _optionFocuses) {
-      f.unfocus();
-    }
+    for (final f in _optionFocuses) { f.unfocus(); }
     _pageController.animateToPage(0,
         duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
     setState(() => _currentStep = 0);
@@ -132,6 +135,72 @@ class _CreateScreenState extends State<CreateScreen> {
     }
   }
 
+  // ── Publish ──────────────────────────────────
+  Future<void> _publishPoll() async {
+    if (!_canPublish || _publishing) return;
+    _dismissKeyboard();
+    setState(() => _publishing = true);
+    HapticFeedback.mediumImpact();
+
+    // Build options — only non-empty entries, preserving order.
+    final now = DateTime.now();
+    final ts = now.millisecondsSinceEpoch;
+    final options = _optionControllers
+        .where((c) => c.text.trim().isNotEmpty)
+        .toList()
+        .asMap()
+        .entries
+        .map((e) => PollOption(
+              id: 'opt_${ts}_${e.key}',
+              text: e.value.text.trim(),
+              votes: 0,
+            ))
+        .toList();
+
+    final poll = Poll(
+      id: 'poll_$ts',
+      author: currentUser,
+      question: _questionController.text.trim(),
+      options: options,
+      createdAt: now,
+    );
+
+    ref.read(pollsProvider.notifier).addPoll(poll);
+
+    // Brief pause so the user sees the button change.
+    await Future.delayed(const Duration(milliseconds: 420));
+    if (!mounted) return;
+
+    _resetForm();
+
+    // Switch to feed tab.
+    widget.onPublished?.call();
+  }
+
+  void _resetForm() {
+    _questionController.clear();
+
+    // Dispose any dynamically-added option fields (index ≥ 2).
+    for (int i = _optionControllers.length - 1; i >= 2; i--) {
+      _optionControllers[i].dispose();
+      _optionFocuses[i].dispose();
+      _optionControllers.removeAt(i);
+      _optionFocuses.removeAt(i);
+    }
+
+    // Clear the two required fields.
+    for (final c in _optionControllers) { c.clear(); }
+
+    _pageController.jumpToPage(0);
+    setState(() {
+      _currentStep = 0;
+      _questionFilled = false;
+      _canPublish = false;
+      _publishing = false;
+    });
+  }
+
+  // ── Build ──────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -171,7 +240,6 @@ class _CreateScreenState extends State<CreateScreen> {
         height: AppIconSizes.touchTarget,
         child: Row(
           children: [
-            // Back button — only on step 2
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 180),
               child: _currentStep == 1
@@ -193,7 +261,6 @@ class _CreateScreenState extends State<CreateScreen> {
                       height: AppIconSizes.touchTarget),
             ),
             const SizedBox(width: 4),
-            // Title
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
@@ -207,7 +274,6 @@ class _CreateScreenState extends State<CreateScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            // Step dots
             SizedBox(
               width: AppIconSizes.touchTarget,
               child: Row(
@@ -303,7 +369,6 @@ class _CreateScreenState extends State<CreateScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Options label
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH),
           child: Row(
@@ -318,7 +383,6 @@ class _CreateScreenState extends State<CreateScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        // Options
         Expanded(
           child: ListView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -337,6 +401,9 @@ class _CreateScreenState extends State<CreateScreen> {
   }
 
   Widget _buildBottomBar() {
+    final isStep2 = _currentStep == 1;
+    final enabled = isStep2 ? _canPublish : _questionFilled;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(
           AppSpacing.screenH, 10, AppSpacing.screenH, 10),
@@ -349,9 +416,9 @@ class _CreateScreenState extends State<CreateScreen> {
         height: 52,
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: _currentStep == 0
-              ? (_questionFilled ? _goToStep2 : null)
-              : (_canPublish ? () => HapticFeedback.mediumImpact() : null),
+          onPressed: enabled && !_publishing
+              ? (isStep2 ? _publishPoll : _goToStep2)
+              : null,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.accentPrimary,
             disabledBackgroundColor: AppColors.surfaceElevated,
@@ -364,12 +431,23 @@ class _CreateScreenState extends State<CreateScreen> {
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 180),
-            child: Text(
-              _currentStep == 0 ? 'Continue' : 'Publish Poll',
-              key: ValueKey(_currentStep),
-              style: AppTypography.titleSmall
-                  .copyWith(fontWeight: FontWeight.w700),
-            ),
+            child: _publishing
+                ? const SizedBox(
+                    key: ValueKey('loading'),
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    isStep2 ? 'Publish Poll' : 'Continue',
+                    key: ValueKey(_currentStep),
+                    style: AppTypography.titleSmall
+                        .copyWith(fontWeight: FontWeight.w700),
+                  ),
           ),
         ),
       ),

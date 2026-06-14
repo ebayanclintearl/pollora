@@ -165,24 +165,32 @@ class _PollContent extends ConsumerWidget {
 
         const SizedBox(height: 20),
 
-        // Options
-        ...poll.options.asMap().entries.map((e) => Padding(
-              padding: EdgeInsets.only(
-                  bottom: e.key < poll.options.length - 1 ? 10 : 0),
-              child: GestureDetector(
-                onTap: () {
-                  if (poll.isVoted) return;
-                  HapticFeedback.selectionClick();
-                  ref.read(pollsProvider.notifier).vote(pollId, e.value.id);
-                },
-                child: _DetailOptionBar(
-                  option: e.value,
-                  totalVotes: poll.totalVotes,
-                  isVoted: poll.votedOptionId == e.value.id,
-                  hasVoted: poll.isVoted,
-                ),
-              ),
-            )),
+        // Options — IgnorePointer prevents any re-vote once the user has voted.
+        IgnorePointer(
+          ignoring: poll.isVoted,
+          child: Column(
+            children: [
+              ...poll.options.asMap().entries.map((e) => Padding(
+                    padding: EdgeInsets.only(
+                        bottom: e.key < poll.options.length - 1 ? 10 : 0),
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        ref
+                            .read(pollsProvider.notifier)
+                            .vote(pollId, e.value.id);
+                      },
+                      child: _DetailOptionBar(
+                        option: e.value,
+                        totalVotes: poll.totalVotes,
+                        isVoted: poll.votedOptionId == e.value.id,
+                        hasVoted: poll.isVoted,
+                      ),
+                    ),
+                  )),
+            ],
+          ),
+        ),
 
         const SizedBox(height: 18),
 

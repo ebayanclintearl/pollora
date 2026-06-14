@@ -96,11 +96,15 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    FeedScreen(),
-    CreateScreen(),
-    MyPollsScreen(),
+  late final List<Widget> _screens = [
+    const FeedScreen(),
+    CreateScreen(onPublished: _onPollPublished),
+    const MyPollsScreen(),
   ];
+
+  void _onPollPublished() {
+    setState(() => _currentIndex = 0);
+  }
 
   @override
   Widget build(BuildContext context) {

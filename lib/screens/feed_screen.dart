@@ -436,7 +436,11 @@ class _PollCardState extends ConsumerState<_PollCard>
           const SizedBox(height: 16),
 
           // ── Options ──────────────────────────
-          Column(
+          // IgnorePointer locks the entire bar area once the user has voted —
+          // no tap can reach any option bar or re-trigger a vote.
+          IgnorePointer(
+            ignoring: p.isVoted,
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ...visible.asMap().entries.map((e) => Padding(
@@ -444,7 +448,6 @@ class _PollCardState extends ConsumerState<_PollCard>
                         bottom: e.key < visible.length - 1 ? 8 : 0),
                     child: GestureDetector(
                       onTap: () {
-                        if (p.isVoted) return;
                         HapticFeedback.selectionClick();
                         ref
                             .read(pollsProvider.notifier)
@@ -458,29 +461,29 @@ class _PollCardState extends ConsumerState<_PollCard>
                       ),
                     ),
                   )),
-              if (hasMore && !_optionsExpanded) ...[
-                const SizedBox(height: 8),
-                GestureDetector(
-                  onTap: () =>
-                      setState(() => _optionsExpanded = true),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                        color: AppColors.accentPrimaryMuted,
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.pill)),
-                    child: Text(
-                      '+$hidden more option${hidden > 1 ? 's' : ''}',
-                      style: AppTypography.labelMedium
-                          .copyWith(color: AppColors.textAccent),
-                    ),
-                  ),
-                ),
-              ],
             ],
           ),
+          ),
+          if (hasMore && !_optionsExpanded) ...[
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => setState(() => _optionsExpanded = true),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                    color: AppColors.accentPrimaryMuted,
+                    borderRadius:
+                        BorderRadius.circular(AppRadius.pill)),
+                child: Text(
+                  '+$hidden more option${hidden > 1 ? 's' : ''}',
+                  style: AppTypography.labelMedium
+                      .copyWith(color: AppColors.textAccent),
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 12),
           Container(height: 1, color: AppColors.borderSubtle),

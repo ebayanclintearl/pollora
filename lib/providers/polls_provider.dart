@@ -182,6 +182,11 @@ class PollsNotifier extends StateNotifier<List<Poll>> {
     }).toList();
   }
 
+  /// Prepends a newly created poll to the top of the feed.
+  void addPoll(Poll poll) {
+    state = [poll, ...state];
+  }
+
   /// Called when the user taps the native share button.
   /// Increments the share count so the UI reflects the action.
   void incrementShare(String pollId) {

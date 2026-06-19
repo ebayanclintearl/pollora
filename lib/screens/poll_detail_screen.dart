@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../widgets/poll_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -342,12 +342,7 @@ class _DetailOptionBar extends StatelessWidget {
                 left: 0, top: 0, bottom: 0,
                 child: AspectRatio(
                   aspectRatio: 1.0,
-                  child: Image.file(
-                    File(option.imagePath!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: AppColors.surfaceElevated),
-                  ),
+                  child: PollImage(path: option.imagePath),
                 ),
               ),
             // Text + percentage

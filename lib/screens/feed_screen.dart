@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/poll_image.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -95,6 +95,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     } else if (delta < -_scrollThreshold && !_headerVisible) {
       setState(() => _headerVisible = true);
     }
+
+    // Load next page when within 400px of the bottom.
+    final sc = _scrollController;
+    if (sc.position.extentAfter < 400) {
+      ref.read(pollsProvider.notifier).loadMore();
+    }
   }
 
   void _activateSearch() {
@@ -132,11 +138,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     // Sticky tab bar height (no notch needed — SafeArea handles it)
     const double tabBarH = 56.0;
 
-    final searchQuery = ref.watch(searchQueryProvider);
-    final followedIds = ref.watch(followProvider);
-    final pollsAsync = ref.watch(pollsProvider);
-    final isLoading = pollsAsync.isLoading;
-    final hasError = pollsAsync.hasError;
+    final searchQuery   = ref.watch(searchQueryProvider);
+    final followedIds   = ref.watch(followProvider);
+    final pollsAsync    = ref.watch(pollsProvider);
+    final isLoading     = pollsAsync.isLoading;
+    final hasError      = pollsAsync.hasError;
+    final isLoadingMore = ref.watch(pollsLoadingMoreProvider);
+    final hasMore       = ref.watch(pollsHasMoreProvider);
     final polls = switch (_selectedTab) {
       _FeedTab.trending  => ref.watch(trendingPollsProvider),
       _FeedTab.popular   => ref.watch(popularPollsProvider),
@@ -209,19 +217,46 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         ? const _FollowingEmptyState()
                         : const _EmptyState(query: ''),
                   )
-                else
-                  SliverPadding(
-                    padding: const EdgeInsets.only(bottom: 100),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => i.isOdd
-                            ? Container(
-                                height: 1, color: AppColors.borderSubtle)
-                            : _FeedItem(pollId: polls[i ~/ 2].id),
-                        childCount: polls.length * 2 - 1,
-                      ),
+                else ...[
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => i.isOdd
+                          ? Container(
+                              height: 1, color: AppColors.borderSubtle)
+                          : _FeedItem(pollId: polls[i ~/ 2].id),
+                      childCount: polls.length * 2 - 1,
                     ),
                   ),
+                  // Pagination footer
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 100,
+                      child: isLoadingMore
+                          ? const Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation(
+                                      AppColors.textTertiary),
+                                ),
+                              ),
+                            )
+                          : hasMore
+                              ? const SizedBox.shrink()
+                              : const Center(
+                                  child: Text(
+                                    'You\'re all caught up',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ),
+                                ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -505,25 +540,7 @@ class _PollCardState extends ConsumerState<_PollCard>
               borderRadius: BorderRadius.circular(AppRadius.card),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.file(
-                  File(p.coverImagePath!),
-                  fit: BoxFit.cover,
-                  frameBuilder: (_, child, frame, __) => AnimatedOpacity(
-                    opacity: frame == null ? 0 : 1,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeIn,
-                    child: frame == null
-                        ? Container(color: AppColors.surfaceElevated)
-                        : child,
-                  ),
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.surfaceElevated,
-                    child: const Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: AppColors.textTertiary, size: 32),
-                    ),
-                  ),
-                ),
+                child: PollImage(path: p.coverImagePath),
               ),
             ),
           ],
@@ -797,12 +814,7 @@ class _PollOptionBarState extends State<_PollOptionBar> {
                   left: 0, top: 0, bottom: 0,
                   child: AspectRatio(
                     aspectRatio: 1.0,
-                    child: Image.file(
-                      File(widget.option.imagePath!),
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: AppColors.surfaceElevated),
-                    ),
+                    child: PollImage(path: widget.option.imagePath),
                   ),
                 ),
               // Text + percentage

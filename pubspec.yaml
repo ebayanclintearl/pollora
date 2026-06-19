@@ -23,6 +23,10 @@ dependencies:
   sign_in_with_apple: ^6.1.0
   crypto: ^3.0.3           # required by sign_in_with_apple nonce
 
+  # Images
+  cached_network_image: ^3.3.1
+  path: ^1.9.0
+
   # Config
   flutter_dotenv: ^5.1.0
 

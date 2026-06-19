@@ -10,8 +10,10 @@ import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
 import '../models/poll.dart';
 import '../models/user.dart';
+import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/follow_provider.dart';
 import '../providers/polls_provider.dart';
 import '../providers/search_provider.dart';
@@ -400,6 +402,15 @@ class _PollCardState extends ConsumerState<_PollCard>
     super.dispose();
   }
 
+  /// Returns the ID to use for avatar colour — real auth ID for the current
+  /// user so it matches the profile tab, mock ID for everyone else.
+  String _avatarId(AppUser author) {
+    if (author.isCurrentUser) {
+      return ref.watch(auth_prov.currentUserProvider)?.id ?? author.id;
+    }
+    return author.id;
+  }
+
   @override
   Widget build(BuildContext context) {
     final polls = ref.watch(pollsProvider);
@@ -430,9 +441,9 @@ class _PollCardState extends ConsumerState<_PollCard>
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor: p.author.avatarColor,
+                  backgroundColor: AvatarHelper.colorFor(_avatarId(p.author)),
                   child: Text(
-                    p.author.avatarLabel,
+                    AvatarHelper.initialFor(displayName: p.author.name),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
@@ -857,9 +868,9 @@ class _UserSuggestionRow extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundColor: user.avatarColor,
+              backgroundColor: AvatarHelper.colorFor(user.id),
               child: Text(
-                user.avatarLabel,
+                AvatarHelper.initialFor(displayName: user.name),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,

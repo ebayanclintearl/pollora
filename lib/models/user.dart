@@ -1,11 +1,7 @@
-import 'package:flutter/material.dart';
-
 class AppUser {
   final String id;
   final String name;
   final String handle;
-  final String avatarLabel;
-  final Color avatarColor;
   final String? bio;
   final int pollsCount;
   final int votesReceived;
@@ -19,8 +15,6 @@ class AppUser {
     required this.id,
     required this.name,
     required this.handle,
-    required this.avatarLabel,
-    required this.avatarColor,
     this.bio,
     this.pollsCount = 0,
     this.votesReceived = 0,
@@ -40,8 +34,6 @@ class AppUser {
         id: id,
         name: name,
         handle: handle,
-        avatarLabel: avatarLabel,
-        avatarColor: avatarColor,
         bio: bio,
         pollsCount: pollsCount ?? this.pollsCount,
         votesReceived: votesReceived ?? this.votesReceived,

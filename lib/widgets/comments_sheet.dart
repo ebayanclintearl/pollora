@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
 import '../app_radius.dart';
+import '../core/avatar_helper.dart';
 
 class CommentsSheet extends StatefulWidget {
   final String pollQuestion;
@@ -22,29 +23,25 @@ class _CommentsSheetState extends State<CommentsSheet> {
 
   final List<_Comment> _comments = [
     const _Comment(
-        avatarLabel: 'RZ',
-        avatarColor: Color(0xFF1A5C36),
+        userId: 'u1',
         username: 'RoronoaZoro',
         text: 'Escanor is clearly the strongest, no debate!',
         timestamp: '2h',
         likes: 14),
     const _Comment(
-        avatarLabel: 'MD',
-        avatarColor: Color(0xFF7A3800),
+        userId: 'u2',
         username: 'MonkeyDLuffy',
         text: "I'd put Zoro higher honestly 🔥",
         timestamp: '3h',
         likes: 8),
     const _Comment(
-        avatarLabel: 'IC',
-        avatarColor: Color(0xFF1A3A70),
+        userId: 'u3',
         username: 'Ichigo',
         text: 'The gap between Escanor and Ban is way too big',
         timestamp: '5h',
         likes: 5),
     const _Comment(
-        avatarLabel: 'GK',
-        avatarColor: Color(0xFF5B1A7A),
+        userId: 'u4',
         username: 'GokuSon',
         text: 'Ban with full power is seriously underrated though',
         timestamp: '8h',
@@ -72,8 +69,7 @@ class _CommentsSheetState extends State<CommentsSheet> {
     if (text.isEmpty) return;
     HapticFeedback.lightImpact();
     final newComment = _Comment(
-      avatarLabel: 'C',
-      avatarColor: const Color(0xFF7B6914),
+      userId: 'u0',
       username: 'Clint',
       text: _replyingToUsername != null ? '@$_replyingToUsername $text' : text,
       timestamp: 'now',
@@ -389,8 +385,7 @@ class _EmptyComments extends StatelessWidget {
 // Comment model
 // ─────────────────────────────────────────────
 class _Comment {
-  final String avatarLabel;
-  final Color avatarColor;
+  final String userId;
   final String username;
   final String text;
   final String timestamp;
@@ -399,8 +394,7 @@ class _Comment {
   final bool isReply;
 
   const _Comment({
-    required this.avatarLabel,
-    required this.avatarColor,
+    required this.userId,
     required this.username,
     required this.text,
     required this.timestamp,
@@ -475,9 +469,9 @@ class _CommentRowState extends State<_CommentRow>
           // Avatar
           CircleAvatar(
             radius: 15,
-            backgroundColor: widget.comment.avatarColor,
+            backgroundColor: AvatarHelper.colorFor(widget.comment.userId),
             child: Text(
-              widget.comment.avatarLabel,
+              AvatarHelper.initialFor(displayName: widget.comment.username),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 11,

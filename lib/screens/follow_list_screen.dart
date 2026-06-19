@@ -5,6 +5,7 @@ import '../app_colors.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
 import '../models/user.dart';
 import '../providers/follow_provider.dart';
 import '../providers/users_provider.dart';
@@ -168,9 +169,9 @@ class _UserRow extends ConsumerWidget {
                 // Avatar
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: user.avatarColor,
+                  backgroundColor: AvatarHelper.colorFor(user.id),
                   child: Text(
-                    user.avatarLabel,
+                    AvatarHelper.initialFor(displayName: user.name),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,

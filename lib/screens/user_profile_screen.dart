@@ -5,6 +5,7 @@ import '../app_colors.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
 import '../models/poll.dart';
 import '../models/user.dart';
 import '../providers/follow_provider.dart';
@@ -68,9 +69,9 @@ class UserProfileScreen extends ConsumerWidget {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundColor: user.avatarColor,
+                        backgroundColor: AvatarHelper.colorFor(user.id),
                         child: Text(
-                          user.avatarLabel,
+                          AvatarHelper.initialFor(displayName: user.name),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,

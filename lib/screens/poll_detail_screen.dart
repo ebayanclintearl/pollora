@@ -6,7 +6,9 @@ import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
 import '../models/poll.dart';
+import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/polls_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/comments_sheet.dart';
@@ -120,6 +122,8 @@ class _PollContent extends ConsumerWidget {
     final poll = _find(ref.watch(pollsProvider));
     if (poll == null) return const SizedBox.shrink();
 
+    final authUserId = ref.watch(auth_prov.currentUserProvider)?.id;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -132,9 +136,11 @@ class _PollContent extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: poll.author.avatarColor,
+                backgroundColor: AvatarHelper.colorFor(
+                  poll.author.isCurrentUser ? (authUserId ?? poll.author.id) : poll.author.id,
+                ),
                 child: Text(
-                  poll.author.avatarLabel,
+                  AvatarHelper.initialFor(displayName: poll.author.name),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 13,

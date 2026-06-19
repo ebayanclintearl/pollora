@@ -694,26 +694,27 @@ class _PollCardState extends ConsumerState<_PollCard>
                 child: GestureDetector(
                   onTap: () async {
                     HapticFeedback.lightImpact();
-                    ref.read(pollsProvider.notifier)
-                        .incrementShare(widget.pollId);
                     final result = await Share.share(
                       '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
                       subject: p.question,
                     );
                     if (result.status == ShareResultStatus.success &&
                         context.mounted) {
+                      ref.read(pollsProvider.notifier).share(widget.pollId);
                       AppToast.show(context, 'Poll shared',
                           icon: Icons.ios_share_rounded);
                     }
                   },
                   behavior: HitTestBehavior.opaque,
-                  child: const SizedBox(
+                  child: SizedBox(
                     width: AppIconSizes.touchTarget,
                     height: AppIconSizes.touchTarget,
                     child: Center(
                       child: Icon(Icons.ios_share_rounded,
                           size: AppIconSizes.control,
-                          color: AppColors.textTertiary),
+                          color: p.hasShared
+                              ? AppColors.accentPrimary
+                              : AppColors.textTertiary),
                     ),
                   ),
                 ),

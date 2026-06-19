@@ -441,7 +441,7 @@ class _PollActionsState extends ConsumerState<_PollActions>
         _ActionBtn(
           icon: Icons.chat_bubble_outline_rounded,
           label: '${poll.commentCount}',
-          onTap: () {
+          onTap: () async {
             HapticFeedback.lightImpact();
             showModalBottomSheet(
               context: context,
@@ -493,13 +493,16 @@ class _PollActionsState extends ConsumerState<_PollActions>
         _ActionBtn(
           icon: Icons.ios_share_rounded,
           label: '${poll.shareCount}',
-          onTap: () {
+          active: poll.hasShared,
+          onTap: () async {
             HapticFeedback.lightImpact();
-            ref.read(pollsProvider.notifier).incrementShare(poll.id);
-            Share.share(
+            final result = await Share.share(
               '${poll.question}\n\nhttps://pollora.app/poll/${poll.id}',
               subject: poll.question,
             );
+            if (result.status == ShareResultStatus.success) {
+              ref.read(pollsProvider.notifier).share(poll.id);
+            }
           },
         ),
       ],
@@ -510,12 +513,18 @@ class _PollActionsState extends ConsumerState<_PollActions>
 class _ActionBtn extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
-  const _ActionBtn(
-      {required this.icon, required this.label, required this.onTap});
+  final Future<void> Function() onTap;
+  final bool active;
+  const _ActionBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final color = active ? AppColors.accentPrimary : AppColors.textTertiary;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -525,16 +534,11 @@ class _ActionBtn extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: AppIconSizes.control, color: AppColors.textTertiary),
+            Icon(icon, size: AppIconSizes.control, color: color),
             const SizedBox(width: 5),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textTertiary,
-                height: 1,
-              ),
+              style: TextStyle(fontSize: 13, color: color, height: 1),
             ),
           ],
         ),

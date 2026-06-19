@@ -45,6 +45,8 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     Map<String, String> votedOptions   = {};
     Set<String>         favoritedPolls = {};
 
+    Set<String> sharedPolls = {};
+
     if (uid != null) {
       final ids = (pollsData as List).map((j) => j['id'] as String).toList();
       if (ids.isNotEmpty) {
@@ -59,12 +61,20 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
               .select('poll_id')
               .eq('user_id', uid)
               .inFilter('poll_id', ids),
+          supabase
+              .from('shares')
+              .select('poll_id')
+              .eq('user_id', uid)
+              .inFilter('poll_id', ids),
         ]);
         for (final v in results[0] as List) {
           votedOptions[v['poll_id'] as String] = v['option_id'] as String;
         }
         for (final f in results[1] as List) {
           favoritedPolls.add(f['poll_id'] as String);
+        }
+        for (final s in results[2] as List) {
+          sharedPolls.add(s['poll_id'] as String);
         }
       }
     }
@@ -75,6 +85,7 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
         json as Map<String, dynamic>,
         votedOptionId: votedOptions[id],
         isFavorited:   favoritedPolls.contains(id),
+        hasShared:     sharedPolls.contains(id),
         currentUserId: uid,
       );
     }).toList();
@@ -193,11 +204,26 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     ref.invalidateSelf();
   }
 
-  void incrementShare(String pollId) {
+  Future<void> share(String pollId) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    final poll = _current.firstWhere((p) => p.id == pollId,
+        orElse: () => throw StateError('poll not found'));
+    if (poll.hasShared) return; // already counted this user
+
+    // Optimistic update
+    final snapshot = _current;
     state = AsyncData(_current.map((p) {
       if (p.id != pollId) return p;
-      return p.copyWith(shareCount: p.shareCount + 1);
+      return p.copyWith(hasShared: true, shareCount: p.shareCount + 1);
     }).toList());
+
+    try {
+      await supabase.from('shares').insert({'user_id': uid, 'poll_id': pollId});
+    } catch (_) {
+      state = AsyncData(snapshot); // revert on failure
+    }
   }
 
   // ── Storage helpers ───────────────────────

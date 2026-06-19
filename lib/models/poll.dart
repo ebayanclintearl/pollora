@@ -39,6 +39,7 @@ class Poll {
   final int commentCount;
   final int shareCount;
   final bool isFavorited;
+  final bool hasShared;
   final String? votedOptionId;
   // Non-null = this is a reshared copy; holds the user who shared it
   final AppUser? sharedBy;
@@ -49,6 +50,7 @@ class Poll {
     Map<String, dynamic> json, {
     String? votedOptionId,
     bool isFavorited = false,
+    bool hasShared = false,
     String? currentUserId,
   }) {
     final authorJson = json['author'] as Map<String, dynamic>;
@@ -71,6 +73,7 @@ class Poll {
       commentCount: json['comment_count'] as int? ?? 0,
       shareCount: json['share_count'] as int? ?? 0,
       isFavorited: isFavorited,
+      hasShared: hasShared,
       votedOptionId: votedOptionId,
       coverImagePath: json['cover_image_url'] as String?,
     );
@@ -85,6 +88,7 @@ class Poll {
     this.commentCount = 0,
     this.shareCount = 0,
     this.isFavorited = false,
+    this.hasShared = false,
     this.votedOptionId,
     this.sharedBy,
     this.coverImagePath,
@@ -105,6 +109,7 @@ class Poll {
   Poll copyWith({
     List<PollOption>? options,
     bool? isFavorited,
+    bool? hasShared,
     String? votedOptionId,
     int? commentCount,
     int? shareCount,
@@ -120,6 +125,7 @@ class Poll {
         commentCount: commentCount ?? this.commentCount,
         shareCount: shareCount ?? this.shareCount,
         isFavorited: isFavorited ?? this.isFavorited,
+        hasShared: hasShared ?? this.hasShared,
         votedOptionId: votedOptionId ?? this.votedOptionId,
         sharedBy: sharedBy ?? this.sharedBy,
         coverImagePath: coverImagePath ?? this.coverImagePath,

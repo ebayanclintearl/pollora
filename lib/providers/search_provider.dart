@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/poll.dart';
 import '../models/user.dart';
 import 'polls_provider.dart';
-import 'users_provider.dart';
 
 sealed class SearchItem {
   const SearchItem();
@@ -25,13 +24,18 @@ final searchSuggestionsProvider = Provider<List<SearchItem>>((ref) {
   if (query.isEmpty) return const [];
 
   final polls = ref.watch(feedPollsProvider);
-  final users = ref.watch(allUsersProvider);
+
+  // Derive unique non-current-user authors directly from loaded polls.
+  final seen = <String>{};
+  final users = polls
+      .where((p) => !p.author.isCurrentUser && seen.add(p.author.id))
+      .map((p) => p.author)
+      .toList();
 
   final matchedUsers = users
       .where((u) =>
-          !u.isCurrentUser &&
-          (u.name.toLowerCase().contains(query) ||
-              u.handle.toLowerCase().contains(query)))
+          u.name.toLowerCase().contains(query) ||
+          u.handle.toLowerCase().contains(query))
       .take(3)
       .map<SearchItem>((u) => UserSearchItem(u))
       .toList();

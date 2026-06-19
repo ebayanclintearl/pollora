@@ -9,8 +9,9 @@ import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../models/poll.dart';
+import '../models/user.dart';
 import '../providers/polls_provider.dart';
-import '../providers/users_provider.dart';
+import '../providers/users_provider.dart' as users_prov;
 
 class CreateScreen extends ConsumerStatefulWidget {
   /// Called after a poll is published — used by the shell to switch to the feed.
@@ -203,9 +204,11 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
       ));
     }
 
+    final currentUser = ref.read(users_prov.currentUserProvider);
     final poll = Poll(
       id: 'poll_$ts',
-      author: currentUser,
+      author: currentUser ??
+          const AppUser(id: '', name: '', handle: '', isCurrentUser: true),
       question: _questionController.text.trim(),
       options: options,
       createdAt: now,

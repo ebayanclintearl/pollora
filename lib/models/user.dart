@@ -24,6 +24,20 @@ class AppUser {
     this.followsCurrentUser = false,
   });
 
+  factory AppUser.fromJson(Map<String, dynamic> json, {bool isCurrentUser = false}) {
+    return AppUser(
+      id: json['id'] as String,
+      name: json['name'] as String? ?? '',
+      handle: json['handle'] as String? ?? '',
+      bio: json['bio'] as String?,
+      pollsCount: json['polls_count'] as int? ?? 0,
+      votesReceived: json['votes_received'] as int? ?? 0,
+      followersCount: json['followers_count'] as int? ?? 0,
+      followingCount: json['following_count'] as int? ?? 0,
+      isCurrentUser: isCurrentUser,
+    );
+  }
+
   AppUser copyWith({
     int? followersCount,
     int? followingCount,

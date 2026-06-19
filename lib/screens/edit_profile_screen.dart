@@ -1,36 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
+import '../providers/auth_provider.dart' as auth_prov;
+import '../providers/users_provider.dart';
 import '../widgets/app_toast.dart';
 
-class EditProfileScreen extends StatefulWidget {
+class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileScreen> createState() => _EditProfileScreenState();
+  ConsumerState<EditProfileScreen> createState() =>
+      _EditProfileScreenState();
 }
 
-class _EditProfileScreenState extends State<EditProfileScreen> {
-  final _nameFocus    = FocusNode();
-  final _handleFocus  = FocusNode();
-  final _bioFocus     = FocusNode();
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  final _nameFocus = FocusNode();
+  final _handleFocus = FocusNode();
+  final _bioFocus = FocusNode();
 
   late final TextEditingController _nameCtrl;
   late final TextEditingController _handleCtrl;
   late final TextEditingController _bioCtrl;
 
   bool _saving = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
-    _nameCtrl   = TextEditingController(text: 'Clint');
-    _handleCtrl = TextEditingController(text: '@clintearl');
-    _bioCtrl    = TextEditingController(text: '');
+    _nameCtrl = TextEditingController();
+    _handleCtrl = TextEditingController();
+    _bioCtrl = TextEditingController();
   }
 
   @override
@@ -52,17 +58,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
     setState(() => _saving = true);
     HapticFeedback.mediumImpact();
-    await Future.delayed(const Duration(milliseconds: 700));
-    if (!mounted) return;
-    setState(() => _saving = false);
-    AppToast.show(context, 'Profile updated',
-        icon: Icons.check_circle_outline_rounded);
-    Navigator.of(context).pop();
+    try {
+      await ref.read(currentProfileProvider.notifier).saveProfile(
+            name: _nameCtrl.text.trim(),
+            handle: _handleCtrl.text.trim(),
+            bio: _bioCtrl.text.trim(),
+          );
+      if (!mounted) return;
+      AppToast.show(context, 'Profile updated',
+          icon: Icons.check_circle_outline_rounded);
+      Navigator.of(context).pop();
+    } catch (_) {
+      if (!mounted) return;
+      AppToast.show(context, 'Failed to save — please try again',
+          isError: true);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
+    final user = ref.watch(currentUserProvider);
+    final authUser = ref.watch(auth_prov.currentUserProvider);
+    final avatarColor = AvatarHelper.colorFor(authUser?.id ?? user?.id ?? '');
+    final avatarInitial = AvatarHelper.initialFor(
+      displayName: user?.name,
+      email: authUser?.email,
+    );
+
+    // Pre-fill once loaded (won't overwrite in-progress edits).
+    if (!_initialized && user != null) {
+      _nameCtrl.text = user.name;
+      _handleCtrl.text = user.handle;
+      _bioCtrl.text = user.bio ?? '';
+      _initialized = true;
+    }
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -100,7 +132,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Text('Edit Profile',
                         style: AppTypography.screenTitle),
                   ),
-                  // Save button
                   GestureDetector(
                     onTap: _saving ? null : _save,
                     behavior: HitTestBehavior.opaque,
@@ -143,14 +174,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         Container(
                           width: 88,
                           height: 88,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFF8B6914),
+                            color: avatarColor,
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'C',
-                              style: TextStyle(
+                              avatarInitial,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 34,
                                 fontWeight: FontWeight.w700,

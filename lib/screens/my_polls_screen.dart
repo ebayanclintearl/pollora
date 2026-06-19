@@ -214,9 +214,9 @@ class _ProfileSection extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(user.name, style: AppTypography.profileName),
+                Text(user?.name ?? '', style: AppTypography.profileName),
                 const SizedBox(height: 3),
-                Text(user.handle, style: AppTypography.bodySmall),
+                Text(user?.handle ?? '', style: AppTypography.bodySmall),
                 const SizedBox(height: 8),
                 const Row(
                   children: [
@@ -255,12 +255,12 @@ class _StatsRow extends ConsumerWidget {
       child: IntrinsicHeight(
         child: Row(
           children: [
-            _StatCell(value: user.pollsCount, label: 'Polls'),
+            _StatCell(value: user?.pollsCount ?? 0, label: 'Polls'),
             _VerticalDivider(),
-            _StatCell(value: user.votesReceived, label: 'Votes'),
+            _StatCell(value: user?.votesReceived ?? 0, label: 'Votes'),
             _VerticalDivider(),
             _StatCell(
-              value: user.followersCount,
+              value: user?.followersCount ?? 0,
               label: 'Followers',
               onTap: () => Navigator.of(context).pushNamed(
                 '/follow-list',
@@ -269,7 +269,7 @@ class _StatsRow extends ConsumerWidget {
             ),
             _VerticalDivider(),
             _StatCell(
-              value: user.followingCount,
+              value: user?.followingCount ?? 0,
               label: 'Following',
               onTap: () => Navigator.of(context).pushNamed(
                 '/follow-list',

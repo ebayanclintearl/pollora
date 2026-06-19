@@ -453,6 +453,7 @@ class _PollActionsState extends ConsumerState<_PollActions>
               backgroundColor: Colors.transparent,
               barrierColor: Colors.black.withValues(alpha: 0.5),
               builder: (_) => CommentsSheet(
+                pollId: poll.id,
                 pollQuestion: poll.question,
                 commentCount: poll.commentCount,
               ),

@@ -600,6 +600,7 @@ class _PollCardState extends ConsumerState<_PollCard>
                     barrierColor:
                         Colors.black.withValues(alpha: 0.5),
                     builder: (_) => CommentsSheet(
+                      pollId: p.id,
                       pollQuestion: p.question,
                       commentCount: p.commentCount,
                     ),

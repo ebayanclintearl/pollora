@@ -1,205 +1,150 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/supabase_client.dart';
 import '../models/poll.dart';
-import 'users_provider.dart';
-
-// ── Initial feed data ─────────────────────────
-List<Poll> _buildInitialPolls() {
-  final now = DateTime.now();
-  return [
-    Poll(
-      id: 'p1',
-      author: allUsers[1], // RoronoaZoro
-      question: 'Who is the strongest?',
-      options: const [
-        PollOption(id: 'p1o1', text: 'Ban', votes: 237),
-        PollOption(id: 'p1o2', text: 'Escanor', votes: 836),
-        PollOption(id: 'p1o3', text: 'Zoro', votes: 173),
-      ],
-      createdAt: now.subtract(const Duration(hours: 2)),
-      commentCount: 12,
-      shareCount: 34,
-    ),
-    Poll(
-      id: 'p2',
-      author: allUsers[2], // MonkeyDLuffy
-      question: 'Which Devil Fruit is the most useful?',
-      options: const [
-        PollOption(id: 'p2o1', text: 'Gomu Gomu no Mi', votes: 415),
-        PollOption(id: 'p2o2', text: 'Mera Mera no Mi', votes: 326),
-        PollOption(id: 'p2o3', text: 'Hie Hie no Mi', votes: 246),
-      ],
-      createdAt: now.subtract(const Duration(hours: 6)),
-      commentCount: 7,
-      shareCount: 18,
-    ),
-    Poll(
-      id: 'p3',
-      author: allUsers[3], // Ichigo
-      question: 'Which is your favorite Anime?',
-      options: const [
-        PollOption(id: 'p3o1', text: 'One Piece', votes: 1297),
-        PollOption(id: 'p3o2', text: 'Bleach', votes: 713),
-        PollOption(id: 'p3o3', text: 'Naruto', votes: 531),
-      ],
-      createdAt: now.subtract(const Duration(days: 1)),
-      commentCount: 23,
-      shareCount: 67,
-    ),
-    Poll(
-      id: 'p4',
-      author: allUsers[4], // GokuSon
-      question: 'Best anime battle of all time?',
-      options: const [
-        PollOption(id: 'p4o1', text: 'Goku vs Vegeta', votes: 2449),
-        PollOption(id: 'p4o2', text: 'Naruto vs Sasuke', votes: 1786),
-        PollOption(id: 'p4o3', text: 'Ichigo vs Aizen', votes: 868),
-      ],
-      createdAt: now.subtract(const Duration(days: 2)),
-      commentCount: 41,
-      shareCount: 112,
-    ),
-    Poll(
-      id: 'p5',
-      author: allUsers[5], // KilluaZ
-      question: 'Who has the best power system in anime?',
-      options: const [
-        PollOption(id: 'p5o1', text: 'Nen – Hunter x Hunter', votes: 2972),
-        PollOption(id: 'p5o2', text: 'Devil Fruits – One Piece', votes: 1923),
-        PollOption(id: 'p5o3', text: 'Chakra – Naruto', votes: 1661),
-        PollOption(id: 'p5o4', text: 'Quirks – My Hero Academia', votes: 1136),
-        PollOption(id: 'p5o5', text: 'Alchemy – Fullmetal', votes: 699),
-        PollOption(id: 'p5o6', text: 'Cursed Energy – Jujutsu', votes: 351),
-      ],
-      createdAt: now.subtract(const Duration(days: 3)),
-      commentCount: 8,
-      shareCount: 44,
-    ),
-    Poll(
-      id: 'p6',
-      author: allUsers[6], // ErenYeager
-      question: 'Which anime had the best ending?',
-      options: const [
-        PollOption(id: 'p6o1', text: 'Fullmetal Alchemist: Brotherhood', votes: 1596),
-        PollOption(id: 'p6o2', text: 'Steins;Gate', votes: 1089),
-        PollOption(id: 'p6o3', text: 'Attack on Titan', votes: 701),
-        PollOption(id: 'p6o4', text: 'Demon Slayer', votes: 505),
-      ],
-      createdAt: now.subtract(const Duration(days: 4)),
-      commentCount: 5,
-      shareCount: 29,
-    ),
-    // ── Current user's polls ──────────────────
-    Poll(
-      id: 'my1',
-      author: currentUser,
-      question: 'Who is the strongest Seven Deadly Sin?',
-      options: const [
-        PollOption(id: 'my1o1', text: 'Escanor', votes: 2178),
-        PollOption(id: 'my1o2', text: 'Ban', votes: 602),
-        PollOption(id: 'my1o3', text: 'Meliodas', votes: 465),
-      ],
-      createdAt: now.subtract(const Duration(days: 2)),
-      commentCount: 15,
-      shareCount: 28,
-    ),
-    Poll(
-      id: 'my2',
-      author: currentUser,
-      question: 'Which Devil Fruit is most useful?',
-      options: const [
-        PollOption(id: 'my2o1', text: 'Gomu Gomu no Mi', votes: 415),
-        PollOption(id: 'my2o2', text: 'Ope Ope no Mi', votes: 312),
-        PollOption(id: 'my2o3', text: 'Pika Pika no Mi', votes: 260),
-      ],
-      createdAt: now.subtract(const Duration(days: 5)),
-      commentCount: 7,
-      shareCount: 12,
-    ),
-    Poll(
-      id: 'my3',
-      author: currentUser,
-      question: 'Which is your favorite Anime?',
-      options: const [
-        PollOption(id: 'my3o1', text: 'One Piece', votes: 1297),
-        PollOption(id: 'my3o2', text: 'Naruto', votes: 731),
-        PollOption(id: 'my3o3', text: 'Bleach', votes: 513),
-      ],
-      createdAt: now.subtract(const Duration(days: 7)),
-      commentCount: 23,
-      shareCount: 45,
-      isFavorited: true,
-    ),
-    Poll(
-      id: 'my4',
-      author: currentUser,
-      question: 'Which character deserves more love?',
-      options: const [
-        PollOption(id: 'my4o1', text: 'Killua', votes: 398),
-        PollOption(id: 'my4o2', text: 'Rock Lee', votes: 148),
-        PollOption(id: 'my4o3', text: 'Yamcha', votes: 102),
-      ],
-      createdAt: now.subtract(const Duration(days: 14)),
-      commentCount: 9,
-      shareCount: 8,
-    ),
-    Poll(
-      id: 'my5',
-      author: currentUser,
-      question: 'Best anime battle of all time?',
-      options: const [
-        PollOption(id: 'my5o1', text: 'Goku vs Vegeta', votes: 2449),
-        PollOption(id: 'my5o2', text: 'Naruto vs Sasuke', votes: 1786),
-        PollOption(id: 'my5o3', text: 'Ichigo vs Aizen', votes: 868),
-      ],
-      createdAt: now.subtract(const Duration(days: 14)),
-      commentCount: 41,
-      shareCount: 92,
-      isFavorited: true,
-    ),
-  ];
-}
 
 // ── Notifier ──────────────────────────────────
 class PollsNotifier extends StateNotifier<List<Poll>> {
-  PollsNotifier() : super(_buildInitialPolls());
+  PollsNotifier() : super(const []) {
+    _load();
+  }
 
-  void vote(String pollId, String optionId) {
-    state = state.map((poll) {
-      if (poll.id != pollId) return poll;
-      // Tapping the same option already voted — no change.
-      if (poll.votedOptionId == optionId) return poll;
+  Future<void> _load() async {
+    try {
+      final uid = supabase.auth.currentUser?.id;
 
-      final previousId = poll.votedOptionId;
-      final updatedOptions = poll.options.map((opt) {
-        if (opt.id == optionId) return opt.copyWith(votes: opt.votes + 1);
-        // Remove the previous vote count when changing.
-        if (opt.id == previousId) {
-          return opt.copyWith(votes: (opt.votes - 1).clamp(0, 999999));
+      final pollsData = await supabase
+          .from('polls')
+          .select('*, author:profiles!author_id(*), poll_options(*)')
+          .order('created_at', ascending: false);
+
+      Map<String, String> votedOptions = {};
+      Set<String> favoritedPolls = {};
+
+      if (uid != null) {
+        final results = await Future.wait([
+          supabase
+              .from('votes')
+              .select('poll_id, option_id')
+              .eq('user_id', uid),
+          supabase.from('favorites').select('poll_id').eq('user_id', uid),
+        ]);
+        for (final v in results[0] as List) {
+          votedOptions[v['poll_id'] as String] = v['option_id'] as String;
         }
-        return opt;
+        for (final f in results[1] as List) {
+          favoritedPolls.add(f['poll_id'] as String);
+        }
+      }
+
+      if (!mounted) return;
+      state = (pollsData as List).map((json) {
+        final id = json['id'] as String;
+        return Poll.fromJson(
+          json as Map<String, dynamic>,
+          votedOptionId: votedOptions[id],
+          isFavorited: favoritedPolls.contains(id),
+          currentUserId: uid,
+        );
       }).toList();
-      return poll.copyWith(options: updatedOptions, votedOptionId: optionId);
-    }).toList();
+    } catch (_) {
+      // Keep current state on error — UI shows whatever was last loaded.
+    }
   }
 
-  void toggleFavorite(String pollId) {
+  Future<void> refresh() => _load();
+
+  Future<void> vote(String pollId, String optionId) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    // Optimistic update
     state = state.map((poll) {
       if (poll.id != pollId) return poll;
-      return poll.copyWith(isFavorited: !poll.isFavorited);
+      if (poll.votedOptionId == optionId) return poll;
+      final prev = poll.votedOptionId;
+      final opts = poll.options.map((o) {
+        if (o.id == optionId) return o.copyWith(votes: o.votes + 1);
+        if (o.id == prev) return o.copyWith(votes: (o.votes - 1).clamp(0, 999999));
+        return o;
+      }).toList();
+      return poll.copyWith(options: opts, votedOptionId: optionId);
     }).toList();
+
+    try {
+      await supabase.from('votes').upsert(
+        {'user_id': uid, 'poll_id': pollId, 'option_id': optionId},
+        onConflict: 'user_id,poll_id',
+      );
+    } catch (_) {
+      await _load();
+    }
   }
 
-  /// Prepends a newly created poll to the top of the feed.
-  void addPoll(Poll poll) {
-    state = [poll, ...state];
+  Future<void> toggleFavorite(String pollId) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    bool? was;
+    state = state.map((p) {
+      if (p.id != pollId) return p;
+      was = p.isFavorited;
+      return p.copyWith(isFavorited: !p.isFavorited);
+    }).toList();
+    if (was == null) return;
+
+    try {
+      if (was!) {
+        await supabase
+            .from('favorites')
+            .delete()
+            .eq('user_id', uid)
+            .eq('poll_id', pollId);
+      } else {
+        await supabase
+            .from('favorites')
+            .insert({'user_id': uid, 'poll_id': pollId});
+      }
+    } catch (_) {
+      // Revert on failure
+      state = state.map((p) {
+        if (p.id != pollId) return p;
+        return p.copyWith(isFavorited: was!);
+      }).toList();
+    }
   }
 
-  /// Called when the user taps the native share button.
-  /// Increments the share count so the UI reflects the action.
+  Future<void> addPoll(Poll localPoll) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+
+    try {
+      final row = await supabase.from('polls').insert({
+        'author_id': uid,
+        'question': localPoll.question,
+        'cover_image_url': localPoll.coverImagePath,
+      }).select().single();
+
+      final pollId = row['id'] as String;
+
+      if (localPoll.options.isNotEmpty) {
+        await supabase.from('poll_options').insert(
+          localPoll.options.asMap().entries.map((e) => {
+            'poll_id': pollId,
+            'text': e.value.text,
+            'position': e.key,
+            'image_url': e.value.imagePath,
+          }).toList(),
+        );
+      }
+
+      await _load();
+    } catch (_) {}
+  }
+
   void incrementShare(String pollId) {
-    state = state.map((poll) {
-      if (poll.id != pollId) return poll;
-      return poll.copyWith(shareCount: poll.shareCount + 1);
+    state = state.map((p) {
+      if (p.id != pollId) return p;
+      return p.copyWith(shareCount: p.shareCount + 1);
     }).toList();
   }
 }
@@ -210,61 +155,55 @@ final pollsProvider =
 
 /// All polls sorted newest first (for the feed).
 final feedPollsProvider = Provider<List<Poll>>((ref) {
-  final polls = ref.watch(pollsProvider);
-  return [...polls]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  return [...ref.watch(pollsProvider)]
+    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
-/// Trending — engagement-score within the last 7 days, sorted descending.
-/// Score = totalVotes + (commentCount × 3)
+/// Trending — engagement score within the last 7 days.
 final trendingPollsProvider = Provider<List<Poll>>((ref) {
   final polls = ref.watch(pollsProvider);
   final cutoff = DateTime.now().subtract(const Duration(days: 7));
   int score(Poll p) => p.totalVotes + p.commentCount * 3;
-  return polls
-      .where((p) => p.createdAt.isAfter(cutoff))
-      .toList()
+  return polls.where((p) => p.createdAt.isAfter(cutoff)).toList()
     ..sort((a, b) => score(b).compareTo(score(a)));
 });
 
-/// Popular — all time, sorted by total votes descending.
+/// Popular — all time, sorted by total votes.
 final popularPollsProvider = Provider<List<Poll>>((ref) {
-  final polls = ref.watch(pollsProvider);
-  return [...polls]..sort((a, b) => b.totalVotes.compareTo(a.totalVotes));
+  return [...ref.watch(pollsProvider)]
+    ..sort((a, b) => b.totalVotes.compareTo(a.totalVotes));
 });
 
-/// Following — polls from users the current user follows, newest first.
+/// Following — polls from users the current user follows.
 final followingPollsProvider =
     Provider.family<List<Poll>, Set<String>>((ref, followedIds) {
-  final polls = ref.watch(pollsProvider);
-  return polls
+  return ref
+      .watch(pollsProvider)
       .where((p) => followedIds.contains(p.author.id))
       .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
-/// Current user's own polls (not shared posts).
+/// Current user's own polls.
 final myPollsProvider = Provider<List<Poll>>((ref) {
-  final polls = ref.watch(pollsProvider);
-  return polls
-      .where((p) => p.author.id == currentUser.id && p.sharedBy == null)
+  return ref
+      .watch(pollsProvider)
+      .where((p) => p.author.isCurrentUser && p.sharedBy == null)
       .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
 /// Polls the current user has favorited.
 final favoritePollsProvider = Provider<List<Poll>>((ref) {
-  final polls = ref.watch(pollsProvider);
-  return polls
-      .where((p) => p.isFavorited)
-      .toList()
+  return ref.watch(pollsProvider).where((p) => p.isFavorited).toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
 /// All polls by a specific user (for their profile page).
 final pollsByUserProvider =
     Provider.family<List<Poll>, String>((ref, userId) {
-  final polls = ref.watch(pollsProvider);
-  return polls
+  return ref
+      .watch(pollsProvider)
       .where((p) => p.author.id == userId && p.sharedBy == null)
       .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));

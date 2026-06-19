@@ -13,6 +13,15 @@ class PollOption {
     this.imagePath,
   });
 
+  factory PollOption.fromJson(Map<String, dynamic> json) {
+    return PollOption(
+      id: json['id'] as String,
+      text: json['text'] as String,
+      votes: json['votes'] as int? ?? 0,
+      imagePath: json['image_url'] as String?,
+    );
+  }
+
   PollOption copyWith({int? votes}) =>
       PollOption(id: id, text: text, votes: votes ?? this.votes, imagePath: imagePath);
 
@@ -35,6 +44,37 @@ class Poll {
   final AppUser? sharedBy;
   // Optional cover image — local file path (picked from gallery)
   final String? coverImagePath;
+
+  factory Poll.fromJson(
+    Map<String, dynamic> json, {
+    String? votedOptionId,
+    bool isFavorited = false,
+    String? currentUserId,
+  }) {
+    final authorJson = json['author'] as Map<String, dynamic>;
+    final isCurrentUser =
+        currentUserId != null && authorJson['id'] == currentUserId;
+    final author = AppUser.fromJson(authorJson, isCurrentUser: isCurrentUser);
+
+    final optionsRaw =
+        List<Map<String, dynamic>>.from(json['poll_options'] as List? ?? []);
+    optionsRaw.sort((a, b) =>
+        (a['position'] as int? ?? 0).compareTo(b['position'] as int? ?? 0));
+    final options = optionsRaw.map(PollOption.fromJson).toList();
+
+    return Poll(
+      id: json['id'] as String,
+      author: author,
+      question: json['question'] as String,
+      options: options,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      commentCount: json['comment_count'] as int? ?? 0,
+      shareCount: json['share_count'] as int? ?? 0,
+      isFavorited: isFavorited,
+      votedOptionId: votedOptionId,
+      coverImagePath: json['cover_image_url'] as String?,
+    );
+  }
 
   const Poll({
     required this.id,

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgresChangeEvent;
 import '../core/supabase_client.dart';
 import '../models/poll.dart';
 import 'auth_provider.dart' as auth_prov;
@@ -8,20 +9,41 @@ import 'auth_provider.dart' as auth_prov;
 const _pageSize = 20;
 
 // ── Pagination side-state ─────────────────────
-// Separate StateProviders so the UI can watch without
-// coupling to AsyncValue internals.
-final pollsHasMoreProvider    = StateProvider<bool>((ref) => true);
+final pollsHasMoreProvider     = StateProvider<bool>((ref) => true);
 final pollsLoadingMoreProvider = StateProvider<bool>((ref) => false);
+
+// ── Real-time new-poll counter ─────────────────
+// Incremented by the Realtime subscription; reset to 0 on refresh.
+final newPollsCountProvider = StateProvider<int>((ref) => 0);
 
 // ── Notifier ──────────────────────────────────
 class PollsNotifier extends AsyncNotifier<List<Poll>> {
   @override
   Future<List<Poll>> build() async {
-    // Re-run on every auth change.
     ref.watch(auth_prov.authStateProvider);
-    // Reset pagination state.
-    ref.read(pollsHasMoreProvider.notifier).state    = true;
+    ref.read(pollsHasMoreProvider.notifier).state     = true;
     ref.read(pollsLoadingMoreProvider.notifier).state = false;
+    ref.read(newPollsCountProvider.notifier).state    = 0;
+
+    // Subscribe to new polls via Realtime; increment the banner counter.
+    final channel = supabase
+        .channel('public:polls:inserts')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'polls',
+          callback: (payload) {
+            final uid = supabase.auth.currentUser?.id;
+            // Don't count the current user's own new polls.
+            if (payload.newRecord['author_id'] == uid) return;
+            ref.read(newPollsCountProvider.notifier).state++;
+          },
+        )
+        .subscribe();
+
+    // Cancel the channel when the provider is rebuilt / disposed.
+    ref.onDispose(() => supabase.removeChannel(channel));
+
     return _fetch(cursor: null);
   }
 
@@ -91,7 +113,10 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     }).toList();
   }
 
-  Future<void> refresh() async => ref.invalidateSelf();
+  Future<void> refresh() async {
+    ref.read(newPollsCountProvider.notifier).state = 0;
+    ref.invalidateSelf();
+  }
 
   Future<void> loadMore() async {
     if (ref.read(pollsLoadingMoreProvider) ||
@@ -224,6 +249,20 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     }
 
     ref.invalidateSelf();
+  }
+
+  Future<void> deletePoll(String pollId) async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    final snapshot = _current;
+    // Optimistic remove
+    state = AsyncData(_current.where((p) => p.id != pollId).toList());
+    try {
+      await supabase.from('polls').delete().eq('id', pollId).eq('author_id', uid);
+    } catch (_) {
+      state = AsyncData(snapshot);
+      rethrow;
+    }
   }
 
   Future<void> share(String pollId) async {

@@ -1,297 +1,814 @@
-import '../widgets/poll_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../core/avatar_helper.dart';
+import '../core/supabase_client.dart';
 import '../models/poll.dart';
 import '../providers/auth_provider.dart' as auth_prov;
+import '../providers/follow_provider.dart';
 import '../providers/polls_provider.dart';
-import 'package:share_plus/share_plus.dart';
-import '../widgets/comments_sheet.dart';
+import '../providers/users_provider.dart';
+import '../widgets/app_toast.dart';
+import '../widgets/poll_image.dart';
 
-class PollDetailScreen extends ConsumerWidget {
+// ─────────────────────────────────────────────
+// Poll Detail — unified poll + comments page
+// ─────────────────────────────────────────────
+class PollDetailScreen extends ConsumerStatefulWidget {
   final String pollId;
   const PollDetailScreen({super.key, required this.pollId});
 
-  Poll? _find(List<Poll> polls) {
-    for (final p in polls) {
-      if (p.id == pollId) return p;
-    }
-    return null;
+  @override
+  ConsumerState<PollDetailScreen> createState() => _PollDetailScreenState();
+}
+
+class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
+    with SingleTickerProviderStateMixin {
+
+  // ── Comment state ──────────────────────────
+  final List<_Comment> _comments = [];
+  bool _commentsLoading = true;
+  bool _submitting = false;
+  String? _replyingToUsername;
+  int?    _replyingToIndex;
+  bool    _hasText = false;
+
+  // ── UI controllers ─────────────────────────
+  final _inputCtrl   = TextEditingController();
+  final _focusNode   = FocusNode();
+  final _scrollCtrl  = ScrollController();
+
+  // ── Favorite animation ─────────────────────
+  late AnimationController _heartCtrl;
+  late Animation<double>   _heartScale;
+
+
+  @override
+  void initState() {
+    super.initState();
+    _heartCtrl = AnimationController(
+        duration: const Duration(milliseconds: 400), vsync: this);
+    _heartScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.35, end: 0.90), weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.90, end: 1.0),  weight: 30),
+    ]).animate(CurvedAnimation(parent: _heartCtrl, curve: Curves.easeOut));
+
+    _inputCtrl.addListener(() {
+      final has = _inputCtrl.text.trim().isNotEmpty;
+      if (has != _hasText) setState(() => _hasText = has);
+    });
+
+    _loadComments();
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final top = MediaQuery.of(context).padding.top;
-    final poll = _find(ref.watch(pollsProvider).valueOrNull ?? const []);
+  void dispose() {
+    _heartCtrl.dispose();
+    _inputCtrl.dispose();
+    _focusNode.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
 
-    if (poll == null) {
-      return const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(
-          child: Text('Poll not found', style: AppTypography.bodyMedium),
-        ),
-      );
+  // ── Comment loading ────────────────────────
+
+  Future<void> _loadComments() async {
+    try {
+      final data = await supabase
+          .from('comments')
+          .select('id, text, created_at, likes, reply_to_id, '
+              'author:profiles!author_id(id, name, handle)')
+          .eq('poll_id', widget.pollId)
+          .order('created_at', ascending: true);
+
+      if (!mounted) return;
+      final uid = supabase.auth.currentUser?.id;
+      setState(() {
+        _commentsLoading = false;
+        _comments
+          ..clear()
+          ..addAll((data as List).map((row) {
+            final author = row['author'] as Map<String, dynamic>;
+            return _Comment(
+              id:        row['id'] as String,
+              userId:    author['id'] as String,
+              username:  author['name'] as String? ?? '',
+              handle:    author['handle'] as String? ?? '',
+              text:      row['text'] as String,
+              timestamp: _timeAgo(
+                  DateTime.parse(row['created_at'] as String)),
+              likes:   row['likes'] as int? ?? 0,
+              isOwn:   author['id'] == uid,
+              isReply: row['reply_to_id'] != null,
+            );
+          }));
+      });
+    } catch (_) {
+      if (mounted) setState(() => _commentsLoading = false);
     }
+  }
+
+  Future<void> _submitComment() async {
+    final text = _inputCtrl.text.trim();
+    if (text.isEmpty || _submitting) return;
+    if (text.length > 1000) return;
+    _submitting = true;
+    HapticFeedback.lightImpact();
+
+    final uid = supabase.auth.currentUser?.id;
+    final me  = ref.read(currentUserProvider);
+    final body =
+        _replyingToUsername != null ? '@$_replyingToUsername $text' : text;
+
+    final optimistic = _Comment(
+      id:        '',
+      userId:    uid ?? '',
+      username:  me?.name ?? '',
+      handle:    me?.handle ?? '',
+      text:      body,
+      timestamp: 'now',
+      likes:     0,
+      isOwn:     true,
+      isReply:   _replyingToUsername != null,
+    );
+
+    final insertAt =
+        _replyingToIndex != null ? _replyingToIndex! + 1 : _comments.length;
+    setState(() {
+      _comments.insert(insertAt, optimistic);
+      _inputCtrl.clear();
+      _replyingToUsername = null;
+      _replyingToIndex    = null;
+    });
+    _focusNode.unfocus();
+
+    // Scroll to the new comment
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    if (uid == null) return;
+    try {
+      await supabase.from('comments').insert({
+        'poll_id':   widget.pollId,
+        'author_id': uid,
+        'text':      body,
+      });
+    } catch (_) {
+    } finally {
+      _submitting = false;
+    }
+  }
+
+  void _startReply(String username, int index) {
+    setState(() {
+      _replyingToUsername = username;
+      _replyingToIndex    = index;
+    });
+    _inputCtrl.clear();
+    Future.delayed(
+        const Duration(milliseconds: 50), () => _focusNode.requestFocus());
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyingToUsername = null;
+      _replyingToIndex    = null;
+    });
+    _focusNode.unfocus();
+  }
+
+  Future<void> _deleteComment(int index) async {
+    final c = _comments[index];
+    setState(() => _comments.removeAt(index));
+    if (c.id.isNotEmpty) {
+      try {
+        await supabase.from('comments').delete().eq('id', c.id);
+      } catch (_) {}
+    }
+  }
+
+  // ── Build ──────────────────────────────────
+
+  @override
+  Widget build(BuildContext context) {
+    final top  = MediaQuery.of(context).padding.top;
+    final poll = ref.watch(pollsProvider).valueOrNull
+        ?.where((p) => p.id == widget.pollId)
+        .firstOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          HapticFeedback.mediumImpact();
-          ref.invalidate(pollsProvider);
-          await ref.read(pollsProvider.future);
-        },
-        color: AppColors.accentPrimary,
-        backgroundColor: AppColors.surfaceCard,
-        strokeWidth: 2.5,
-        displacement: top + 56,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // ── Header ──────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                    AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
-                child: Row(
-                  children: [
-                    Semantics(
-                      label: 'Back',
-                      button: true,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.of(context).pop();
-                        },
-                        behavior: HitTestBehavior.opaque,
-                        child: const SizedBox(
-                          width: 44,
-                          height: 44,
-                          child: Icon(Icons.arrow_back_ios_new_rounded,
-                              color: AppColors.textSecondary, size: 20),
+      body: Column(
+        children: [
+          // ── Scrollable area ─────────────────
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(pollsProvider);
+                await ref.read(pollsProvider.future);
+                await _loadComments();
+              },
+              color: AppColors.accentPrimary,
+              backgroundColor: AppColors.surfaceCard,
+              strokeWidth: 2.5,
+              displacement: top + 56,
+              child: CustomScrollView(
+                controller: _scrollCtrl,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          AppSpacing.screenH, top + 12,
+                          AppSpacing.screenH, 0),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              Navigator.of(context).pop();
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: const SizedBox(
+                              width: 44, height: 44,
+                              child: Icon(
+                                  Icons.arrow_back_ios_new_rounded,
+                                  color: AppColors.textSecondary,
+                                  size: 20),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text('Poll',
+                              style: AppTypography.screenTitle),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  if (poll == null)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                          child: Text('Poll not found',
+                              style: AppTypography.bodyMedium)),
+                    )
+                  else ...[
+                    // ── Poll card ───────────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                        child: _PollCard(
+                          poll: poll,
+                          heartCtrl: _heartCtrl,
+                          heartScale: _heartScale,
+                          onShare: () async {
+                            final result = await Share.share(
+                              '${poll.question}\n\nhttps://pollora.app/poll/${poll.id}',
+                              subject: poll.question,
+                            );
+                            if (result.status == ShareResultStatus.success) {
+                              ref
+                                  .read(pollsProvider.notifier)
+                                  .share(poll.id);
+                            }
+                          },
+                          onFavorite: () {
+                            ref
+                                .read(pollsProvider.notifier)
+                                .toggleFavorite(poll.id);
+                            _heartCtrl.forward(from: 0);
+                          },
+                          onVote: (optId) => ref
+                              .read(pollsProvider.notifier)
+                              .vote(poll.id, optId),
+                          onDelete: () =>
+                              _confirmDelete(context, ref, poll.id),
+                          onReport: () => AppToast.show(context,
+                              'Poll reported — thanks for the feedback'),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Text('Poll', style: AppTypography.screenTitle),
+
+                    // ── Comments header ──────────────
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Comments',
+                              style: AppTypography.titleMedium.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceElevated,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.pill),
+                              ),
+                              child: Text(
+                                '${_commentsLoading ? poll.commentCount : _comments.length}',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // ── Comment list / loading ───────
+                    if (_commentsLoading)
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) => const _CommentSkeleton(),
+                            childCount: 4,
+                          ),
+                        ),
+                      )
+                    else if (_comments.isEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 32),
+                          child: Column(
+                            children: [
+                              const Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 36,
+                                  color: AppColors.textTertiary),
+                              const SizedBox(height: 10),
+                              Text(
+                                'No comments yet\nBe the first to comment!',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodySmall.copyWith(
+                                    color: AppColors.textTertiary),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (_, i) => _CommentRow(
+                              comment: _comments[i],
+                              onReply: () => _startReply(
+                                  _comments[i].username, i),
+                              onDelete: _comments[i].isOwn
+                                  ? () => _deleteComment(i)
+                                  : null,
+                            ),
+                            childCount: _comments.length,
+                          ),
+                        ),
+                      ),
+
+                    // Bottom spacing above input
+                    const SliverToBoxAdapter(
+                        child: SizedBox(height: 100)),
                   ],
-                ),
+                ],
               ),
             ),
+          ),
 
-            // ── Content ─────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-                child: _PollContent(pollId: pollId),
-              ),
-            ),
+          // ── Sticky comment input ────────────
+          _CommentInput(
+            controller: _inputCtrl,
+            focusNode:  _focusNode,
+            hasText:    _hasText,
+            replyingTo: _replyingToUsername,
+            onCancelReply: _cancelReply,
+            onSubmit:   _submitComment,
+          ),
+        ],
+      ),
+    );
+  }
 
-            // ── Actions ─────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 100),
-                child: _PollActions(pollId: pollId),
-              ),
-            ),
-          ],
+  void _confirmDelete(
+      BuildContext context, WidgetRef ref, String pollId) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surfaceCard,
+        title: const Text('Delete poll?',
+            style: TextStyle(color: AppColors.textPrimary)),
+        content: const Text(
+          'This can\'t be undone. All votes and comments will be removed.',
+          style: TextStyle(color: AppColors.textSecondary),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              try {
+                await ref
+                    .read(pollsProvider.notifier)
+                    .deletePoll(pollId);
+              } catch (_) {}
+            },
+            child: const Text('Delete',
+                style:
+                    TextStyle(color: AppColors.textDestructive)),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ── Poll content ──────────────────────────────
-class _PollContent extends ConsumerWidget {
-  final String pollId;
-  const _PollContent({required this.pollId});
+// ─────────────────────────────────────────────
+// Poll card — author + cover + question + options + actions
+// ─────────────────────────────────────────────
+class _PollCard extends ConsumerWidget {
+  final Poll poll;
+  final AnimationController heartCtrl;
+  final Animation<double> heartScale;
+  final VoidCallback onFavorite;
+  final Future<void> Function() onShare;
+  final void Function(String optionId) onVote;
+  final VoidCallback onDelete;
+  final VoidCallback onReport;
 
-  Poll? _find(List<Poll> polls) {
-    for (final p in polls) {
-      if (p.id == pollId) return p;
-    }
-    return null;
-  }
+  const _PollCard({
+    required this.poll,
+    required this.heartCtrl,
+    required this.heartScale,
+    required this.onFavorite,
+    required this.onShare,
+    required this.onVote,
+    required this.onDelete,
+    required this.onReport,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final poll = _find(ref.watch(pollsProvider).valueOrNull ?? const []);
-    if (poll == null) return const SizedBox.shrink();
-
-    final authUserId = ref.watch(auth_prov.currentUserProvider)?.id;
+    final authUserId  = ref.watch(auth_prov.currentUserProvider)?.id;
+    final isFollowing = poll.author.isCurrentUser
+        ? false
+        : ref.watch(isFollowingProvider(poll.author.id));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Author row — tapping navigates to their profile
-        GestureDetector(
-          onTap: () => Navigator.of(context)
-              .pushNamed('/user-profile', arguments: poll.author),
-          behavior: HitTestBehavior.opaque,
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AvatarHelper.colorFor(
-                  poll.author.isCurrentUser ? (authUserId ?? poll.author.id) : poll.author.id,
-                ),
-                child: Text(
-                  AvatarHelper.initialFor(displayName: poll.author.name),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+        // ── Author row ──────────────────────
+        Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.of(context)
+                  .pushNamed('/user-profile', arguments: poll.author),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AvatarHelper.colorFor(
+                      poll.author.isCurrentUser
+                          ? (authUserId ?? poll.author.id)
+                          : poll.author.id,
+                    ),
+                    child: Text(
+                      AvatarHelper.initialFor(
+                          displayName: poll.author.name),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(poll.author.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          )),
+                      Text(poll.author.handle,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textTertiary,
+                            height: 1.2,
+                          )),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Text(poll.timeAgo, style: AppTypography.statLabel),
+            const SizedBox(width: 8),
+            // Inline follow for others
+            if (!poll.author.isCurrentUser)
+              _FollowChip(userId: poll.author.id, isFollowing: isFollowing),
+            // ⋯ menu
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _showMenu(context, ref),
+              child: const SizedBox(
+                width: 32, height: 32,
+                child: Center(
+                  child: Icon(Icons.more_horiz_rounded,
+                      size: 18, color: AppColors.textTertiary),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      poll.author.name,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        height: 1.2,
-                      ),
-                    ),
-                    Text(
-                      poll.author.handle,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textTertiary,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(poll.timeAgo, style: AppTypography.statLabel),
-            ],
-          ),
+            ),
+          ],
         ),
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
 
-        // Question
+        // ── Question ─────────────────────────
         Text(
           poll.question,
           style: AppTypography.cardTitle
               .copyWith(fontSize: 20, height: 1.35),
         ),
 
-        const SizedBox(height: 20),
-
-        // Options — tap to vote or change vote.
-        Column(
-          children: [
-            ...poll.options.asMap().entries.map((e) => Padding(
-                  padding: EdgeInsets.only(
-                      bottom: e.key < poll.options.length - 1 ? 10 : 0),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      ref
-                          .read(pollsProvider.notifier)
-                          .vote(pollId, e.value.id);
-                    },
-                    child: _DetailOptionBar(
-                      option: e.value,
-                      totalVotes: poll.totalVotes,
-                      isVoted: poll.votedOptionId == e.value.id,
-                      hasVoted: poll.isVoted,
-                    ),
-                  ),
-                )),
-          ],
-        ),
-        if (poll.isVoted) ...[
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Icon(Icons.touch_app_outlined,
-                  size: 12, color: AppColors.textTertiary),
-              const SizedBox(width: 4),
-              const Text(
-                'Tap any option to change your vote',
-                style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textTertiary,
-                    height: 1),
-              ),
-            ],
+        // ── Cover image ─────────────────────
+        if (poll.coverImagePath != null) ...[
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.card),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: PollImage(path: poll.coverImagePath),
+            ),
           ),
         ],
 
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
 
-        // Vote summary
-        Row(
-          children: [
-            const Icon(Icons.how_to_vote_outlined,
-                size: 15, color: AppColors.textTertiary),
-            const SizedBox(width: 5),
-            Text(
-              '${_fmt(poll.totalVotes)} votes',
-              style: AppTypography.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (poll.isVoted) ...[
-              const SizedBox(width: 8),
-              Container(
-                width: 3,
-                height: 3,
-                decoration: const BoxDecoration(
-                    color: AppColors.textTertiary, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'You voted',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textAccent,
-                  fontWeight: FontWeight.w500,
+        // ── Options ──────────────────────────
+        ...poll.options.asMap().entries.map((e) => Padding(
+              padding: EdgeInsets.only(
+                  bottom: e.key < poll.options.length - 1 ? 10 : 0),
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onVote(e.value.id);
+                },
+                child: _OptionBar(
+                  option:     e.value,
+                  totalVotes: poll.totalVotes,
+                  isVoted:    poll.votedOptionId == e.value.id,
+                  hasVoted:   poll.isVoted,
                 ),
               ),
-            ],
-          ],
-        ),
+            )),
 
-        const SizedBox(height: 18),
+        if (poll.isVoted) ...[
+          const SizedBox(height: 8),
+          const Row(children: [
+            Icon(Icons.touch_app_outlined,
+                size: 12, color: AppColors.textTertiary),
+            SizedBox(width: 4),
+            Text('Tap any option to change your vote',
+                style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textTertiary,
+                    height: 1)),
+          ]),
+        ],
+
+        const SizedBox(height: 16),
+        Container(height: 0.5, color: const Color(0xFF2A2A2A)),
+        const SizedBox(height: 4),
+
+        // ── Footer: votes · heart · share ────
+        Row(children: [
+          const Icon(Icons.how_to_vote_outlined,
+              size: AppIconSizes.inline, color: AppColors.textTertiary),
+          const SizedBox(width: 5),
+          Text('${_fmt(poll.totalVotes)} votes',
+              style: AppTypography.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              )),
+          if (poll.isVoted) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 3, height: 3,
+              decoration: const BoxDecoration(
+                  color: AppColors.textTertiary,
+                  shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 8),
+            Text('You voted',
+                style: AppTypography.labelMedium.copyWith(
+                  color: AppColors.textAccent,
+                  fontWeight: FontWeight.w500,
+                )),
+          ],
+          const Spacer(),
+
+          // Favorite
+          GestureDetector(
+            onTap: onFavorite,
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              width: 44, height: 44,
+              child: Center(
+                child: ScaleTransition(
+                  scale: heartScale,
+                  child: Icon(
+                    poll.isFavorited
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    size: AppIconSizes.control,
+                    color: poll.isFavorited
+                        ? const Color(0xFFFF5C7A)
+                        : AppColors.textTertiary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Share
+          GestureDetector(
+            onTap: onShare,
+            behavior: HitTestBehavior.opaque,
+            child: SizedBox(
+              width: 44, height: 44,
+              child: Center(
+                child: Icon(Icons.ios_share_rounded,
+                    size: AppIconSizes.control,
+                    color: poll.hasShared
+                        ? AppColors.accentPrimary
+                        : AppColors.textTertiary),
+              ),
+            ),
+          ),
+        ]),
+
         Container(height: 0.5, color: const Color(0xFF2A2A2A)),
       ],
     );
   }
-}
 
-String _fmt(int n) {
-  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-  if (n >= 1000) {
-    final k = n ~/ 1000;
-    final r = (n % 1000).toString().padLeft(3, '0');
-    return '$k,$r';
+  void _showMenu(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SafeArea(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceCard,
+            borderRadius: BorderRadius.circular(AppRadius.card),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36, height: 4,
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.borderSubtle,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              if (poll.author.isCurrentUser)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline_rounded,
+                      color: AppColors.textDestructive),
+                  title: const Text('Delete poll',
+                      style:
+                          TextStyle(color: AppColors.textDestructive)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onDelete();
+                  },
+                )
+              else ...[
+                ListTile(
+                  leading: const Icon(Icons.link_rounded,
+                      color: AppColors.textSecondary),
+                  title: const Text('Copy link'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Clipboard.setData(ClipboardData(
+                        text:
+                            'https://pollora.app/poll/${poll.id}'));
+                    AppToast.show(context, 'Link copied');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.flag_outlined,
+                      color: AppColors.textDestructive),
+                  title: const Text('Report poll',
+                      style:
+                          TextStyle(color: AppColors.textDestructive)),
+                  onTap: () {
+                    Navigator.pop(context);
+                    onReport();
+                  },
+                ),
+              ],
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
   }
-  return n.toString();
 }
 
-// ── Option bar ────────────────────────────────
-class _DetailOptionBar extends StatelessWidget {
+// ─────────────────────────────────────────────
+// Follow chip (inline in author row)
+// ─────────────────────────────────────────────
+class _FollowChip extends ConsumerWidget {
+  final String userId;
+  final bool isFollowing;
+  const _FollowChip({required this.userId, required this.isFollowing});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        ref.read(followProvider.notifier).toggle(userId);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(right: 4),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isFollowing
+              ? Colors.transparent
+              : AppColors.accentPrimary,
+          border: Border.all(
+            color: isFollowing
+                ? AppColors.borderSubtle
+                : AppColors.accentPrimary,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          isFollowing ? 'Following' : 'Follow',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: isFollowing
+                ? AppColors.textSecondary
+                : Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Option bar
+// ─────────────────────────────────────────────
+class _OptionBar extends StatelessWidget {
   final PollOption option;
   final int totalVotes;
   final bool isVoted;
   final bool hasVoted;
 
-  const _DetailOptionBar({
+  const _OptionBar({
     required this.option,
     required this.totalVotes,
     required this.isVoted,
@@ -301,10 +818,11 @@ class _DetailOptionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = option.imagePath != null;
-    final barH = hasImage ? 72.0 : 52.0;
+    final barH    = hasImage ? 72.0 : 52.0;
 
     return LayoutBuilder(builder: (_, constraints) {
-      final fillWidth = constraints.maxWidth * option.percentage(totalVotes);
+      final fillW =
+          constraints.maxWidth * option.percentage(totalVotes);
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: barH,
@@ -314,29 +832,28 @@ class _DetailOptionBar extends StatelessWidget {
         ),
         foregroundDecoration: isVoted
             ? BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.pollBar),
-                border:
-                    Border.all(color: AppColors.accentPrimary, width: 1.5),
+                borderRadius:
+                    BorderRadius.circular(AppRadius.pollBar),
+                border: Border.all(
+                    color: AppColors.accentPrimary, width: 1.5),
               )
             : null,
         clipBehavior: Clip.hardEdge,
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Fill bar
             Align(
               alignment: Alignment.centerLeft,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeOutCubic,
-                width: hasVoted ? fillWidth : 0,
+                width:  hasVoted ? fillW : 0,
                 height: barH,
                 color: isVoted
                     ? AppColors.pollBarLeading
                     : AppColors.pollBarOther,
               ),
             ),
-            // Option image (1:1, left-anchored)
             if (hasImage)
               Positioned(
                 left: 0, top: 0, bottom: 0,
@@ -345,23 +862,21 @@ class _DetailOptionBar extends StatelessWidget {
                   child: PollImage(path: option.imagePath),
                 ),
               ),
-            // Text + percentage
             Padding(
               padding: EdgeInsets.only(
-                left: hasImage ? barH + 12.0 : 14.0,
+                left:  hasImage ? barH + 12.0 : 14.0,
                 right: 14.0,
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      option.text,
-                      style: AppTypography.titleSmall.copyWith(
-                        fontWeight:
-                            isVoted ? FontWeight.w700 : FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Text(option.text,
+                        style: AppTypography.titleSmall.copyWith(
+                          fontWeight: isVoted
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis),
                   ),
                   const SizedBox(width: 8),
                   if (hasVoted) ...[
@@ -372,14 +887,12 @@ class _DetailOptionBar extends StatelessWidget {
                             size: AppIconSizes.inline,
                             color: Colors.white),
                       ),
-                    Text(
-                      '${option.percentageInt(totalVotes)}%',
-                      style: AppTypography.bodySmall.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        letterSpacing: 0,
-                      ),
-                    ),
+                    Text('${option.percentageInt(totalVotes)}%',
+                        style: AppTypography.bodySmall.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          letterSpacing: 0,
+                        )),
                   ],
                 ],
               ),
@@ -391,158 +904,452 @@ class _DetailOptionBar extends StatelessWidget {
   }
 }
 
-// ── Actions bar ───────────────────────────────
-class _PollActions extends ConsumerStatefulWidget {
-  final String pollId;
-  const _PollActions({required this.pollId});
+// ─────────────────────────────────────────────
+// Comment row
+// ─────────────────────────────────────────────
+class _CommentRow extends StatefulWidget {
+  final _Comment     comment;
+  final VoidCallback onReply;
+  final VoidCallback? onDelete;
+
+  const _CommentRow({
+    required this.comment,
+    required this.onReply,
+    this.onDelete,
+  });
 
   @override
-  ConsumerState<_PollActions> createState() => _PollActionsState();
+  State<_CommentRow> createState() => _CommentRowState();
 }
 
-class _PollActionsState extends ConsumerState<_PollActions>
+class _CommentRowState extends State<_CommentRow>
     with SingleTickerProviderStateMixin {
-  late AnimationController _heartCtrl;
-  late Animation<double> _heartScale;
+  bool _liked = false;
+  late AnimationController _likeCtrl;
+  late Animation<double>   _likeScale;
 
   @override
   void initState() {
     super.initState();
-    _heartCtrl = AnimationController(
-        duration: const Duration(milliseconds: 400), vsync: this);
-    _heartScale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.35, end: 0.9), weight: 30),
+    _likeCtrl = AnimationController(
+        duration: const Duration(milliseconds: 350), vsync: this);
+    _likeScale = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 40),
+      TweenSequenceItem(tween: Tween(begin: 1.4, end: 0.9), weight: 30),
       TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 30),
-    ]).animate(CurvedAnimation(parent: _heartCtrl, curve: Curves.easeOut));
+    ]).animate(
+        CurvedAnimation(parent: _likeCtrl, curve: Curves.easeOut));
   }
 
   @override
   void dispose() {
-    _heartCtrl.dispose();
+    _likeCtrl.dispose();
     super.dispose();
   }
 
-  Poll? _find(List<Poll> polls) {
-    for (final p in polls) {
-      if (p.id == widget.pollId) return p;
-    }
-    return null;
+  void _toggleLike() {
+    HapticFeedback.lightImpact();
+    setState(() => _liked = !_liked);
+    _likeCtrl.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final poll = _find(ref.watch(pollsProvider).valueOrNull ?? const []);
-    if (poll == null) return const SizedBox.shrink();
-
-    return Row(
-      children: [
-        // Comments
-        _ActionBtn(
-          icon: Icons.chat_bubble_outline_rounded,
-          label: '${poll.commentCount}',
-          onTap: () async {
-            HapticFeedback.lightImpact();
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              barrierColor: Colors.black.withValues(alpha: 0.5),
-              builder: (_) => CommentsSheet(
-                pollId: poll.id,
-                pollQuestion: poll.question,
-                commentCount: poll.commentCount,
-              ),
-            );
-          },
-        ),
-
-        const SizedBox(width: 4),
-
-        // Favorite
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            ref.read(pollsProvider.notifier).toggleFavorite(poll.id);
-            _heartCtrl.forward(from: 0);
-          },
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            width: 44,
-            height: 44,
-            child: Center(
-              child: ScaleTransition(
-                scale: _heartScale,
-                child: Icon(
-                  poll.isFavorited
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  size: AppIconSizes.control,
-                  color: poll.isFavorited
-                      ? const Color(0xFFFF5C7A)
-                      : AppColors.textTertiary,
-                ),
+    final likes = widget.comment.likes + (_liked ? 1 : 0);
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: 20,
+        left: widget.comment.isReply ? 36 : 0,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 16,
+            backgroundColor:
+                AvatarHelper.colorFor(widget.comment.userId),
+            child: Text(
+              AvatarHelper.initialFor(
+                  displayName: widget.comment.username),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                height: 1,
               ),
             ),
           ),
-        ),
-
-        const SizedBox(width: 4),
-
-        // Share
-        _ActionBtn(
-          icon: Icons.ios_share_rounded,
-          label: '${poll.shareCount}',
-          active: poll.hasShared,
-          onTap: () async {
-            HapticFeedback.lightImpact();
-            final result = await Share.share(
-              '${poll.question}\n\nhttps://pollora.app/poll/${poll.id}',
-              subject: poll.question,
-            );
-            if (result.status == ShareResultStatus.success) {
-              ref.read(pollsProvider.notifier).share(poll.id);
-            }
-          },
-        ),
-      ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Name + timestamp
+                Row(children: [
+                  Text(widget.comment.username,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                        height: 1,
+                      )),
+                  const SizedBox(width: 6),
+                  Text('· ${widget.comment.timestamp}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textTertiary,
+                        height: 1,
+                      )),
+                ]),
+                const SizedBox(height: 5),
+                // Text
+                Text(widget.comment.text,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                      height: 1.45,
+                    )),
+                const SizedBox(height: 8),
+                // Like / Reply / Delete
+                Row(children: [
+                  GestureDetector(
+                    onTap: _toggleLike,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ScaleTransition(
+                            scale: _likeScale,
+                            child: Icon(
+                              _liked
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              size: 16,
+                              color: _liked
+                                  ? const Color(0xFFFF5C7A)
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          if (likes > 0) ...[
+                            const SizedBox(width: 4),
+                            Text('$likes',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: _liked
+                                      ? const Color(0xFFFF5C7A)
+                                      : AppColors.textSecondary,
+                                  height: 1,
+                                )),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  GestureDetector(
+                    onTap: widget.onReply,
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                          vertical: 4, horizontal: 2),
+                      child: Text('Reply',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textSecondary,
+                            height: 1,
+                          )),
+                    ),
+                  ),
+                  if (widget.onDelete != null) ...[
+                    const SizedBox(width: 16),
+                    GestureDetector(
+                      onTap: widget.onDelete,
+                      behavior: HitTestBehavior.opaque,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 2),
+                        child: Text('Delete',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textDestructive,
+                              height: 1,
+                            )),
+                      ),
+                    ),
+                  ],
+                ]),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _ActionBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Future<void> Function() onTap;
-  final bool active;
-  const _ActionBtn({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.active = false,
-  });
+// ─────────────────────────────────────────────
+// Comment skeleton loader
+// ─────────────────────────────────────────────
+class _CommentSkeleton extends StatelessWidget {
+  const _CommentSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.accentPrimary : AppColors.textTertiary;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        height: 44,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: AppIconSizes.control, color: color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(fontSize: 13, color: color, height: 1),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32, height: 32,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceElevated,
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 11,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 11,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Container(
+                  height: 11,
+                  width: 200,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceElevated,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────
+// Sticky comment input
+// ─────────────────────────────────────────────
+class _CommentInput extends ConsumerWidget {
+  final TextEditingController controller;
+  final FocusNode             focusNode;
+  final bool                  hasText;
+  final String?               replyingTo;
+  final VoidCallback          onCancelReply;
+  final Future<void> Function() onSubmit;
+
+  const _CommentInput({
+    required this.controller,
+    required this.focusNode,
+    required this.hasText,
+    required this.replyingTo,
+    required this.onCancelReply,
+    required this.onSubmit,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bottom = MediaQuery.of(context).padding.bottom;
+    final me        = ref.watch(currentUserProvider);
+    final authUser  = ref.watch(auth_prov.currentUserProvider);
+    final avatarColor =
+        AvatarHelper.colorFor(authUser?.id ?? me?.id ?? '');
+    final initial =
+        AvatarHelper.initialFor(displayName: me?.name ?? '');
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.background,
+        border: Border(
+            top: BorderSide(color: Color(0xFF2A2A2A), width: 0.5)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Reply banner
+          if (replyingTo != null)
+            Container(
+              color: AppColors.surfaceElevated,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.reply_rounded,
+                      size: 14, color: AppColors.textTertiary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Replying to @$replyingTo',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: onCancelReply,
+                    behavior: HitTestBehavior.opaque,
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close_rounded,
+                          size: 16, color: AppColors.textTertiary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Input row
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+                16, 10, 16, bottom > 0 ? bottom : 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: avatarColor,
+                  child: Text(initial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      )),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Container(
+                    constraints:
+                        const BoxConstraints(maxHeight: 120),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceElevated,
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.card),
+                    ),
+                    child: TextField(
+                      controller:    controller,
+                      focusNode:     focusNode,
+                      maxLines:      null,
+                      textInputAction: TextInputAction.newline,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                        height: 1.4,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText:    'Write a comment…',
+                        hintStyle: TextStyle(
+                            color: AppColors.textTertiary,
+                            fontSize: 14),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        border:      InputBorder.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: hasText ? onSubmit : null,
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: hasText
+                          ? AppColors.accentPrimary
+                          : AppColors.surfaceElevated,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_upward_rounded,
+                      size: 18,
+                      color: hasText
+                          ? Colors.white
+                          : AppColors.textTertiary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Comment model
+// ─────────────────────────────────────────────
+class _Comment {
+  final String id;
+  final String userId;
+  final String username;
+  final String handle;
+  final String text;
+  final String timestamp;
+  final int    likes;
+  final bool   isOwn;
+  final bool   isReply;
+
+  const _Comment({
+    required this.id,
+    required this.userId,
+    required this.username,
+    required this.handle,
+    required this.text,
+    required this.timestamp,
+    required this.likes,
+    this.isOwn  = false,
+    this.isReply = false,
+  });
+}
+
+// ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+String _fmt(int n) {
+  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+  if (n >= 1000) {
+    final k = n ~/ 1000;
+    final r = (n % 1000).toString().padLeft(3, '0');
+    return '$k,$r';
+  }
+  return n.toString();
+}
+
+String _timeAgo(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inDays >= 7)     return '${diff.inDays ~/ 7}w';
+  if (diff.inDays > 0)      return '${diff.inDays}d';
+  if (diff.inHours > 0)     return '${diff.inHours}h';
+  if (diff.inMinutes > 0)   return '${diff.inMinutes}m';
+  return 'now';
 }

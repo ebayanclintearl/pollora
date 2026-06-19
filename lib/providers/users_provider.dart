@@ -59,7 +59,7 @@ final currentUserProvider = Provider<AppUser?>((ref) {
 /// All unique users who have authored a visible poll.
 /// Derived from loaded polls — avoids a separate DB query and circular imports.
 final allUsersProvider = Provider<List<AppUser>>((ref) {
-  final polls = ref.watch(pollsProvider);
+  final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
   final seen = <String>{};
   final users = <AppUser>[];
   for (final p in polls) {

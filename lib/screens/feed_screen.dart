@@ -40,7 +40,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   final ScrollController _scrollController = ScrollController();
 
   bool _searchActive = false;
-  bool _isLoading = true;
   bool _headerVisible = true;
   double _lastScrollOffset = 0;
   _FeedTab _selectedTab = _FeedTab.trending;
@@ -53,9 +52,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     widget.reselectNotifier?.addListener(_onReselect);
-    Future.delayed(const Duration(milliseconds: 1600), () {
-      if (mounted) setState(() => _isLoading = false);
-    });
   }
 
   @override
@@ -119,9 +115,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 1400));
-    if (mounted) setState(() => _isLoading = false);
+    ref.invalidate(pollsProvider);
+    await ref.read(pollsProvider.future);
   }
 
   // ── Build ──────────────────────────────────
@@ -139,6 +134,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
     final searchQuery = ref.watch(searchQueryProvider);
     final followedIds = ref.watch(followProvider);
+    final pollsAsync = ref.watch(pollsProvider);
+    final isLoading = pollsAsync.isLoading;
+    final hasError = pollsAsync.hasError;
     final polls = switch (_selectedTab) {
       _FeedTab.trending  => ref.watch(trendingPollsProvider),
       _FeedTab.popular   => ref.watch(popularPollsProvider),
@@ -182,7 +180,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   ),
 
                 // ── Content ─────────────────────
-                if (_isLoading)
+                if (isLoading)
                   SliverPadding(
                     padding: const EdgeInsets.only(bottom: 100),
                     sliver: SliverList(
@@ -193,6 +191,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                             : const _SkeletonCard(),
                         childCount: 7,
                       ),
+                    ),
+                  )
+                else if (hasError)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _ErrorState(
+                      onRetry: () => ref.invalidate(pollsProvider),
                     ),
                   )
                 else if (_searchActive && searchQuery.isNotEmpty)
@@ -413,7 +418,7 @@ class _PollCardState extends ConsumerState<_PollCard>
 
   @override
   Widget build(BuildContext context) {
-    final polls = ref.watch(pollsProvider);
+    final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
     Poll? poll;
     for (final p in polls) {
       if (p.id == widget.pollId) {
@@ -1299,6 +1304,61 @@ class _EmptyState extends StatelessWidget {
           style: AppTypography.bodyMedium
               .copyWith(color: AppColors.textTertiary),
           textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+// ── Error state ───────────────────────────────
+class _ErrorState extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _ErrorState({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.wifi_off_rounded,
+            size: 44, color: AppColors.textTertiary),
+        const SizedBox(height: 16),
+        const Text(
+          'Couldn\'t load polls',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Check your connection and try again',
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 24),
+        GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onRetry();
+          },
+          child: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.accentPrimary,
+              borderRadius: BorderRadius.circular(AppRadius.pill),
+            ),
+            child: const Text(
+              'Retry',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ],
     );

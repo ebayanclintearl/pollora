@@ -28,7 +28,7 @@ class PollDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final top = MediaQuery.of(context).padding.top;
-    final poll = _find(ref.watch(pollsProvider));
+    final poll = _find(ref.watch(pollsProvider).valueOrNull ?? const []);
 
     if (poll == null) {
       return const Scaffold(
@@ -44,7 +44,8 @@ class PollDetailScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async {
           HapticFeedback.mediumImpact();
-          await Future.delayed(const Duration(milliseconds: 800));
+          ref.invalidate(pollsProvider);
+          await ref.read(pollsProvider.future);
         },
         color: AppColors.accentPrimary,
         backgroundColor: AppColors.surfaceCard,
@@ -120,7 +121,7 @@ class _PollContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final poll = _find(ref.watch(pollsProvider));
+    final poll = _find(ref.watch(pollsProvider).valueOrNull ?? const []);
     if (poll == null) return const SizedBox.shrink();
 
     final authUserId = ref.watch(auth_prov.currentUserProvider)?.id;
@@ -436,7 +437,7 @@ class _PollActionsState extends ConsumerState<_PollActions>
 
   @override
   Widget build(BuildContext context) {
-    final poll = _find(ref.watch(pollsProvider));
+    final poll = _find(ref.watch(pollsProvider).valueOrNull ?? const []);
     if (poll == null) return const SizedBox.shrink();
 
     return Row(

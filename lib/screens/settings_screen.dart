@@ -8,18 +8,19 @@ import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../core/avatar_helper.dart';
 import '../providers/auth_provider.dart';
+import '../providers/follow_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
 import 'edit_profile_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _notificationsEnabled = true;
 
   @override
@@ -132,6 +133,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       HapticFeedback.mediumImpact();
                       try {
                         await AuthService.signOut();
+                        ref.invalidate(followProvider);
+                        // pollsProvider auto-reloads via authStateProvider watch
                       } catch (e) {
                         if (context.mounted) {
                           AppToast.show(context, 'Sign out failed', isError: true);

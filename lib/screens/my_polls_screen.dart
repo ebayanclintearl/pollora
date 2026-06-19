@@ -38,7 +38,10 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
 
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
-    await Future.delayed(const Duration(milliseconds: 800));
+    await Future.wait([
+      ref.read(pollsProvider.notifier).refresh(),
+      ref.read(currentProfileProvider.notifier).refresh(),
+    ]);
   }
 
   @override

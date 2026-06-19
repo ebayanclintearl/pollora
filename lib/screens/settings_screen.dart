@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
+import '../providers/auth_provider.dart';
+import '../services/auth_service.dart';
+import '../widgets/app_toast.dart';
 import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -61,22 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // ── Profile row ──
                   _ProfileRow(),
                   const SizedBox(height: 20),
-
-                  // ── Account ──
-                  const _SectionLabel('Account'),
-                  _SettingsCard(
-                    children: [
-                      _SettingsRow(
-                        icon: Icons.person_outline_rounded,
-                        label: 'Edit Profile',
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const EditProfileScreen()),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
 
                   // ── Preferences ──
                   const _SectionLabel('Preferences'),
@@ -139,7 +128,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   // ── Sign Out — standalone destructive button ──
                   GestureDetector(
-                    onTap: () => HapticFeedback.mediumImpact(),
+                    onTap: () async {
+                      HapticFeedback.mediumImpact();
+                      try {
+                        await AuthService.signOut();
+                      } catch (e) {
+                        if (context.mounted) {
+                          AppToast.show(context, 'Sign out failed', isError: true);
+                        }
+                      }
+                    },
                     behavior: HitTestBehavior.opaque,
                     child: Container(
                       height: 52,
@@ -188,54 +186,81 @@ class _SettingsScreenState extends State<SettingsScreen> {
 // ─────────────────────────────────────────────
 // Profile row — mini summary at top of settings
 // ─────────────────────────────────────────────
-class _ProfileRow extends StatelessWidget {
+class _ProfileRow extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.cardPad),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(AppRadius.card),
-      ),
-      child: Row(
-        children: [
-          // Avatar
-          Container(
-            width: 52,
-            height: 52,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Color(0xFF8B6914),
-            ),
-            child: const Center(
-              child: Text(
-                'C',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+
+    final displayName = AvatarHelper.nameFor(
+      displayName: user?.userMetadata?['display_name'] as String?,
+      email: user?.email,
+    );
+    final handle = AvatarHelper.handleFor(
+      handle: user?.userMetadata?['handle'] as String?,
+      email: user?.email,
+    );
+    final initial = AvatarHelper.initialFor(
+      displayName: user?.userMetadata?['display_name'] as String?,
+      email: user?.email,
+    );
+    final avatarColor = AvatarHelper.colorFor(user?.id);
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.cardPad),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: avatarColor,
+              ),
+              child: Center(
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          // Name + handle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Clint',
+            const SizedBox(width: 14),
+            // Name + handle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    displayName,
                     style: AppTypography.titleMedium
-                        .copyWith(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 2),
-                const Text('@clint', style: AppTypography.bodySmall),
-              ],
+                        .copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(handle, style: AppTypography.bodySmall),
+                ],
+              ),
             ),
-          ),
-          // Chevron
-          const Icon(Icons.chevron_right_rounded,
-              color: AppColors.textTertiary, size: AppIconSizes.control),
-        ],
+            // Chevron
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.textTertiary, size: AppIconSizes.control),
+          ],
+        ),
       ),
     );
   }

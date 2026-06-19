@@ -1,12 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app_colors.dart';
 import 'app_theme.dart';
 import 'models/user.dart';
+import 'providers/auth_provider.dart';
+import 'screens/auth_sheet.dart';
 import 'screens/splash_screen.dart';
-import 'screens/onboarding_screen.dart';
 import 'screens/feed_screen.dart';
 import 'screens/create_screen.dart';
 import 'screens/my_polls_screen.dart';
@@ -14,8 +18,18 @@ import 'screens/user_profile_screen.dart';
 import 'screens/poll_detail_screen.dart';
 import 'screens/follow_list_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: '.env');
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -58,17 +72,17 @@ class PolloraApp extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// App entry — shows splash then transitions to shell
+// App entry: Splash → Auth gate → Shell
 // ─────────────────────────────────────────────
-class _AppEntry extends StatefulWidget {
+class _AppEntry extends ConsumerStatefulWidget {
   const _AppEntry();
   @override
-  State<_AppEntry> createState() => _AppEntryState();
+  ConsumerState<_AppEntry> createState() => _AppEntryState();
 }
 
-class _AppEntryState extends State<_AppEntry> {
+class _AppEntryState extends ConsumerState<_AppEntry> {
   bool _splashDone = false;
-  bool _onboardingDone = false;
+  bool _sheetShown = false;
 
   @override
   Widget build(BuildContext context) {
@@ -77,12 +91,49 @@ class _AppEntryState extends State<_AppEntry> {
         onComplete: () => setState(() => _splashDone = true),
       );
     }
-    if (!_onboardingDone) {
-      return OnboardingScreen(
-        onComplete: () => setState(() => _onboardingDone = true),
-      );
+
+    final isAuthenticated = ref.watch(isAuthenticatedProvider);
+
+    if (!isAuthenticated) {
+      // Show the dark background and open the auth sheet once.
+      if (!_sheetShown) {
+        _sheetShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          await showAuthSheet(context);
+          // Sheet dismissed means auth succeeded — Riverpod will
+          // rebuild this widget with isAuthenticated == true.
+          if (mounted) setState(() => _sheetShown = false);
+        });
+      }
+      return const _UnauthBackground();
     }
+
+    // Reset so the sheet can re-appear after sign-out.
+    _sheetShown = false;
     return const MainShell();
+  }
+}
+
+/// Feed visible behind the auth sheet — blurred + darkened.
+class _UnauthBackground extends StatelessWidget {
+  const _UnauthBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // App content rendered but fully non-interactive.
+        const IgnorePointer(child: MainShell()),
+
+        // Blur layer.
+        BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.45),
+          ),
+        ),
+      ],
+    );
   }
 }
 

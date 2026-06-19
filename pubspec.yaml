@@ -15,6 +15,17 @@ dependencies:
   flutter_riverpod: ^2.5.1
   share_plus: ^10.1.4
 
+  # Supabase
+  supabase_flutter: ^2.5.0
+
+  # Auth
+  google_sign_in: ^6.2.0
+  sign_in_with_apple: ^6.1.0
+  crypto: ^3.0.3           # required by sign_in_with_apple nonce
+
+  # Config
+  flutter_dotenv: ^5.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -24,3 +35,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+    - .env

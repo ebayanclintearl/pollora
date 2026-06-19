@@ -1,40 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../app_radius.dart';
 import '../app_typography.dart';
+import '../core/avatar_helper.dart';
+import '../providers/auth_provider.dart';
+import '../services/auth_service.dart';
+import '../widgets/app_toast.dart';
 
-class SwitchAccountSheet extends StatefulWidget {
+class SwitchAccountSheet extends ConsumerWidget {
   const SwitchAccountSheet({super.key});
 
   @override
-  State<SwitchAccountSheet> createState() => _SwitchAccountSheetState();
-}
-
-class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
-  int _selectedIndex = 0;
-
-  final List<_Account> _accounts = const [
-    _Account(name: 'Clint', handle: '@clint', label: 'C', color: Color(0xFF7B6914)),
-    _Account(name: 'Naruto Uzumaki', handle: '@naruto', label: 'N', color: Color(0xFFAA4400)),
-    _Account(name: 'Goku Son', handle: '@goku', label: 'G', color: Color(0xFF1A3F7A)),
-  ];
-
-  void _selectAccount(int i) {
-    if (i == _selectedIndex) return;
-    HapticFeedback.selectionClick();
-    setState(() => _selectedIndex = i);
-  }
-
-  void _confirmSwitch() {
-    HapticFeedback.mediumImpact();
-    Navigator.of(context).pop();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bottom = MediaQuery.of(context).padding.bottom;
-    final selected = _accounts[_selectedIndex];
+    final user = ref.watch(currentUserProvider);
+
+    final displayName = AvatarHelper.nameFor(
+      displayName: user?.userMetadata?['display_name'] as String?,
+      email: user?.email,
+    );
+    final handle = AvatarHelper.handleFor(
+      handle: user?.userMetadata?['handle'] as String?,
+      email: user?.email,
+    );
+    final initial = AvatarHelper.initialFor(
+      displayName: user?.userMetadata?['display_name'] as String?,
+      email: user?.email,
+    );
+    final avatarColor = AvatarHelper.colorFor(user?.id);
+
+    Future<void> doSignOut() async {
+      Navigator.of(context).pop();
+      try {
+        await AuthService.signOut();
+      } catch (_) {
+        if (context.mounted) {
+          AppToast.show(context, 'Sign out failed', isError: true);
+        }
+      }
+    }
 
     return Material(
       color: Colors.transparent,
@@ -71,7 +77,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Switch Account',
+                        'Account',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -82,7 +88,7 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Choose an account to continue',
+                        'Signed in as',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w400,
@@ -115,46 +121,77 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
             ),
             const SizedBox(height: 20),
 
-            // ── Account rows ──────────────────────────
-            ..._accounts.asMap().entries.map((e) => Padding(
-                  padding: EdgeInsets.only(
-                      bottom: e.key < _accounts.length - 1 ? 10 : 0),
-                  child: _AccountRow(
-                    account: e.value,
-                    isSelected: e.key == _selectedIndex,
-                    onTap: () => _selectAccount(e.key),
-                  ),
-                )),
-
-            const SizedBox(height: 14),
-
-            // ── Confirm button ────────────────────────
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _confirmSwitch,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accentPrimary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
-                  ),
-                ),
-                child: Text(
-                  'Switch to ${selected.name.split(' ').first}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+            // ── Current account row (selected, non-tappable) ──
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.accentPrimary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                border: Border.all(
+                  color: AppColors.accentPrimary.withValues(alpha: 0.70),
+                  width: 1.5,
                 ),
               ),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              child: Row(
+                children: [
+                  // Avatar
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: avatarColor,
+                    child: Text(
+                      initial,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Name + handle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                            height: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          handle,
+                          style: AppTypography.bodySmall,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  // Selected indicator
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.accentPrimary,
+                    ),
+                    child: const Icon(Icons.check_rounded,
+                        color: Colors.white, size: 14),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 10),
 
-            // ── Action group ─────────────────────────
+            const SizedBox(height: 20),
+
+            // ── Actions ───────────────────────────────
             Container(
               decoration: BoxDecoration(
                 color: AppColors.surfaceElevated,
@@ -165,136 +202,32 @@ class _SwitchAccountSheetState extends State<SwitchAccountSheet> {
                 ),
               ),
               clipBehavior: Clip.antiAlias,
-              child: const Column(
+              child: Column(
                 children: [
+                  // Add another account — signs out so user can re-auth
                   _ActionRow(
                     icon: Icons.person_add_outlined,
                     title: 'Add another account',
                     isDestructive: false,
                     showDivider: true,
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      await doSignOut();
+                    },
                   ),
+                  // Sign out
                   _ActionRow(
                     icon: Icons.logout_rounded,
-                    title: 'Sign out from all accounts',
+                    title: 'Sign out',
                     isDestructive: true,
                     showDivider: false,
+                    onTap: () async {
+                      HapticFeedback.mediumImpact();
+                      await doSignOut();
+                    },
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────
-// Models
-// ─────────────────────────────────────────────
-class _Account {
-  final String name;
-  final String handle;
-  final String label;
-  final Color color;
-
-  const _Account({
-    required this.name,
-    required this.handle,
-    required this.label,
-    required this.color,
-  });
-}
-
-// ─────────────────────────────────────────────
-// Account Row
-// ─────────────────────────────────────────────
-class _AccountRow extends StatelessWidget {
-  final _Account account;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _AccountRow(
-      {required this.account, required this.isSelected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.accentPrimary.withValues(alpha: 0.08)
-              : AppColors.surfaceElevated,
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.accentPrimary.withValues(alpha: 0.70)
-                : const Color(0xFF303030),
-            width: isSelected ? 1.5 : 0.8,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        child: Row(
-          children: [
-            // Avatar
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: account.color,
-              child: Text(
-                account.label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  height: 1,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Name + handle
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    account.name,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? AppColors.textPrimary : AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    account.handle,
-                    style: AppTypography.bodySmall,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Radio indicator
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isSelected ? AppColors.accentPrimary : Colors.transparent,
-                border: Border.all(
-                  color: isSelected ? AppColors.accentPrimary : const Color(0xFF484848),
-                  width: 1.8,
-                ),
-              ),
-              child: isSelected
-                  ? const Icon(Icons.check_rounded, color: Colors.white, size: 14)
-                  : null,
             ),
           ],
         ),
@@ -311,12 +244,14 @@ class _ActionRow extends StatelessWidget {
   final String title;
   final bool isDestructive;
   final bool showDivider;
+  final VoidCallback onTap;
 
   const _ActionRow({
     required this.icon,
     required this.title,
     required this.isDestructive,
     required this.showDivider,
+    required this.onTap,
   });
 
   @override
@@ -324,10 +259,11 @@ class _ActionRow extends StatelessWidget {
     return Column(
       children: [
         GestureDetector(
-          onTap: () => HapticFeedback.lightImpact(),
+          onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
             child: Row(
               children: [
                 Icon(

@@ -7,6 +7,8 @@ import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../models/poll.dart';
+import '../core/avatar_helper.dart';
+import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
 import '../widgets/switch_account_sheet.dart';
@@ -148,6 +150,14 @@ class _ProfileSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final authUser = ref.watch(auth_prov.currentUserProvider);
+
+    // Use AvatarHelper with real auth user ID for consistent colour everywhere.
+    final avatarColor = AvatarHelper.colorFor(authUser?.id);
+    final avatarInitial = AvatarHelper.initialFor(
+      displayName: authUser?.userMetadata?['display_name'] as String?,
+      email: authUser?.email,
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -162,11 +172,11 @@ class _ProfileSection extends ConsumerWidget {
                 height: 72,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: user.avatarColor,
+                  color: avatarColor,
                 ),
                 child: Center(
                   child: Text(
-                    user.avatarLabel,
+                    avatarInitial,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 28,

@@ -49,6 +49,30 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- ── Google Sign-In ───────────────────────────────────────────
+	     Replace YOUR_REVERSED_CLIENT_ID with the value from your
+	     Google Cloud Console OAuth 2.0 iOS client.
+	     Format: com.googleusercontent.apps.XXXXXXXXXX-XXXXXXXX
+	──────────────────────────────────────────────────────────────── -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>YOUR_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Allows the app to open Google and Apple auth pages -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>googlegmail</string>
+		<string>googlegoogleapp</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -115,11 +115,17 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
 
   List<Poll> get _current => state.valueOrNull ?? const [];
 
+  // Track in-flight mutations so rapid taps can't fire duplicate DB calls.
+  final _votingPolls     = <String>{};
+  final _favoritingPolls = <String>{};
+
   // ── Mutations ─────────────────────────────
 
   Future<void> vote(String pollId, String optionId) async {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) return;
+    if (_votingPolls.contains(pollId)) return; // in-flight guard
+    _votingPolls.add(pollId);
     final snapshot = _current;
     state = AsyncData(_current.map((poll) {
       if (poll.id != pollId) return poll;
@@ -139,12 +145,16 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       );
     } catch (_) {
       state = AsyncData(snapshot);
+    } finally {
+      _votingPolls.remove(pollId);
     }
   }
 
   Future<void> toggleFavorite(String pollId) async {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) return;
+    if (_favoritingPolls.contains(pollId)) return; // in-flight guard
+    _favoritingPolls.add(pollId);
     final snapshot = _current;
     bool? was;
     state = AsyncData(_current.map((p) {
@@ -167,12 +177,24 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       }
     } catch (_) {
       state = AsyncData(snapshot);
+    } finally {
+      _favoritingPolls.remove(pollId);
     }
   }
 
   Future<void> addPoll(Poll localPoll) async {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) throw Exception('Not signed in');
+
+    final question = localPoll.question.trim();
+    if (question.isEmpty || question.length > 300) {
+      throw Exception('Question must be 1–300 characters');
+    }
+    for (final opt in localPoll.options) {
+      if (opt.text.trim().isEmpty || opt.text.trim().length > 120) {
+        throw Exception('Each option must be 1–120 characters');
+      }
+    }
 
     // Upload images to Storage before writing to DB.
     final coverUrl = await _uploadImage(
@@ -237,6 +259,10 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
 
     final file = File(localPath);
     if (!file.existsSync()) return null;
+
+    // Reject files over 5 MB before hitting Storage.
+    const maxBytes = 5 * 1024 * 1024;
+    if (await file.length() > maxBytes) throw Exception('Image must be under 5 MB');
 
     final ext      = p.extension(localPath).isNotEmpty
         ? p.extension(localPath)

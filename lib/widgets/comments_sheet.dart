@@ -30,6 +30,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   int? _replyingToIndex;
   bool _hasText = false;
   bool _loading = true;
+  bool _submitting = false;
 
   final List<_Comment> _comments = [];
 
@@ -88,7 +89,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
 
   Future<void> _submitComment() async {
     final text = _controller.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _submitting) return;
+    if (text.length > 1000) return; // hard cap matches DB constraint
+    _submitting = true;
     HapticFeedback.lightImpact();
 
     final uid = supabase.auth.currentUser?.id;
@@ -124,7 +127,10 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
         'author_id': uid,
         'text': body,
       });
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _submitting = false;
+    }
   }
 
   void _startReply(String username, int index) {

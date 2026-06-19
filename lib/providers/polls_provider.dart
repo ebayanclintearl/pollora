@@ -161,37 +161,36 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
 
   Future<void> addPoll(Poll localPoll) async {
     final uid = supabase.auth.currentUser?.id;
-    if (uid == null) return;
-    try {
-      // Upload images to Storage before writing to DB.
-      final coverUrl = await _uploadImage(
+    if (uid == null) throw Exception('Not signed in');
+
+    // Upload images to Storage before writing to DB.
+    final coverUrl = await _uploadImage(
         localPoll.coverImagePath, 'poll-covers', uid);
 
-      final row = await supabase.from('polls').insert({
-        'author_id':       uid,
-        'question':        localPoll.question,
-        'cover_image_url': coverUrl,
-      }).select().single();
+    final row = await supabase.from('polls').insert({
+      'author_id':       uid,
+      'question':        localPoll.question,
+      'cover_image_url': coverUrl,
+    }).select().single();
 
-      final pollId = row['id'] as String;
+    final pollId = row['id'] as String;
 
-      if (localPoll.options.isNotEmpty) {
-        final optionRows = <Map<String, dynamic>>[];
-        for (int i = 0; i < localPoll.options.length; i++) {
-          final opt    = localPoll.options[i];
-          final imgUrl = await _uploadImage(opt.imagePath, 'poll-options', uid);
-          optionRows.add({
-            'poll_id':   pollId,
-            'text':      opt.text,
-            'position':  i,
-            'image_url': imgUrl,
-          });
-        }
-        await supabase.from('poll_options').insert(optionRows);
+    if (localPoll.options.isNotEmpty) {
+      final optionRows = <Map<String, dynamic>>[];
+      for (int i = 0; i < localPoll.options.length; i++) {
+        final opt    = localPoll.options[i];
+        final imgUrl = await _uploadImage(opt.imagePath, 'poll-options', uid);
+        optionRows.add({
+          'poll_id':   pollId,
+          'text':      opt.text,
+          'position':  i,
+          'image_url': imgUrl,
+        });
       }
+      await supabase.from('poll_options').insert(optionRows);
+    }
 
-      ref.invalidateSelf();
-    } catch (_) {}
+    ref.invalidateSelf();
   }
 
   void incrementShare(String pollId) {

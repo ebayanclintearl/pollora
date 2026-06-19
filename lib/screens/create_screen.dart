@@ -215,7 +215,19 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
       coverImagePath: _coverImagePath,
     );
 
-    ref.read(pollsProvider.notifier).addPoll(poll);
+    try {
+      await ref.read(pollsProvider.notifier).addPoll(poll);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _publishing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to publish: $e'),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
+      return;
+    }
 
     // Show success state briefly before navigating away.
     setState(() { _publishing = false; _published = true; });

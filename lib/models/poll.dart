@@ -4,15 +4,17 @@ class PollOption {
   final String id;
   final String text;
   final int votes;
+  final String? imagePath;
 
   const PollOption({
     required this.id,
     required this.text,
     required this.votes,
+    this.imagePath,
   });
 
   PollOption copyWith({int? votes}) =>
-      PollOption(id: id, text: text, votes: votes ?? this.votes);
+      PollOption(id: id, text: text, votes: votes ?? this.votes, imagePath: imagePath);
 
   double percentage(int total) => total > 0 ? votes / total : 0.0;
   int percentageInt(int total) =>

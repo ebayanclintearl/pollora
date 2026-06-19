@@ -39,6 +39,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     TextEditingController(),
   ];
   final List<FocusNode> _optionFocuses = [FocusNode(), FocusNode()];
+  final List<String?> _optionImagePaths = [null, null];
 
   String? _coverImagePath;
   final _imagePicker = ImagePicker();
@@ -120,6 +121,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     setState(() {
       _optionControllers.add(ctrl);
       _optionFocuses.add(focus);
+      _optionImagePaths.add(null);
     });
     Future.delayed(const Duration(milliseconds: 60), () {
       if (mounted) {
@@ -136,8 +138,24 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     setState(() {
       _optionControllers.removeAt(index);
       _optionFocuses.removeAt(index);
+      _optionImagePaths.removeAt(index);
     });
     _updatePublishState();
+  }
+
+  Future<void> _pickOptionImage(int index) async {
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked != null && mounted) {
+      setState(() => _optionImagePaths[index] = picked.path);
+    }
+  }
+
+  void _clearOptionImage(int index) {
+    HapticFeedback.lightImpact();
+    setState(() => _optionImagePaths[index] = null);
   }
 
   Future<void> _pickCoverImage() async {
@@ -173,17 +191,17 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     // Build options — only non-empty entries, preserving order.
     final now = DateTime.now();
     final ts = now.millisecondsSinceEpoch;
-    final options = _optionControllers
-        .where((c) => c.text.trim().isNotEmpty)
-        .toList()
-        .asMap()
-        .entries
-        .map((e) => PollOption(
-              id: 'opt_${ts}_${e.key}',
-              text: e.value.text.trim(),
-              votes: 0,
-            ))
-        .toList();
+    final options = <PollOption>[];
+    for (int i = 0; i < _optionControllers.length; i++) {
+      final text = _optionControllers[i].text.trim();
+      if (text.isEmpty) continue;
+      options.add(PollOption(
+        id: 'opt_${ts}_$i',
+        text: text,
+        votes: 0,
+        imagePath: _optionImagePaths[i],
+      ));
+    }
 
     final poll = Poll(
       id: 'poll_$ts',
@@ -231,6 +249,10 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
       _published = false;
       _coverImagePath = null;
     });
+    _optionImagePaths
+      ..length = 2
+      ..[0] = null
+      ..[1] = null;
   }
 
   // ── Build ──────────────────────────────────
@@ -519,10 +541,13 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
         index: i,
         controller: _optionControllers[i],
         focusNode: _optionFocuses[i],
+        imagePath: _optionImagePaths[i],
         canRemove: i >= 2,
         isLast: i == _optionControllers.length - 1,
         onRemove: () => _removeOption(i),
         onSubmitted: () => _onOptionSubmitted(i),
+        onPickImage: () => _pickOptionImage(i),
+        onClearImage: () => _clearOptionImage(i),
       ));
     }
     return rows;
@@ -558,25 +583,33 @@ class _OptionRow extends StatelessWidget {
   final int index;
   final TextEditingController controller;
   final FocusNode focusNode;
+  final String? imagePath;
   final bool canRemove;
   final bool isLast;
   final VoidCallback onRemove;
   final VoidCallback onSubmitted;
+  final VoidCallback onPickImage;
+  final VoidCallback onClearImage;
 
   const _OptionRow({
     required this.index,
     required this.controller,
     required this.focusNode,
+    required this.imagePath,
     required this.canRemove,
     required this.isLast,
     required this.onRemove,
     required this.onSubmitted,
+    required this.onPickImage,
+    required this.onClearImage,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Index badge
         Container(
           width: 28,
           height: 28,
@@ -593,6 +626,13 @@ class _OptionRow extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
+        ),
+        const SizedBox(width: 8),
+        // Image picker (1:1)
+        _OptionImagePicker(
+          imagePath: imagePath,
+          onPick: onPickImage,
+          onClear: onClearImage,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -637,6 +677,88 @@ class _OptionRow extends StatelessWidget {
         else
           const SizedBox(width: AppIconSizes.touchTarget),
       ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Option image picker  (1:1, optional)
+// ─────────────────────────────────────────────
+class _OptionImagePicker extends StatelessWidget {
+  final String? imagePath;
+  final VoidCallback onPick;
+  final VoidCallback onClear;
+
+  static const double _size = 52.0;
+
+  const _OptionImagePicker({
+    required this.imagePath,
+    required this.onPick,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (imagePath != null) {
+      return SizedBox(
+        width: _size,
+        height: _size,
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Image.file(
+                File(imagePath!),
+                width: _size,
+                height: _size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: AppColors.surfaceElevated,
+                  child: const Icon(Icons.broken_image_outlined,
+                      size: 20, color: AppColors.textTertiary),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 3,
+              right: 3,
+              child: GestureDetector(
+                onTap: onClear,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.7),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close_rounded,
+                      size: 11, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: onPick,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: _size,
+        height: _size,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceElevated,
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(color: AppColors.borderDefault, width: 1),
+        ),
+        child: const Icon(
+          Icons.image_outlined,
+          size: 20,
+          color: AppColors.textTertiary,
+        ),
+      ),
     );
   }
 }

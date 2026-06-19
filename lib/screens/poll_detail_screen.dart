@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -298,11 +299,14 @@ class _DetailOptionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = option.imagePath != null;
+    final barH = hasImage ? 72.0 : 52.0;
+
     return LayoutBuilder(builder: (_, constraints) {
       final fillWidth = constraints.maxWidth * option.percentage(totalVotes);
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 52,
+        height: barH,
         decoration: BoxDecoration(
           color: AppColors.pollBarTrack,
           borderRadius: BorderRadius.circular(AppRadius.pollBar),
@@ -318,20 +322,39 @@ class _DetailOptionBar extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
+            // Fill bar
             Align(
               alignment: Alignment.centerLeft,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeOutCubic,
                 width: hasVoted ? fillWidth : 0,
-                height: 52,
+                height: barH,
                 color: isVoted
                     ? AppColors.pollBarLeading
                     : AppColors.pollBarOther,
               ),
             ),
+            // Option image (1:1, left-anchored)
+            if (hasImage)
+              Positioned(
+                left: 0, top: 0, bottom: 0,
+                child: AspectRatio(
+                  aspectRatio: 1.0,
+                  child: Image.file(
+                    File(option.imagePath!),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: AppColors.surfaceElevated),
+                  ),
+                ),
+              ),
+            // Text + percentage
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: EdgeInsets.only(
+                left: hasImage ? barH + 12.0 : 14.0,
+                right: 14.0,
+              ),
               child: Row(
                 children: [
                   Expanded(

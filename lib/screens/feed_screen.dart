@@ -745,6 +745,9 @@ class _PollOptionBarState extends State<_PollOptionBar> {
 
   @override
   Widget build(BuildContext context) {
+    final hasImage = widget.option.imagePath != null;
+    final barH = hasImage ? 68.0 : 48.0;
+
     return LayoutBuilder(
       builder: (_, constraints) {
         final fillWidth =
@@ -753,7 +756,7 @@ class _PollOptionBarState extends State<_PollOptionBar> {
 
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          height: 48,
+          height: barH,
           decoration: BoxDecoration(
             color: AppColors.pollBarTrack,
             borderRadius: BorderRadius.circular(AppRadius.pollBar),
@@ -769,20 +772,39 @@ class _PollOptionBarState extends State<_PollOptionBar> {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // Fill bar
               Align(
                 alignment: Alignment.centerLeft,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 500),
                   curve: Curves.easeOutCubic,
                   width: showFill ? fillWidth : 0,
-                  height: 48,
+                  height: barH,
                   color: widget.isVoted
                       ? AppColors.pollBarLeading
                       : AppColors.pollBarOther,
                 ),
               ),
+              // Option image (1:1, left-anchored)
+              if (hasImage)
+                Positioned(
+                  left: 0, top: 0, bottom: 0,
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: Image.file(
+                      File(widget.option.imagePath!),
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          Container(color: AppColors.surfaceElevated),
+                    ),
+                  ),
+                ),
+              // Text + percentage
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.only(
+                  left: hasImage ? barH + 10.0 : 12.0,
+                  right: 12.0,
+                ),
                 child: Row(
                   children: [
                     Expanded(

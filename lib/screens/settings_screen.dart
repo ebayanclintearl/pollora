@@ -5,6 +5,7 @@ import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import 'edit_profile_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -30,7 +31,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).pop();
+                    },
                     behavior: HitTestBehavior.opaque,
                     child: const SizedBox(
                       width: AppIconSizes.touchTarget,
@@ -65,7 +69,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _SettingsRow(
                         icon: Icons.person_outline_rounded,
                         label: 'Edit Profile',
-                        onTap: () {},
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen()),
+                        ),
                       ),
                     ],
                   ),

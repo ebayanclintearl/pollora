@@ -16,7 +16,10 @@ class CreateScreen extends ConsumerStatefulWidget {
   /// Called after a poll is published — used by the shell to switch to the feed.
   final VoidCallback? onPublished;
 
-  const CreateScreen({super.key, this.onPublished});
+  /// Updated to true whenever the user has typed anything; back to false on reset.
+  final ValueNotifier<bool>? hasContentNotifier;
+
+  const CreateScreen({super.key, this.onPublished, this.hasContentNotifier});
 
   @override
   ConsumerState<CreateScreen> createState() => _CreateScreenState();
@@ -43,6 +46,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
   bool _questionFilled = false;
   bool _canPublish = false;
   bool _publishing = false;
+  bool _published = false;
 
   @override
   void initState() {
@@ -76,6 +80,10 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
         _optionControllers.where((c) => c.text.trim().isNotEmpty).length;
     final can = q && opts >= 2;
     if (can != _canPublish) setState(() => _canPublish = can);
+
+    // Notify shell if draft has any content.
+    final hasContent = q || _optionControllers.any((c) => c.text.trim().isNotEmpty);
+    widget.hasContentNotifier?.value = hasContent;
   }
 
   void _goToStep2() {
@@ -188,8 +196,9 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
 
     ref.read(pollsProvider.notifier).addPoll(poll);
 
-    // Brief pause so the user sees the button change.
-    await Future.delayed(const Duration(milliseconds: 420));
+    // Show success state briefly before navigating away.
+    setState(() { _publishing = false; _published = true; });
+    await Future.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
 
     _resetForm();
@@ -213,11 +222,13 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
     for (final c in _optionControllers) { c.clear(); }
 
     _pageController.jumpToPage(0);
+    widget.hasContentNotifier?.value = false;
     setState(() {
       _currentStep = 0;
       _questionFilled = false;
       _canPublish = false;
       _publishing = false;
+      _published = false;
       _coverImagePath = null;
     });
   }
@@ -460,7 +471,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
             ),
           ),
           child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 180),
+            duration: const Duration(milliseconds: 220),
             child: _publishing
                 ? const SizedBox(
                     key: ValueKey('loading'),
@@ -472,12 +483,28 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                           AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : Text(
-                    isStep2 ? 'Publish Poll' : 'Continue',
-                    key: ValueKey(_currentStep),
-                    style: AppTypography.titleSmall
-                        .copyWith(fontWeight: FontWeight.w700),
-                  ),
+                : _published
+                    ? const Row(
+                        key: ValueKey('success'),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check_circle_rounded,
+                              color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text('Published!',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              )),
+                        ],
+                      )
+                    : Text(
+                        isStep2 ? 'Publish Poll' : 'Continue',
+                        key: ValueKey(_currentStep),
+                        style: AppTypography.titleSmall
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
           ),
         ),
       ),

@@ -165,11 +165,18 @@ class PollsNotifier extends StateNotifier<List<Poll>> {
 
   void vote(String pollId, String optionId) {
     state = state.map((poll) {
-      if (poll.id != pollId || poll.isVoted) return poll;
+      if (poll.id != pollId) return poll;
+      // Tapping the same option already voted — no change.
+      if (poll.votedOptionId == optionId) return poll;
+
+      final previousId = poll.votedOptionId;
       final updatedOptions = poll.options.map((opt) {
-        return opt.id == optionId
-            ? opt.copyWith(votes: opt.votes + 1)
-            : opt;
+        if (opt.id == optionId) return opt.copyWith(votes: opt.votes + 1);
+        // Remove the previous vote count when changing.
+        if (opt.id == previousId) {
+          return opt.copyWith(votes: (opt.votes - 1).clamp(0, 999999));
+        }
+        return opt;
       }).toList();
       return poll.copyWith(options: updatedOptions, votedOptionId: optionId);
     }).toList();
@@ -205,6 +212,34 @@ final pollsProvider =
 final feedPollsProvider = Provider<List<Poll>>((ref) {
   final polls = ref.watch(pollsProvider);
   return [...polls]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+});
+
+/// Trending — engagement-score within the last 7 days, sorted descending.
+/// Score = totalVotes + (commentCount × 3)
+final trendingPollsProvider = Provider<List<Poll>>((ref) {
+  final polls = ref.watch(pollsProvider);
+  final cutoff = DateTime.now().subtract(const Duration(days: 7));
+  int score(Poll p) => p.totalVotes + p.commentCount * 3;
+  return polls
+      .where((p) => p.createdAt.isAfter(cutoff))
+      .toList()
+    ..sort((a, b) => score(b).compareTo(score(a)));
+});
+
+/// Popular — all time, sorted by total votes descending.
+final popularPollsProvider = Provider<List<Poll>>((ref) {
+  final polls = ref.watch(pollsProvider);
+  return [...polls]..sort((a, b) => b.totalVotes.compareTo(a.totalVotes));
+});
+
+/// Following — polls from users the current user follows, newest first.
+final followingPollsProvider =
+    Provider.family<List<Poll>, Set<String>>((ref, followedIds) {
+  final polls = ref.watch(pollsProvider);
+  return polls
+      .where((p) => followedIds.contains(p.author.id))
+      .toList()
+    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
 /// Current user's own polls (not shared posts).

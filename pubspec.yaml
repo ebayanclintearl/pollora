@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  image_picker: ^1.1.0
+  image_picker: ^0.8.9
   google_fonts: ^6.2.1
   flutter_riverpod: ^2.5.1
   share_plus: ^10.1.4

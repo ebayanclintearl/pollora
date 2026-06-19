@@ -96,14 +96,94 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  late final List<Widget> _screens = [
-    const FeedScreen(),
-    CreateScreen(onPublished: _onPollPublished),
-    const MyPollsScreen(),
-  ];
+  // Incremented when user taps the Feed tab while already on it.
+  final _feedReselectNotifier = ValueNotifier<int>(0);
+
+  // Tracks whether Create screen has unsaved content.
+  final _createHasContent = ValueNotifier<bool>(false);
+
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      FeedScreen(reselectNotifier: _feedReselectNotifier),
+      CreateScreen(
+        onPublished: _onPollPublished,
+        hasContentNotifier: _createHasContent,
+      ),
+      const MyPollsScreen(),
+    ];
+  }
+
+  @override
+  void dispose() {
+    _feedReselectNotifier.dispose();
+    _createHasContent.dispose();
+    super.dispose();
+  }
 
   void _onPollPublished() {
+    _createHasContent.value = false;
     setState(() => _currentIndex = 0);
+  }
+
+  void _onNavTap(int i) {
+    if (i == _currentIndex) {
+      // Re-tap on Feed → scroll to top.
+      if (i == 0) {
+        HapticFeedback.selectionClick();
+        _feedReselectNotifier.value++;
+      }
+      return;
+    }
+    // Leaving Create with unsaved content → confirm discard.
+    if (_currentIndex == 1 && _createHasContent.value) {
+      _showDiscardDialog(i);
+      return;
+    }
+    HapticFeedback.selectionClick();
+    setState(() => _currentIndex = i);
+  }
+
+  void _showDiscardDialog(int targetIndex) {
+    showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.surfaceCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Discard draft?',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        content: const Text(
+          'Your poll draft will be lost.',
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keep editing',
+                style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _createHasContent.value = false;
+              HapticFeedback.selectionClick();
+              setState(() => _currentIndex = targetIndex);
+            },
+            child: const Text('Discard',
+                style: TextStyle(color: Color(0xFFFF5C7A))),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -118,11 +198,7 @@ class _MainShellState extends State<MainShell> {
         ),
         bottomNavigationBar: _PolloraBottomNav(
           currentIndex: _currentIndex,
-          onTap: (i) {
-            if (i == _currentIndex) return;
-            HapticFeedback.selectionClick();
-            setState(() => _currentIndex = i);
-          },
+          onTap: _onNavTap,
         ),
       ),
     );
@@ -201,7 +277,11 @@ class _NavTab extends StatelessWidget {
     final isActive = index == currentIndex;
 
     return Expanded(
-      child: GestureDetector(
+      child: Semantics(
+        label: label,
+        selected: isActive,
+        button: true,
+        child: GestureDetector(
         onTap: () => onTap(index),
         behavior: HitTestBehavior.opaque,
         child: Column(
@@ -229,7 +309,8 @@ class _NavTab extends StatelessWidget {
             ),
           ],
         ),
-      ),
+        ), // GestureDetector
+      ), // Semantics
     );
   }
 }
@@ -241,7 +322,10 @@ class _CreateFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      label: 'Create poll',
+      button: true,
+      child: GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
@@ -262,6 +346,7 @@ class _CreateFAB extends StatelessWidget {
           ),
         ),
       ),
-    );
+      ), // GestureDetector
+    ); // Semantics
   }
 }

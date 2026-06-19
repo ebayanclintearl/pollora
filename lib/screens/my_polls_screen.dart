@@ -34,6 +34,11 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
     );
   }
 
+  Future<void> _onRefresh() async {
+    HapticFeedback.mediumImpact();
+    await Future.delayed(const Duration(milliseconds: 800));
+  }
+
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
@@ -42,7 +47,12 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: AppColors.accentPrimary,
+        backgroundColor: AppColors.surfaceCard,
+        strokeWidth: 2.5,
+        child: CustomScrollView(
         slivers: [
           // ── Screen header ─────────────────────────
           SliverToBoxAdapter(
@@ -123,6 +133,7 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }

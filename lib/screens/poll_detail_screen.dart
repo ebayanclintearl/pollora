@@ -38,48 +38,66 @@ class PollDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // ── Header ──────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                  AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
-                    behavior: HitTestBehavior.opaque,
-                    child: const SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: AppColors.textSecondary, size: 20),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          HapticFeedback.mediumImpact();
+          await Future.delayed(const Duration(milliseconds: 800));
+        },
+        color: AppColors.accentPrimary,
+        backgroundColor: AppColors.surfaceCard,
+        strokeWidth: 2.5,
+        displacement: top + 56,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // ── Header ──────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                    AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
+                child: Row(
+                  children: [
+                    Semantics(
+                      label: 'Back',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.of(context).pop();
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: const SizedBox(
+                          width: 44,
+                          height: 44,
+                          child: Icon(Icons.arrow_back_ios_new_rounded,
+                              color: AppColors.textSecondary, size: 20),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text('Poll', style: AppTypography.screenTitle),
-                ],
+                    const SizedBox(width: 6),
+                    const Text('Poll', style: AppTypography.screenTitle),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // ── Content ─────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: _PollContent(pollId: pollId),
+            // ── Content ─────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                child: _PollContent(pollId: pollId),
+              ),
             ),
-          ),
 
-          // ── Actions ─────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 100),
-              child: _PollActions(pollId: pollId),
+            // ── Actions ─────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 100),
+                child: _PollActions(pollId: pollId),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -165,32 +183,46 @@ class _PollContent extends ConsumerWidget {
 
         const SizedBox(height: 20),
 
-        // Options — IgnorePointer prevents any re-vote once the user has voted.
-        IgnorePointer(
-          ignoring: poll.isVoted,
-          child: Column(
-            children: [
-              ...poll.options.asMap().entries.map((e) => Padding(
-                    padding: EdgeInsets.only(
-                        bottom: e.key < poll.options.length - 1 ? 10 : 0),
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        ref
-                            .read(pollsProvider.notifier)
-                            .vote(pollId, e.value.id);
-                      },
-                      child: _DetailOptionBar(
-                        option: e.value,
-                        totalVotes: poll.totalVotes,
-                        isVoted: poll.votedOptionId == e.value.id,
-                        hasVoted: poll.isVoted,
-                      ),
+        // Options — tap to vote or change vote.
+        Column(
+          children: [
+            ...poll.options.asMap().entries.map((e) => Padding(
+                  padding: EdgeInsets.only(
+                      bottom: e.key < poll.options.length - 1 ? 10 : 0),
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      ref
+                          .read(pollsProvider.notifier)
+                          .vote(pollId, e.value.id);
+                    },
+                    child: _DetailOptionBar(
+                      option: e.value,
+                      totalVotes: poll.totalVotes,
+                      isVoted: poll.votedOptionId == e.value.id,
+                      hasVoted: poll.isVoted,
                     ),
-                  )),
+                  ),
+                )),
+          ],
+        ),
+        if (poll.isVoted) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.touch_app_outlined,
+                  size: 12, color: AppColors.textTertiary),
+              const SizedBox(width: 4),
+              const Text(
+                'Tap any option to change your vote',
+                style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textTertiary,
+                    height: 1),
+              ),
             ],
           ),
-        ),
+        ],
 
         const SizedBox(height: 18),
 

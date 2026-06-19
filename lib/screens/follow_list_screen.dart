@@ -47,7 +47,10 @@ class FollowListScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pop(),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.of(context).pop();
+                    },
                     behavior: HitTestBehavior.opaque,
                     child: const SizedBox(
                       width: 44,

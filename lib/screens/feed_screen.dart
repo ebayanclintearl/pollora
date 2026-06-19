@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/comments_sheet.dart';
+import '../widgets/app_toast.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -16,10 +17,16 @@ import '../providers/polls_provider.dart';
 import '../providers/search_provider.dart';
 
 // ─────────────────────────────────────────────
+// Feed tab
+// ─────────────────────────────────────────────
+enum _FeedTab { trending, popular, following }
+
+// ─────────────────────────────────────────────
 // Feed Screen
 // ─────────────────────────────────────────────
 class FeedScreen extends ConsumerStatefulWidget {
-  const FeedScreen({super.key});
+  final ValueNotifier<int>? reselectNotifier;
+  const FeedScreen({super.key, this.reselectNotifier});
 
   @override
   ConsumerState<FeedScreen> createState() => _FeedScreenState();
@@ -34,6 +41,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   bool _isLoading = true;
   bool _headerVisible = true;
   double _lastScrollOffset = 0;
+  _FeedTab _selectedTab = _FeedTab.trending;
 
   // Minimum scroll delta before reacting — prevents jitter on tiny movements.
   static const double _scrollThreshold = 6.0;
@@ -42,6 +50,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    widget.reselectNotifier?.addListener(_onReselect);
     Future.delayed(const Duration(milliseconds: 1600), () {
       if (mounted) setState(() => _isLoading = false);
     });
@@ -49,12 +58,23 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   @override
   void dispose() {
+    widget.reselectNotifier?.removeListener(_onReselect);
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     super.dispose();
+  }
+
+  void _onReselect() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    }
   }
 
   void _onScroll() {
@@ -106,32 +126,58 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   @override
   Widget build(BuildContext context) {
     final top = MediaQuery.of(context).padding.top;
-    // Total height reserved for the floating header.
+    // Spacer for the floating header below the notch.
+    // SafeArea wraps the scroll view so y=0 is already below the notch;
+    // we only need the header's own padding + content + padding.
     const double contentH = 44;
-    final double headerH =
-        top + AppSpacing.screenTop + contentH + AppSpacing.screenTop;
+    final double spacerH =
+        AppSpacing.screenTop + contentH + AppSpacing.screenTop;
+    // Sticky tab bar height (no notch needed — SafeArea handles it)
+    const double tabBarH = 56.0;
 
     final searchQuery = ref.watch(searchQueryProvider);
-    final feedPolls = ref.watch(feedPollsProvider);
+    final followedIds = ref.watch(followProvider);
+    final polls = switch (_selectedTab) {
+      _FeedTab.trending  => ref.watch(trendingPollsProvider),
+      _FeedTab.popular   => ref.watch(popularPollsProvider),
+      _FeedTab.following => ref.watch(followingPollsProvider(followedIds)),
+    };
     final suggestions = ref.watch(searchSuggestionsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // ── Scrollable feed ───────────────────
-          RefreshIndicator(
+          // ── Scrollable feed — SafeArea keeps viewport below notch ──
+          SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
             onRefresh: _onRefresh,
             color: AppColors.accentPrimary,
             backgroundColor: AppColors.surfaceCard,
             strokeWidth: 2.5,
-            displacement: headerH + 8,
+            displacement: spacerH + tabBarH + 8,
             child: CustomScrollView(
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                // Reserve space under the floating header.
-                SliverToBoxAdapter(child: SizedBox(height: headerH)),
+                // Reserve space for the floating header (below notch).
+                SliverToBoxAdapter(child: SizedBox(height: spacerH)),
+
+                // ── Sticky tab bar ───────────────
+                // Pins at y=0 of SafeArea viewport = just below notch ✓
+                if (!_searchActive)
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _FeedTabDelegate(
+                      selected: _selectedTab,
+                      onSelect: (tab) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _selectedTab = tab);
+                      },
+                      height: tabBarH,
+                    ),
+                  ),
 
                 // ── Content ─────────────────────
                 if (_isLoading)
@@ -149,10 +195,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   )
                 else if (_searchActive && searchQuery.isNotEmpty)
                   _buildSuggestions(context, suggestions, searchQuery)
-                else if (feedPolls.isEmpty)
-                  const SliverFillRemaining(
+                else if (polls.isEmpty)
+                  SliverFillRemaining(
                     hasScrollBody: false,
-                    child: _EmptyState(query: ''),
+                    child: _selectedTab == _FeedTab.following
+                        ? const _FollowingEmptyState()
+                        : const _EmptyState(query: ''),
                   )
                 else
                   SliverPadding(
@@ -162,17 +210,17 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         (_, i) => i.isOdd
                             ? Container(
                                 height: 1, color: AppColors.borderSubtle)
-                            : _FeedItem(pollId: feedPolls[i ~/ 2].id),
-                        childCount: feedPolls.length * 2 - 1,
+                            : _FeedItem(pollId: polls[i ~/ 2].id),
+                        childCount: polls.length * 2 - 1,
                       ),
                     ),
                   ),
               ],
             ),
           ),
+          ), // SafeArea
 
           // ── Floating header ───────────────────
-          // Slides up on scroll-down, slides back on scroll-up.
           AnimatedSlide(
             offset: _headerVisible ? Offset.zero : const Offset(0, -1),
             duration: const Duration(milliseconds: 250),
@@ -208,15 +256,19 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             const Expanded(
               child: Text('Polls', style: AppTypography.screenTitle),
             ),
-            GestureDetector(
-              onTap: _activateSearch,
-              behavior: HitTestBehavior.opaque,
-              child: const SizedBox(
-                width: AppIconSizes.touchTarget,
-                height: AppIconSizes.touchTarget,
-                child: Icon(Icons.search_rounded,
-                    color: AppColors.textSecondary,
-                    size: AppIconSizes.control),
+            Semantics(
+              label: 'Search polls',
+              button: true,
+              child: GestureDetector(
+                onTap: _activateSearch,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(
+                  width: AppIconSizes.touchTarget,
+                  height: AppIconSizes.touchTarget,
+                  child: Icon(Icons.search_rounded,
+                      color: AppColors.textSecondary,
+                      size: AppIconSizes.control),
+                ),
               ),
             ),
           ],
@@ -326,8 +378,6 @@ class _PollCard extends ConsumerStatefulWidget {
 
 class _PollCardState extends ConsumerState<_PollCard>
     with SingleTickerProviderStateMixin {
-  bool _optionsExpanded = false;
-  static const int _previewCount = 3;
 
   late AnimationController _heartCtrl;
   late Animation<double> _heartScale;
@@ -362,13 +412,6 @@ class _PollCardState extends ConsumerState<_PollCard>
     }
     if (poll == null) return const SizedBox.shrink();
     final p = poll; // non-null alias — safe to use inside closures
-
-    final hasMore = p.options.length > _previewCount;
-    final visible = _optionsExpanded || !hasMore
-        ? p.options
-        : p.options.sublist(0, _previewCount);
-    final hidden =
-        hasMore && !_optionsExpanded ? p.options.length - _previewCount : 0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -431,8 +474,13 @@ class _PollCardState extends ConsumerState<_PollCard>
 
           const SizedBox(height: 8),
 
-          // ── Question ─────────────────────────
-          Text(p.question, style: AppTypography.cardTitle),
+          // ── Question — tappable to open detail ─
+          GestureDetector(
+            onTap: () => Navigator.of(context)
+                .pushNamed('/poll-detail', arguments: p.id),
+            behavior: HitTestBehavior.opaque,
+            child: Text(p.question, style: AppTypography.cardTitle),
+          ),
 
           // ── Cover image (optional) ────────────
           if (p.coverImagePath != null) ...[
@@ -444,6 +492,21 @@ class _PollCardState extends ConsumerState<_PollCard>
                 child: Image.file(
                   File(p.coverImagePath!),
                   fit: BoxFit.cover,
+                  frameBuilder: (_, child, frame, __) => AnimatedOpacity(
+                    opacity: frame == null ? 0 : 1,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeIn,
+                    child: frame == null
+                        ? Container(color: AppColors.surfaceElevated)
+                        : child,
+                  ),
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.surfaceElevated,
+                    child: const Center(
+                      child: Icon(Icons.broken_image_outlined,
+                          color: AppColors.textTertiary, size: 32),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -452,16 +515,12 @@ class _PollCardState extends ConsumerState<_PollCard>
           const SizedBox(height: 16),
 
           // ── Options ──────────────────────────
-          // IgnorePointer locks the entire bar area once the user has voted —
-          // no tap can reach any option bar or re-trigger a vote.
-          IgnorePointer(
-            ignoring: p.isVoted,
-            child: Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ...visible.asMap().entries.map((e) => Padding(
+              ...p.options.asMap().entries.map((e) => Padding(
                     padding: EdgeInsets.only(
-                        bottom: e.key < visible.length - 1 ? 8 : 0),
+                        bottom: e.key < p.options.length - 1 ? 8 : 0),
                     child: GestureDetector(
                       onTap: () {
                         HapticFeedback.selectionClick();
@@ -479,25 +538,21 @@ class _PollCardState extends ConsumerState<_PollCard>
                   )),
             ],
           ),
-          ),
-          if (hasMore && !_optionsExpanded) ...[
+
+          // ── Tap to change hint ────────────────
+          if (p.isVoted) ...[
             const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () => setState(() => _optionsExpanded = true),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                    color: AppColors.accentPrimaryMuted,
-                    borderRadius:
-                        BorderRadius.circular(AppRadius.pill)),
-                child: Text(
-                  '+$hidden more option${hidden > 1 ? 's' : ''}',
-                  style: AppTypography.labelMedium
-                      .copyWith(color: AppColors.textAccent),
+            Row(
+              children: [
+                const Icon(Icons.touch_app_outlined,
+                    size: 12, color: AppColors.textTertiary),
+                const SizedBox(width: 4),
+                Text(
+                  'Tap any option to change your vote',
+                  style: AppTypography.labelSmall
+                      .copyWith(color: AppColors.textTertiary),
                 ),
-              ),
+              ],
             ),
           ],
 
@@ -521,7 +576,10 @@ class _PollCardState extends ConsumerState<_PollCard>
               ),
               const Spacer(),
               // Comments
-              GestureDetector(
+              Semantics(
+                label: 'Comments, ${p.commentCount}',
+                button: true,
+                child: GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
                   showModalBottomSheet(
@@ -561,57 +619,71 @@ class _PollCardState extends ConsumerState<_PollCard>
                   ),
                 ),
               ),
+              ), // Semantics: Comments
               // Favorite with bounce
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ref
-                      .read(pollsProvider.notifier)
-                      .toggleFavorite(widget.pollId);
-                  _heartCtrl.forward(from: 0);
-                },
-                behavior: HitTestBehavior.opaque,
-                child: SizedBox(
-                  width: AppIconSizes.touchTarget,
-                  height: AppIconSizes.touchTarget,
-                  child: Center(
-                    child: ScaleTransition(
-                      scale: _heartScale,
-                      child: Icon(
-                        p.isFavorited
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        size: AppIconSizes.control,
-                        color: p.isFavorited
-                            ? const Color(0xFFFF5C7A)
-                            : AppColors.textTertiary,
+              Semantics(
+                label: p.isFavorited ? 'Unlike poll' : 'Like poll',
+                button: true,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    ref
+                        .read(pollsProvider.notifier)
+                        .toggleFavorite(widget.pollId);
+                    _heartCtrl.forward(from: 0);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: AppIconSizes.touchTarget,
+                    height: AppIconSizes.touchTarget,
+                    child: Center(
+                      child: ScaleTransition(
+                        scale: _heartScale,
+                        child: Icon(
+                          p.isFavorited
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          size: AppIconSizes.control,
+                          color: p.isFavorited
+                              ? const Color(0xFFFF5C7A)
+                              : AppColors.textTertiary,
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
               // Share
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ref.read(pollsProvider.notifier)
-                      .incrementShare(widget.pollId);
-                  Share.share(
-                    '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
-                    subject: p.question,
-                  );
-                },
-                behavior: HitTestBehavior.opaque,
-                child: const SizedBox(
-                  width: AppIconSizes.touchTarget,
-                  height: AppIconSizes.touchTarget,
-                  child: Center(
-                    child: Icon(Icons.ios_share_rounded,
-                        size: AppIconSizes.control,
-                        color: AppColors.textTertiary),
+              Semantics(
+                label: 'Share poll',
+                button: true,
+                child: GestureDetector(
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    ref.read(pollsProvider.notifier)
+                        .incrementShare(widget.pollId);
+                    final result = await Share.share(
+                      '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
+                      subject: p.question,
+                    );
+                    if (result.status == ShareResultStatus.success &&
+                        context.mounted) {
+                      AppToast.show(context, 'Poll shared',
+                          icon: Icons.ios_share_rounded);
+                    }
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: const SizedBox(
+                    width: AppIconSizes.touchTarget,
+                    height: AppIconSizes.touchTarget,
+                    child: Center(
+                      child: Icon(Icons.ios_share_rounded,
+                          size: AppIconSizes.control,
+                          color: AppColors.textTertiary),
+                    ),
                   ),
                 ),
-              ),
+              ), // Semantics: Share
             ],
           ),
         ],
@@ -621,18 +693,18 @@ class _PollCardState extends ConsumerState<_PollCard>
 }
 
 String _fmtVotes(int n) {
-  if (n >= 1000) {
-    final t = n ~/ 1000;
-    final r = (n % 1000).toString().padLeft(3, '0');
-    return '$t,$r';
-  }
+  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
+  if (n >= 10000)   return '${(n / 1000).toStringAsFixed(0)}K';
+  if (n >= 1000)    return '${(n / 1000).toStringAsFixed(1)}K';
   return n.toString();
 }
 
 // ─────────────────────────────────────────────
 // Poll Option Bar
 // ─────────────────────────────────────────────
-class _PollOptionBar extends StatelessWidget {
+// Poll Option Bar — animates fill from 0 on first render
+// ─────────────────────────────────────────────
+class _PollOptionBar extends StatefulWidget {
   final PollOption option;
   final int totalVotes;
   final bool isVoted;
@@ -646,23 +718,38 @@ class _PollOptionBar extends StatelessWidget {
   });
 
   @override
+  State<_PollOptionBar> createState() => _PollOptionBarState();
+}
+
+class _PollOptionBarState extends State<_PollOptionBar> {
+  bool _animIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _animIn = true);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (_, constraints) {
         final fillWidth =
-            constraints.maxWidth * option.percentage(totalVotes);
+            constraints.maxWidth * widget.option.percentage(widget.totalVotes);
+        final showFill = widget.hasVoted && _animIn;
+
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           height: 48,
           decoration: BoxDecoration(
             color: AppColors.pollBarTrack,
-            borderRadius:
-                BorderRadius.circular(AppRadius.pollBar),
+            borderRadius: BorderRadius.circular(AppRadius.pollBar),
           ),
-          foregroundDecoration: isVoted
+          foregroundDecoration: widget.isVoted
               ? BoxDecoration(
-                  borderRadius:
-                      BorderRadius.circular(AppRadius.pollBar),
+                  borderRadius: BorderRadius.circular(AppRadius.pollBar),
                   border: Border.all(
                       color: AppColors.accentPrimary, width: 1.5),
                 )
@@ -674,25 +761,24 @@ class _PollOptionBar extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
+                  duration: const Duration(milliseconds: 500),
                   curve: Curves.easeOutCubic,
-                  width: hasVoted ? fillWidth : 0,
+                  width: showFill ? fillWidth : 0,
                   height: 48,
-                  color: isVoted
+                  color: widget.isVoted
                       ? AppColors.pollBarLeading
                       : AppColors.pollBarOther,
                 ),
               ),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
                     Expanded(
                       child: Text(
-                        option.text,
+                        widget.option.text,
                         style: AppTypography.titleSmall.copyWith(
-                          fontWeight: isVoted
+                          fontWeight: widget.isVoted
                               ? FontWeight.w700
                               : FontWeight.w600,
                         ),
@@ -700,17 +786,18 @@ class _PollOptionBar extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    if (hasVoted) ...[
-                      if (isVoted)
+                    if (widget.hasVoted) ...[
+                      if (widget.isVoted)
                         const Padding(
                           padding: EdgeInsets.only(right: 4),
                           child: Icon(
-                              Icons.check_circle_rounded,
-                              size: AppIconSizes.inline,
-                              color: Colors.white),
+                            Icons.check_circle_rounded,
+                            size: AppIconSizes.inline,
+                            color: Colors.white,
+                          ),
                         ),
                       Text(
-                        '${option.percentageInt(totalVotes)}%',
+                        '${widget.option.percentageInt(widget.totalVotes)}%',
                         style: AppTypography.bodySmall.copyWith(
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
@@ -978,6 +1065,151 @@ class _SkeletonCardState extends State<_SkeletonCard>
           ),
         );
       },
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Feed tab — SliverPersistentHeader delegate
+// ─────────────────────────────────────────────
+class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
+  final _FeedTab selected;
+  final ValueChanged<_FeedTab> onSelect;
+  final double height;
+
+  const _FeedTabDelegate({
+    required this.selected,
+    required this.onSelect,
+    required this.height,
+  });
+
+  static const _tabs = [
+    (_FeedTab.trending,  'Trending',  Icons.trending_up_rounded),
+    (_FeedTab.popular,   'Popular',   Icons.bar_chart_rounded),
+    (_FeedTab.following, 'Following', Icons.people_outline_rounded),
+  ];
+
+  @override
+  double get minExtent => height;
+  @override
+  double get maxExtent => height;
+  @override
+  bool shouldRebuild(_FeedTabDelegate old) =>
+      old.selected != selected;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: AppColors.background,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: _tabs.map((entry) {
+                final (tab, label, icon) = entry;
+                final isActive = selected == tab;
+                final color = isActive
+                    ? AppColors.textAccent
+                    : AppColors.textSecondary;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 5),
+                  child: GestureDetector(
+                    onTap: () => onSelect(tab),
+                    behavior: HitTestBehavior.opaque,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? AppColors.accentPrimaryMuted
+                            : AppColors.surfaceElevated,
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.pill),
+                        border: Border.all(
+                          color: isActive
+                              ? AppColors.accentPrimaryBorder
+                              : AppColors.borderDefault,
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 14, color: color),
+                          const SizedBox(width: 6),
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isActive
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
+                              color: color,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          Container(height: 0.5, color: AppColors.borderDefault),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Following empty state
+// ─────────────────────────────────────────────
+class _FollowingEmptyState extends StatelessWidget {
+  const _FollowingEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 96,
+              height: 96,
+              decoration: const BoxDecoration(
+                  color: AppColors.surfaceCard, shape: BoxShape.circle),
+            ),
+            Container(
+              width: 60,
+              height: 60,
+              decoration: const BoxDecoration(
+                  color: AppColors.surfaceElevated, shape: BoxShape.circle),
+            ),
+            const Icon(Icons.people_outline_rounded,
+                size: AppIconSizes.empty, color: AppColors.textTertiary),
+          ],
+        ),
+        const SizedBox(height: 20),
+        Text(
+          'No one followed yet',
+          style: AppTypography.titleMedium
+              .copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Follow users to see their polls here',
+          style: AppTypography.bodyMedium
+              .copyWith(color: AppColors.textTertiary),
+        ),
+      ],
     );
   }
 }

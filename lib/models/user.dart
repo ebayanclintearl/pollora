@@ -3,6 +3,7 @@ class AppUser {
   final String name;
   final String handle;
   final String? bio;
+  final String? avatarUrl;
   final int pollsCount;
   final int votesReceived;
   final int followersCount;
@@ -16,6 +17,7 @@ class AppUser {
     required this.name,
     required this.handle,
     this.bio,
+    this.avatarUrl,
     this.pollsCount = 0,
     this.votesReceived = 0,
     this.followersCount = 0,
@@ -30,6 +32,7 @@ class AppUser {
       name: json['name'] as String? ?? '',
       handle: json['handle'] as String? ?? '',
       bio: json['bio'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       pollsCount: json['polls_count'] as int? ?? 0,
       votesReceived: json['votes_received'] as int? ?? 0,
       followersCount: json['followers_count'] as int? ?? 0,
@@ -43,12 +46,14 @@ class AppUser {
     int? followingCount,
     int? pollsCount,
     int? votesReceived,
+    String? avatarUrl,
   }) =>
       AppUser(
         id: id,
         name: name,
         handle: handle,
         bio: bio,
+        avatarUrl: avatarUrl ?? this.avatarUrl,
         pollsCount: pollsCount ?? this.pollsCount,
         votesReceived: votesReceived ?? this.votesReceived,
         followersCount: followersCount ?? this.followersCount,

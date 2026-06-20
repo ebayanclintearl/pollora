@@ -5,8 +5,8 @@ import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
+import '../widgets/profile_avatar.dart';
 import '../app_typography.dart';
-import '../core/avatar_helper.dart';
 import '../models/poll.dart';
 import '../models/user.dart';
 import '../providers/follow_provider.dart';
@@ -73,18 +73,11 @@ class UserProfileScreen extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      CircleAvatar(
+                      ProfileAvatar(
+                        userId: fullUser.id,
+                        displayName: fullUser.name,
+                        avatarUrl: fullUser.avatarUrl,
                         radius: 40,
-                        backgroundColor: AvatarHelper.colorFor(fullUser.id),
-                        child: Text(
-                          AvatarHelper.initialFor(displayName: fullUser.name),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            height: 1,
-                          ),
-                        ),
                       ),
                       const Spacer(),
                       _FollowButton(

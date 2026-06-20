@@ -5,12 +5,12 @@ import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/poll_image.dart';
+import '../widgets/profile_avatar.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
-import '../core/avatar_helper.dart';
 import '../models/poll.dart';
 import '../models/user.dart';
 import '../providers/auth_provider.dart' as auth_prov;
@@ -703,17 +703,11 @@ class _PollCardState extends ConsumerState<_PollCard>
             behavior: HitTestBehavior.opaque,
             child: Row(
               children: [
-                CircleAvatar(
+                ProfileAvatar(
+                  userId: _avatarId(p.author),
+                  displayName: p.author.name,
+                  avatarUrl: p.author.avatarUrl,
                   radius: 16,
-                  backgroundColor: AvatarHelper.colorFor(_avatarId(p.author)),
-                  child: Text(
-                    AvatarHelper.initialFor(displayName: p.author.name),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -1361,17 +1355,11 @@ class _UserSuggestionRow extends ConsumerWidget {
             horizontal: AppSpacing.screenH, vertical: 9),
         child: Row(
           children: [
-            CircleAvatar(
+            ProfileAvatar(
+              userId: user.id,
+              displayName: user.name,
+              avatarUrl: user.avatarUrl,
               radius: 20,
-              backgroundColor: AvatarHelper.colorFor(user.id),
-              child: Text(
-                AvatarHelper.initialFor(displayName: user.name),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
             ),
             const SizedBox(width: 12),
             Expanded(

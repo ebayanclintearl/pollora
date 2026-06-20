@@ -1,15 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
-import '../core/avatar_helper.dart';
 import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/users_provider.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/profile_avatar.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -30,6 +33,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   bool _saving = false;
   bool _initialized = false;
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -50,6 +54,61 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    Navigator.of(context).pop(); // close the source sheet
+    final xfile = await ImagePicker().pickImage(
+      source: source,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 85,
+    );
+    if (xfile == null) return;
+    setState(() => _pickedImage = File(xfile.path));
+  }
+
+  void _showImageSourceSheet() {
+    final bottom = MediaQuery.of(context).padding.bottom;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceModal,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.fromLTRB(16, 0, 16, bottom + 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4A4A4A),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
+            _SourceRow(
+              icon: Icons.photo_library_outlined,
+              label: 'Choose from Library',
+              onTap: () => _pickImage(ImageSource.gallery),
+            ),
+            const Divider(height: 1, color: Color(0xFF303030)),
+            _SourceRow(
+              icon: Icons.camera_alt_outlined,
+              label: 'Take Photo',
+              onTap: () => _pickImage(ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     FocusManager.instance.primaryFocus?.unfocus();
     if (_nameCtrl.text.trim().isEmpty) {
@@ -63,15 +122,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             name: _nameCtrl.text.trim(),
             handle: _handleCtrl.text.trim(),
             bio: _bioCtrl.text.trim(),
+            avatarFile: _pickedImage,
           );
       if (!mounted) return;
       AppToast.show(context, 'Profile updated',
           icon: Icons.check_circle_outline_rounded);
       Navigator.of(context).pop();
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
-      AppToast.show(context, 'Failed to save — please try again',
-          isError: true);
+      final msg = e.toString().contains('5 MB')
+          ? 'Image must be under 5 MB'
+          : 'Failed to save — please try again';
+      AppToast.show(context, msg, isError: true);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -82,11 +144,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final top = MediaQuery.of(context).padding.top;
     final user = ref.watch(currentUserProvider);
     final authUser = ref.watch(auth_prov.currentUserProvider);
-    final avatarColor = AvatarHelper.colorFor(authUser?.id ?? user?.id ?? '');
-    final avatarInitial = AvatarHelper.initialFor(
-      displayName: user?.name,
-      email: authUser?.email,
-    );
+    final userId = authUser?.id ?? user?.id ?? '';
 
     // Pre-fill once loaded (won't overwrite in-progress edits).
     if (!_initialized && user != null) {
@@ -171,31 +229,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Center(
                     child: Stack(
                       children: [
-                        Container(
-                          width: 88,
-                          height: 88,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: avatarColor,
-                          ),
-                          child: Center(
-                            child: Text(
-                              avatarInitial,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 34,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
+                        ProfileAvatar(
+                          userId: userId,
+                          displayName: user?.name,
+                          avatarUrl: user?.avatarUrl,
+                          localFile: _pickedImage,
+                          radius: 44,
                         ),
                         Positioned(
                           right: 0,
                           bottom: 0,
                           child: GestureDetector(
-                            onTap: () => AppToast.show(
-                                context, 'Photo upload coming soon',
-                                icon: Icons.photo_camera_outlined),
+                            onTap: _showImageSourceSheet,
                             behavior: HitTestBehavior.opaque,
                             child: Container(
                               width: 28,
@@ -330,6 +375,37 @@ class _Field extends StatelessWidget {
         ),
       ),
       cursorColor: AppColors.accentPrimary,
+    );
+  }
+}
+
+class _SourceRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SourceRow({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH, vertical: 16),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.textSecondary, size: 22),
+            const SizedBox(width: 14),
+            Text(label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                )),
+          ],
+        ),
+      ),
     );
   }
 }

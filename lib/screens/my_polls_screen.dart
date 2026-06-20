@@ -7,10 +7,10 @@ import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../models/poll.dart';
-import '../core/avatar_helper.dart';
 import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
+import '../widgets/profile_avatar.dart';
 import '../widgets/switch_account_sheet.dart';
 import 'follow_list_screen.dart';
 import 'settings_screen.dart';
@@ -155,13 +155,6 @@ class _ProfileSection extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final authUser = ref.watch(auth_prov.currentUserProvider);
 
-    // Use AvatarHelper with real auth user ID for consistent colour everywhere.
-    final avatarColor = AvatarHelper.colorFor(authUser?.id);
-    final avatarInitial = AvatarHelper.initialFor(
-      displayName: authUser?.userMetadata?['display_name'] as String?,
-      email: authUser?.email,
-    );
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       child: Row(
@@ -170,24 +163,11 @@ class _ProfileSection extends ConsumerWidget {
           // Avatar with edit badge
           Stack(
             children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: avatarColor,
-                ),
-                child: Center(
-                  child: Text(
-                    avatarInitial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                    ),
-                  ),
-                ),
+              ProfileAvatar(
+                userId: authUser?.id ?? user?.id ?? '',
+                displayName: user?.name,
+                avatarUrl: user?.avatarUrl,
+                radius: 36,
               ),
               Positioned(
                 right: 0,

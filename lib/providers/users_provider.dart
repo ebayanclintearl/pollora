@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 import '../core/supabase_client.dart';
 import '../models/user.dart';
 import 'auth_provider.dart' as auth_prov;
@@ -34,16 +38,43 @@ class CurrentProfileNotifier extends AsyncNotifier<AppUser?> {
 
   Future<void> refresh() async => ref.invalidateSelf();
 
-  Future<void> saveProfile({String? name, String? handle, String? bio}) async {
+  Future<void> saveProfile({
+    String? name,
+    String? handle,
+    String? bio,
+    File? avatarFile,
+  }) async {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) return;
+
+    String? avatarUrl;
+    if (avatarFile != null) {
+      avatarUrl = await _uploadAvatar(avatarFile, uid);
+    }
+
     await supabase.from('profiles').update({
       if (name != null) 'name': name,
       if (handle != null) 'handle': handle,
       if (bio != null) 'bio': bio,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('id', uid);
     ref.invalidateSelf();
+  }
+
+  Future<String?> _uploadAvatar(File file, String uid) async {
+    const maxBytes = 5 * 1024 * 1024;
+    if (await file.length() > maxBytes) throw Exception('Image must be under 5 MB');
+
+    final ext = p.extension(file.path).isNotEmpty ? p.extension(file.path) : '.jpg';
+    final fileName = '$uid/avatar$ext';
+
+    await supabase.storage.from('avatars').upload(
+          fileName,
+          file,
+          fileOptions: const FileOptions(upsert: true),
+        );
+    return supabase.storage.from('avatars').getPublicUrl(fileName);
   }
 }
 

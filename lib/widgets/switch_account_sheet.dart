@@ -5,7 +5,9 @@ import '../app_colors.dart';
 import '../app_radius.dart';
 import '../app_typography.dart';
 import '../core/avatar_helper.dart';
+import '../widgets/profile_avatar.dart';
 import '../providers/auth_provider.dart';
+import '../providers/users_provider.dart' as users_prov;
 import '../screens/auth_sheet.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
@@ -17,6 +19,7 @@ class SwitchAccountSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bottom = MediaQuery.of(context).padding.bottom;
     final user = ref.watch(currentUserProvider);
+    final appUser = ref.watch(users_prov.currentUserProvider);
 
     final displayName = AvatarHelper.nameFor(
       displayName: user?.userMetadata?['display_name'] as String?,
@@ -26,11 +29,7 @@ class SwitchAccountSheet extends ConsumerWidget {
       handle: user?.userMetadata?['handle'] as String?,
       email: user?.email,
     );
-    final initial = AvatarHelper.initialFor(
-      displayName: user?.userMetadata?['display_name'] as String?,
-      email: user?.email,
-    );
-    final avatarColor = AvatarHelper.colorFor(user?.id);
+    final avatarUrl = appUser?.avatarUrl;
 
     Future<void> doSignOut() async {
       Navigator.of(context).pop();
@@ -137,18 +136,11 @@ class SwitchAccountSheet extends ConsumerWidget {
               child: Row(
                 children: [
                   // Avatar
-                  CircleAvatar(
+                  ProfileAvatar(
+                    userId: user?.id ?? '',
+                    displayName: displayName,
+                    avatarUrl: avatarUrl,
                     radius: 22,
-                    backgroundColor: avatarColor,
-                    child: Text(
-                      initial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      ),
-                    ),
                   ),
                   const SizedBox(width: 12),
                   // Name + handle

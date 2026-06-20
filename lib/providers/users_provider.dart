@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions, PostgrestException;
@@ -50,24 +51,27 @@ class CurrentProfileNotifier extends AsyncNotifier<AppUser?> {
     String? avatarUrl;
     if (avatarFile != null) {
       avatarUrl = await _uploadAvatar(avatarFile, uid);
+      // Evict cached image so the new photo shows immediately everywhere.
+      final oldUrl = ref.read(currentUserProvider)?.avatarUrl;
+      if (oldUrl != null) await CachedNetworkImage.evictFromCache(oldUrl);
     }
 
+    final updateData = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+    if (name != null)      updateData['name']       = name;
+    if (handle != null)    updateData['handle']     = handle;
+    if (bio != null)       updateData['bio']        = bio;
+    if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
+
     try {
-      await supabase.from('profiles').update({
-        if (name != null) 'name': name,
-        if (handle != null) 'handle': handle,
-        if (bio != null) 'bio': bio,
-        if (avatarUrl != null) 'avatar_url': avatarUrl,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', uid);
+      await supabase.from('profiles').update(updateData).eq('id', uid);
     } on PostgrestException catch (e) {
       if (e.code == '23505') throw Exception('handle_taken');
       rethrow;
     }
 
     ref.invalidateSelf();
-    // Also refresh the full-profile view so returning to a user profile
-    // screen shows the updated name/avatar rather than stale cached data.
     ref.invalidate(fullProfileProvider(uid));
   }
 

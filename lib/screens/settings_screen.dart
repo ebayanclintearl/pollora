@@ -23,8 +23,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _notificationsEnabled = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,21 +71,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   // ── Profile row ──
                   _ProfileRow(),
                   const SizedBox(height: 20),
-
-                  // ── Preferences ──
-                  const _SectionLabel('Preferences'),
-                  _SettingsCard(
-                    children: [
-                      _SettingsToggleRow(
-                        icon: Icons.notifications_none_rounded,
-                        label: 'Notifications',
-                        value: _notificationsEnabled,
-                        onChanged: (v) =>
-                            setState(() => _notificationsEnabled = v),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
 
                   // ── Support ──
                   const _SectionLabel('Support'),
@@ -355,48 +338,3 @@ class _SettingsRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// Settings toggle row
-// ─────────────────────────────────────────────
-class _SettingsToggleRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SettingsToggleRow({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: [
-          Icon(icon,
-              size: AppIconSizes.control, color: AppColors.textSecondary),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(label, style: AppTypography.titleSmall),
-          ),
-          Switch(
-            value: value,
-            onChanged: (v) {
-              HapticFeedback.selectionClick();
-              onChanged(v);
-            },
-            activeThumbColor: Colors.white,
-            activeTrackColor: AppColors.accentPrimary,
-            inactiveThumbColor: AppColors.textTertiary,
-            inactiveTrackColor: AppColors.surfaceElevated,
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-          ),
-        ],
-      ),
-    );
-  }
-}

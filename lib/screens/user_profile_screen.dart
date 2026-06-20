@@ -10,6 +10,7 @@ import '../models/poll.dart';
 import '../models/user.dart';
 import '../providers/follow_provider.dart';
 import '../providers/polls_provider.dart';
+import '../providers/users_provider.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   final AppUser user;
@@ -20,6 +21,8 @@ class UserProfileScreen extends ConsumerWidget {
     final top = MediaQuery.of(context).padding.top;
     final isFollowing = ref.watch(isFollowingProvider(user.id));
     final userPolls = ref.watch(pollsByUserProvider(user.id));
+    // Use full profile for bio + fresh counts; fall back to passed user while loading.
+    final fullUser = ref.watch(fullProfileProvider(user.id)).valueOrNull ?? user;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -69,9 +72,9 @@ class UserProfileScreen extends ConsumerWidget {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundColor: AvatarHelper.colorFor(user.id),
+                        backgroundColor: AvatarHelper.colorFor(fullUser.id),
                         child: Text(
-                          AvatarHelper.initialFor(displayName: user.name),
+                          AvatarHelper.initialFor(displayName: fullUser.name),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -83,7 +86,7 @@ class UserProfileScreen extends ConsumerWidget {
                       const Spacer(),
                       _FollowButton(
                         isFollowing: isFollowing,
-                        followsCurrentUser: user.followsCurrentUser,
+                        followsCurrentUser: fullUser.followsCurrentUser,
                         onTap: () {
                           HapticFeedback.selectionClick();
                           ref.read(followProvider.notifier).toggle(user.id);
@@ -92,12 +95,12 @@ class UserProfileScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Text(user.name, style: AppTypography.profileName),
+                  Text(fullUser.name, style: AppTypography.profileName),
                   const SizedBox(height: 3),
                   Row(
                     children: [
-                      Text(user.handle, style: AppTypography.bodySmall),
-                      if (user.followsCurrentUser && !isFollowing) ...[
+                      Text(fullUser.handle, style: AppTypography.bodySmall),
+                      if (fullUser.followsCurrentUser && !isFollowing) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -120,9 +123,9 @@ class UserProfileScreen extends ConsumerWidget {
                       ],
                     ],
                   ),
-                  if (user.bio != null) ...[
+                  if (fullUser.bio != null && fullUser.bio!.isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    Text(user.bio!, style: AppTypography.bodyMedium),
+                    Text(fullUser.bio!, style: AppTypography.bodyMedium),
                   ],
                 ],
               ),
@@ -136,13 +139,13 @@ class UserProfileScreen extends ConsumerWidget {
               child: IntrinsicHeight(
                 child: Row(
                   children: [
-                    _StatCell(value: user.pollsCount, label: 'Polls'),
+                    _StatCell(value: fullUser.pollsCount, label: 'Polls'),
                     _DivLine(),
-                    _StatCell(value: user.votesReceived, label: 'Votes'),
+                    _StatCell(value: fullUser.votesReceived, label: 'Votes'),
                     _DivLine(),
-                    _StatCell(value: user.followersCount, label: 'Followers'),
+                    _StatCell(value: fullUser.followersCount, label: 'Followers'),
                     _DivLine(),
-                    _StatCell(value: user.followingCount, label: 'Following'),
+                    _StatCell(value: fullUser.followingCount, label: 'Following'),
                   ],
                 ),
               ),

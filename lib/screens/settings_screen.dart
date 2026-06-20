@@ -145,8 +145,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     child: Container(
                       height: 52,
                       decoration: BoxDecoration(
-                        color:
-                            AppColors.textDestructive.withValues(alpha: 0.10),
+                        color: Colors.transparent,
+                        border: Border.all(
+                            color: AppColors.textDestructive
+                                .withValues(alpha: 0.5)),
                         borderRadius: BorderRadius.circular(AppRadius.card),
                       ),
                       child: Row(

@@ -220,6 +220,10 @@ class _ProfileSection extends ConsumerWidget {
                 Text(user?.name ?? '', style: AppTypography.profileName),
                 const SizedBox(height: 3),
                 Text(user?.handle ?? '', style: AppTypography.bodySmall),
+                if (user?.bio != null && user!.bio!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(user.bio!, style: AppTypography.bodyMedium),
+                ],
                 const SizedBox(height: 8),
                 const Row(
                   children: [

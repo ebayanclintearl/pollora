@@ -121,8 +121,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
-    ref.invalidate(pollsProvider);
-    await ref.read(pollsProvider.future);
+    await ref.read(pollsProvider.notifier).refresh();
   }
 
   // ── Build ──────────────────────────────────

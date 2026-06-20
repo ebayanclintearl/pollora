@@ -114,13 +114,24 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
   }
 
   Future<void> refresh() async {
+    if (_refreshing) return;
+    _refreshing = true;
     ref.read(newPollsCountProvider.notifier).state = 0;
-    ref.invalidateSelf();
+    try {
+      final fresh = await _fetch(cursor: null);
+      ref.read(pollsHasMoreProvider.notifier).state = true;
+      ref.read(pollsLoadingMoreProvider.notifier).state = false;
+      state = AsyncData(fresh);
+    } catch (_) {
+      // Keep current data visible on error; don't flash empty.
+    } finally {
+      _refreshing = false;
+    }
   }
 
   Future<void> loadMore() async {
     if (ref.read(pollsLoadingMoreProvider) ||
-        !ref.read(pollsHasMoreProvider)) return;
+        !ref.read(pollsHasMoreProvider)) { return; }
 
     final current = state.valueOrNull ?? [];
     if (current.isEmpty) return;
@@ -143,6 +154,7 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
   // Track in-flight mutations so rapid taps can't fire duplicate DB calls.
   final _votingPolls     = <String>{};
   final _favoritingPolls = <String>{};
+  bool _refreshing = false;
 
   // ── Mutations ─────────────────────────────
 

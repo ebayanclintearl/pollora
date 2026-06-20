@@ -78,3 +78,18 @@ final userByIdProvider = Provider.family<AppUser?, String>((ref, id) {
   }
   return null;
 });
+
+/// Full profile fetch by id — includes bio and all counts.
+final fullProfileProvider =
+    FutureProvider.family<AppUser, String>((ref, userId) async {
+  final data = await supabase
+      .from('profiles')
+      .select()
+      .eq('id', userId)
+      .single();
+  final uid = supabase.auth.currentUser?.id;
+  return AppUser.fromJson(
+    (data as Map).cast<String, dynamic>(),
+    isCurrentUser: uid == userId,
+  );
+});

@@ -26,7 +26,11 @@ class AppUser {
     this.followsCurrentUser = false,
   });
 
-  factory AppUser.fromJson(Map<String, dynamic> json, {bool isCurrentUser = false}) {
+  factory AppUser.fromJson(
+    Map<String, dynamic> json, {
+    bool isCurrentUser = false,
+    bool followsCurrentUser = false,
+  }) {
     return AppUser(
       id: json['id'] as String,
       name: json['name'] as String? ?? '',
@@ -38,6 +42,7 @@ class AppUser {
       followersCount: json['followers_count'] as int? ?? 0,
       followingCount: json['following_count'] as int? ?? 0,
       isCurrentUser: isCurrentUser,
+      followsCurrentUser: followsCurrentUser,
     );
   }
 

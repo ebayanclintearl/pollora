@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions, PostgrestException;
 import '../core/supabase_client.dart';
 import '../models/user.dart';
 import 'auth_provider.dart' as auth_prov;
@@ -52,14 +52,23 @@ class CurrentProfileNotifier extends AsyncNotifier<AppUser?> {
       avatarUrl = await _uploadAvatar(avatarFile, uid);
     }
 
-    await supabase.from('profiles').update({
-      if (name != null) 'name': name,
-      if (handle != null) 'handle': handle,
-      if (bio != null) 'bio': bio,
-      if (avatarUrl != null) 'avatar_url': avatarUrl,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', uid);
+    try {
+      await supabase.from('profiles').update({
+        if (name != null) 'name': name,
+        if (handle != null) 'handle': handle,
+        if (bio != null) 'bio': bio,
+        if (avatarUrl != null) 'avatar_url': avatarUrl,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', uid);
+    } on PostgrestException catch (e) {
+      if (e.code == '23505') throw Exception('handle_taken');
+      rethrow;
+    }
+
     ref.invalidateSelf();
+    // Also refresh the full-profile view so returning to a user profile
+    // screen shows the updated name/avatar rather than stale cached data.
+    ref.invalidate(fullProfileProvider(uid));
   }
 
   Future<String?> _uploadAvatar(File file, String uid) async {
@@ -74,7 +83,10 @@ class CurrentProfileNotifier extends AsyncNotifier<AppUser?> {
           file,
           fileOptions: const FileOptions(upsert: true),
         );
-    return supabase.storage.from('avatars').getPublicUrl(fileName);
+    final url = supabase.storage.from('avatars').getPublicUrl(fileName);
+    // Append a version timestamp so CachedNetworkImage treats re-uploads as
+    // a new URL and re-fetches instead of serving the stale cached image.
+    return '$url?v=${DateTime.now().millisecondsSinceEpoch}';
   }
 }
 
@@ -110,17 +122,34 @@ final userByIdProvider = Provider.family<AppUser?, String>((ref, id) {
   return null;
 });
 
-/// Full profile fetch by id — includes bio and all counts.
+/// Full profile fetch by id — includes bio, counts, and followsCurrentUser.
 final fullProfileProvider =
     FutureProvider.family<AppUser, String>((ref, userId) async {
+  // Re-run whenever the current user's profile changes (e.g. after edit).
+  ref.watch(currentProfileProvider);
+
+  final uid = supabase.auth.currentUser?.id;
+
   final data = await supabase
       .from('profiles')
       .select()
       .eq('id', userId)
       .single();
-  final uid = supabase.auth.currentUser?.id;
+
+  bool followsCurrentUser = false;
+  if (uid != null && uid != userId) {
+    final row = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('follower_id', userId)
+        .eq('following_id', uid)
+        .maybeSingle();
+    followsCurrentUser = row != null;
+  }
+
   return AppUser.fromJson(
     (data as Map).cast<String, dynamic>(),
     isCurrentUser: uid == userId,
+    followsCurrentUser: followsCurrentUser,
   );
 });

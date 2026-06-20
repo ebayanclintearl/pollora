@@ -8,6 +8,8 @@ import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../core/avatar_helper.dart';
 import '../providers/auth_provider.dart';
+import '../providers/users_provider.dart' as users_prov;
+import '../widgets/profile_avatar.dart';
 import '../providers/follow_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
@@ -198,21 +200,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 class _ProfileRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(currentUserProvider);
+    final authUser = ref.watch(currentUserProvider);
+    final appUser = ref.watch(users_prov.currentUserProvider);
 
-    final displayName = AvatarHelper.nameFor(
-      displayName: user?.userMetadata?['display_name'] as String?,
-      email: user?.email,
-    );
-    final handle = AvatarHelper.handleFor(
-      handle: user?.userMetadata?['handle'] as String?,
-      email: user?.email,
-    );
-    final initial = AvatarHelper.initialFor(
-      displayName: user?.userMetadata?['display_name'] as String?,
-      email: user?.email,
-    );
-    final avatarColor = AvatarHelper.colorFor(user?.id);
+    final displayName = appUser?.name.isNotEmpty == true
+        ? appUser!.name
+        : AvatarHelper.nameFor(
+            displayName: authUser?.userMetadata?['display_name'] as String?,
+            email: authUser?.email,
+          );
+    final handle = appUser?.handle.isNotEmpty == true
+        ? appUser!.handle
+        : AvatarHelper.handleFor(
+            handle: authUser?.userMetadata?['handle'] as String?,
+            email: authUser?.email,
+          );
 
     return GestureDetector(
       onTap: () {
@@ -230,24 +232,11 @@ class _ProfileRow extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            // Avatar
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: avatarColor,
-              ),
-              child: Center(
-                child: Text(
-                  initial,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+            ProfileAvatar(
+              userId: authUser?.id ?? appUser?.id ?? '',
+              displayName: displayName,
+              avatarUrl: appUser?.avatarUrl,
+              radius: 26,
             ),
             const SizedBox(width: 14),
             // Name + handle

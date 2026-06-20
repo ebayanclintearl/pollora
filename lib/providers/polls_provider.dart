@@ -241,31 +241,45 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       }
     }
 
-    // Upload images to Storage before writing to DB.
-    final coverUrl = await _uploadImage(
-        localPoll.coverImagePath, 'poll-covers', uid);
+    // Track every successfully uploaded file so we can clean up on failure.
+    final uploaded = <({String bucket, String path, String url})>[];
 
-    final row = await supabase.from('polls').insert({
-      'author_id':       uid,
-      'question':        localPoll.question,
-      'cover_image_url': coverUrl,
-    }).select().single();
+    try {
+      final coverResult = await _uploadImageTracked(
+          localPoll.coverImagePath, 'poll-covers', uid);
+      if (coverResult != null) uploaded.add(coverResult);
 
-    final pollId = row['id'] as String;
+      final row = await supabase.from('polls').insert({
+        'author_id':       uid,
+        'question':        localPoll.question,
+        'cover_image_url': coverResult?.url,
+      }).select().single();
 
-    if (localPoll.options.isNotEmpty) {
-      final optionRows = <Map<String, dynamic>>[];
-      for (int i = 0; i < localPoll.options.length; i++) {
-        final opt    = localPoll.options[i];
-        final imgUrl = await _uploadImage(opt.imagePath, 'poll-options', uid);
-        optionRows.add({
-          'poll_id':   pollId,
-          'text':      opt.text,
-          'position':  i,
-          'image_url': imgUrl,
-        });
+      final pollId = row['id'] as String;
+
+      if (localPoll.options.isNotEmpty) {
+        final optionRows = <Map<String, dynamic>>[];
+        for (int i = 0; i < localPoll.options.length; i++) {
+          final opt = localPoll.options[i];
+          final img = await _uploadImageTracked(opt.imagePath, 'poll-options', uid);
+          if (img != null) uploaded.add(img);
+          optionRows.add({
+            'poll_id':   pollId,
+            'text':      opt.text,
+            'position':  i,
+            'image_url': img?.url,
+          });
+        }
+        await supabase.from('poll_options').insert(optionRows);
       }
-      await supabase.from('poll_options').insert(optionRows);
+    } catch (e) {
+      // Best-effort cleanup of any files uploaded before the failure.
+      for (final u in uploaded) {
+        try {
+          await supabase.storage.from(u.bucket).remove([u.path]);
+        } catch (_) {}
+      }
+      rethrow;
     }
 
     // Refresh without going through AsyncLoading (no empty flash).
@@ -311,32 +325,26 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
 
   // ── Storage helpers ───────────────────────
 
-  /// Uploads [localPath] to [bucket] under [uid]/timestamp.ext.
-  /// Returns the public URL on success, or null if path is null / upload fails.
-  Future<String?> _uploadImage(
+  /// Uploads [localPath] to [bucket] and returns both the public URL and
+  /// the storage path, so the caller can clean up on failure.
+  /// Returns null if [localPath] is empty, already a URL, or file missing.
+  Future<({String url, String path, String bucket})?> _uploadImageTracked(
       String? localPath, String bucket, String uid) async {
     if (localPath == null || localPath.isEmpty) return null;
-    if (localPath.startsWith('http')) return localPath; // already a URL
+    if (localPath.startsWith('http')) return null; // already persisted
 
     final file = File(localPath);
     if (!file.existsSync()) return null;
 
-    // Reject files over 5 MB before hitting Storage.
     const maxBytes = 5 * 1024 * 1024;
     if (await file.length() > maxBytes) throw Exception('Image must be under 5 MB');
 
-    final ext      = p.extension(localPath).isNotEmpty
-        ? p.extension(localPath)
-        : '.jpg';
-    final fileName =
-        '$uid/${DateTime.now().millisecondsSinceEpoch}$ext';
+    final ext      = p.extension(localPath).isNotEmpty ? p.extension(localPath) : '.jpg';
+    final fileName = '$uid/${DateTime.now().millisecondsSinceEpoch}$ext';
 
-    try {
-      await supabase.storage.from(bucket).upload(fileName, file);
-      return supabase.storage.from(bucket).getPublicUrl(fileName);
-    } catch (_) {
-      return null;
-    }
+    await supabase.storage.from(bucket).upload(fileName, file);
+    final url = supabase.storage.from(bucket).getPublicUrl(fileName);
+    return (url: url, path: fileName, bucket: bucket);
   }
 }
 

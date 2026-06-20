@@ -132,7 +132,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (!mounted) return;
       final msg = e.toString().contains('5 MB')
           ? 'Image must be under 5 MB'
-          : 'Failed to save — please try again';
+          : e.toString().contains('handle_taken')
+              ? 'That handle is already taken'
+              : 'Failed to save — please try again';
       AppToast.show(context, msg, isError: true);
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -165,10 +167,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             // ── Header ──────────────────────────
             Padding(
               padding: EdgeInsets.fromLTRB(
-                  AppSpacing.screenH,
-                  top + AppSpacing.screenTop,
-                  AppSpacing.screenH,
-                  AppSpacing.x3),
+                  AppSpacing.screenH, top + 8, AppSpacing.screenH, 2),
               child: Row(
                 children: [
                   GestureDetector(

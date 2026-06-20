@@ -9,8 +9,8 @@ class AppUser {
   final int followersCount;
   final int followingCount;
   final bool isCurrentUser;
-  // true when this user follows the logged-in user (hard-coded for demo)
   final bool followsCurrentUser;
+  final DateTime? createdAt;
 
   const AppUser({
     required this.id,
@@ -24,6 +24,7 @@ class AppUser {
     this.followingCount = 0,
     this.isCurrentUser = false,
     this.followsCurrentUser = false,
+    this.createdAt,
   });
 
   factory AppUser.fromJson(
@@ -43,6 +44,9 @@ class AppUser {
       followingCount: json['following_count'] as int? ?? 0,
       isCurrentUser: isCurrentUser,
       followsCurrentUser: followsCurrentUser,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
     );
   }
 

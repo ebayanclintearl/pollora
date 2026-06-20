@@ -5,136 +5,193 @@ import '../app_colors.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
-import '../core/avatar_helper.dart';
+import '../core/supabase_client.dart';
 import '../models/user.dart';
 import '../providers/follow_provider.dart';
-import '../providers/users_provider.dart';
+import '../widgets/profile_avatar.dart';
 
 enum FollowListMode { following, followers }
 
-class FollowListScreen extends ConsumerWidget {
+class FollowListScreen extends ConsumerStatefulWidget {
   final FollowListMode mode;
   const FollowListScreen({super.key, required this.mode});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final top = MediaQuery.of(context).padding.top;
-    final followingIds = ref.watch(followProvider);
-    final allUsersList = ref.watch(allUsersProvider);
+  ConsumerState<FollowListScreen> createState() => _FollowListScreenState();
+}
 
-    final List<AppUser> users;
-    if (mode == FollowListMode.following) {
-      // Everyone the current user actively follows
-      users = allUsersList
-          .where((u) => !u.isCurrentUser && followingIds.contains(u.id))
-          .toList();
-    } else {
-      // Everyone who follows the current user (static demo data +
-      // anyone the current user followed back who also followsCurrentUser)
-      users = allUsersList
-          .where((u) => !u.isCurrentUser && u.followsCurrentUser)
-          .toList();
+class _FollowListScreenState extends ConsumerState<FollowListScreen> {
+  List<AppUser> _users = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) {
+      if (mounted) setState(() => _loading = false);
+      return;
     }
+    try {
+      final List<AppUser> users;
+      if (widget.mode == FollowListMode.following) {
+        final data = await supabase
+            .from('follows')
+            .select('profile:profiles!following_id(*)')
+            .eq('follower_id', uid);
+        users = (data as List).map((row) {
+          final p = (row['profile'] as Map<String, dynamic>).cast<String, dynamic>();
+          return AppUser.fromJson(p);
+        }).toList();
+      } else {
+        final data = await supabase
+            .from('follows')
+            .select('profile:profiles!follower_id(*)')
+            .eq('following_id', uid);
+        users = (data as List).map((row) {
+          final p = (row['profile'] as Map<String, dynamic>).cast<String, dynamic>();
+          return AppUser.fromJson(p);
+        }).toList();
+      }
+      if (mounted) setState(() { _users = users; _loading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // ── Header ──────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                  AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.of(context).pop();
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: const SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: AppColors.textSecondary, size: 20),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() => _loading = true);
+          await _load();
+        },
+        color: AppColors.accentPrimary,
+        backgroundColor: AppColors.surfaceCard,
+        strokeWidth: 2.5,
+        child: CustomScrollView(
+          slivers: [
+            // ── Header ──────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                    AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.of(context).pop();
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: const SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Icon(Icons.arrow_back_ios_new_rounded,
+                            color: AppColors.textSecondary, size: 20),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    mode == FollowListMode.following
-                        ? 'Following'
-                        : 'Followers',
-                    style: AppTypography.screenTitle,
-                  ),
-                ],
+                    const SizedBox(width: 6),
+                    Text(
+                      widget.mode == FollowListMode.following
+                          ? 'Following'
+                          : 'Followers',
+                      style: AppTypography.screenTitle,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // ── Count chip ───────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceElevated,
+            // ── Count chip ───────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceElevated,
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.pill),
+                      ),
+                      child: Text(
+                        _loading
+                            ? '—'
+                            : '${_users.length} ${widget.mode == FollowListMode.following ? 'people' : 'followers'}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                          height: 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── List ─────────────────────────────
+            if (_loading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor:
+                          AlwaysStoppedAnimation(AppColors.textTertiary),
+                    ),
+                  ),
+                ),
+              )
+            else if (_users.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _EmptyFollow(mode: widget.mode),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    ClipRRect(
                       borderRadius:
-                          BorderRadius.circular(AppRadius.pill),
-                    ),
-                    child: Text(
-                      '${users.length} ${mode == FollowListMode.following ? 'people' : 'followers'}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textSecondary,
-                        height: 1,
+                          BorderRadius.circular(AppRadius.card),
+                      child: Container(
+                        color: AppColors.surfaceCard,
+                        child: Column(
+                          children: _users.asMap().entries.map((e) {
+                            return _UserRow(
+                              user: e.value,
+                              showDivider: e.key < _users.length - 1,
+                              onTap: () => Navigator.of(context).pushNamed(
+                                '/user-profile',
+                                arguments: e.value,
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ]),
+                ),
               ),
-            ),
-          ),
-
-          // ── List ─────────────────────────────
-          if (users.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: _EmptyFollow(mode: mode),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  ClipRRect(
-                    borderRadius:
-                        BorderRadius.circular(AppRadius.card),
-                    child: Container(
-                      color: AppColors.surfaceCard,
-                      child: Column(
-                        children: users.asMap().entries.map((e) {
-                          return _UserRow(
-                            user: e.value,
-                            showDivider: e.key < users.length - 1,
-                            onTap: () => Navigator.of(context).pushNamed(
-                              '/user-profile',
-                              arguments: e.value,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -166,19 +223,11 @@ class _UserRow extends ConsumerWidget {
                 horizontal: 14, vertical: 13),
             child: Row(
               children: [
-                // Avatar
-                CircleAvatar(
+                ProfileAvatar(
+                  userId: user.id,
+                  displayName: user.name,
+                  avatarUrl: user.avatarUrl,
                   radius: 22,
-                  backgroundColor: AvatarHelper.colorFor(user.id),
-                  child: Text(
-                    AvatarHelper.initialFor(displayName: user.name),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      height: 1,
-                    ),
-                  ),
                 ),
                 const SizedBox(width: 12),
 

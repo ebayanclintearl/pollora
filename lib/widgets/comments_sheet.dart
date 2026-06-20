@@ -3,10 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../app_radius.dart';
-import '../core/avatar_helper.dart';
 import '../core/supabase_client.dart';
-import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/users_provider.dart';
+import 'profile_avatar.dart';
 
 class CommentsSheet extends ConsumerStatefulWidget {
   final String pollId;
@@ -59,12 +58,26 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     try {
       final data = await supabase
           .from('comments')
-          .select('id, text, created_at, likes, reply_to_id, author:profiles!author_id(id, name, handle)')
+          .select('id, text, created_at, likes, reply_to_id, author:profiles!author_id(id, name, handle, avatar_url)')
           .eq('poll_id', widget.pollId)
           .order('created_at', ascending: true);
 
       if (!mounted) return;
       final uid = supabase.auth.currentUser?.id;
+
+      // Load which comments the current user has already liked.
+      Set<String> likedIds = {};
+      if (uid != null && (data as List).isNotEmpty) {
+        final ids = data.map((r) => r['id'] as String).toList();
+        final liked = await supabase
+            .from('comment_likes')
+            .select('comment_id')
+            .eq('user_id', uid)
+            .inFilter('comment_id', ids);
+        likedIds = (liked as List).map((r) => r['comment_id'] as String).toSet();
+      }
+
+      if (!mounted) return;
       setState(() {
         _loading = false;
         _comments.clear();
@@ -74,11 +87,13 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
             id: row['id'] as String,
             userId: author['id'] as String,
             username: author['name'] as String? ?? '',
+            avatarUrl: author['avatar_url'] as String?,
             text: row['text'] as String,
             timestamp: _timeAgo(DateTime.parse(row['created_at'] as String)),
             likes: row['likes'] as int? ?? 0,
             isOwn: author['id'] == uid,
             isReply: row['reply_to_id'] != null,
+            isLikedByMe: likedIds.contains(row['id'] as String),
           );
         }));
       });
@@ -104,6 +119,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
       id: '',
       userId: uid ?? '',
       username: me?.name ?? '',
+      avatarUrl: me?.avatarUrl,
       text: body,
       timestamp: 'now',
       likes: 0,
@@ -167,9 +183,6 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     final bottom = MediaQuery.of(context).padding.bottom;
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
     final me = ref.watch(currentUserProvider);
-    final authUser = ref.watch(auth_prov.currentUserProvider);
-    final myAvatarColor = AvatarHelper.colorFor(authUser?.id ?? me?.id ?? '');
-    final myInitial = AvatarHelper.initialFor(displayName: me?.name ?? '');
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.76,
@@ -317,18 +330,11 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
-                  child: CircleAvatar(
+                  child: ProfileAvatar(
+                    userId: me?.id ?? '',
+                    displayName: me?.name,
+                    avatarUrl: me?.avatarUrl,
                     radius: 16,
-                    backgroundColor: myAvatarColor,
-                    child: Text(
-                      myInitial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -453,21 +459,25 @@ class _Comment {
   final String id;
   final String userId;
   final String username;
+  final String? avatarUrl;
   final String text;
   final String timestamp;
   final int likes;
   final bool isOwn;
   final bool isReply;
+  final bool isLikedByMe;
 
   const _Comment({
     required this.id,
     required this.userId,
     required this.username,
+    this.avatarUrl,
     required this.text,
     required this.timestamp,
     required this.likes,
     this.isOwn = false,
     this.isReply = false,
+    this.isLikedByMe = false,
   });
 }
 
@@ -489,13 +499,16 @@ class _CommentRow extends StatefulWidget {
 
 class _CommentRowState extends State<_CommentRow>
     with SingleTickerProviderStateMixin {
-  bool _liked = false;
+  late bool _liked;
+  late int _localLikes;
   late AnimationController _likeCtrl;
   late Animation<double> _likeScale;
 
   @override
   void initState() {
     super.initState();
+    _liked = widget.comment.isLikedByMe;
+    _localLikes = widget.comment.likes;
     _likeCtrl = AnimationController(
       duration: const Duration(milliseconds: 350),
       vsync: this,
@@ -513,15 +526,53 @@ class _CommentRowState extends State<_CommentRow>
     super.dispose();
   }
 
-  void _toggleLike() {
+  Future<void> _toggleLike() async {
+    if (widget.comment.id.isEmpty) return;
     HapticFeedback.lightImpact();
-    setState(() => _liked = !_liked);
+    final willLike = !_liked;
+    setState(() {
+      _liked = willLike;
+      _localLikes = willLike
+          ? _localLikes + 1
+          : (_localLikes - 1).clamp(0, 999999);
+    });
     _likeCtrl.forward(from: 0);
+
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      if (willLike) {
+        await supabase.from('comment_likes').insert({
+          'comment_id': widget.comment.id,
+          'user_id': uid,
+        });
+        await supabase.from('comments')
+            .update({'likes': _localLikes})
+            .eq('id', widget.comment.id);
+      } else {
+        await supabase.from('comment_likes')
+            .delete()
+            .eq('comment_id', widget.comment.id)
+            .eq('user_id', uid);
+        await supabase.from('comments')
+            .update({'likes': _localLikes})
+            .eq('id', widget.comment.id);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _liked = !willLike;
+          _localLikes = willLike
+              ? (_localLikes - 1).clamp(0, 999999)
+              : _localLikes + 1;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final likes = widget.comment.likes + (_liked ? 1 : 0);
+    final likes = _localLikes;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -531,18 +582,11 @@ class _CommentRowState extends State<_CommentRow>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
+          ProfileAvatar(
+            userId: widget.comment.userId,
+            displayName: widget.comment.username,
+            avatarUrl: widget.comment.avatarUrl,
             radius: 15,
-            backgroundColor: AvatarHelper.colorFor(widget.comment.userId),
-            child: Text(
-              AvatarHelper.initialFor(displayName: widget.comment.username),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
-            ),
           ),
           const SizedBox(width: 10),
           Expanded(

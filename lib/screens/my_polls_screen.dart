@@ -144,6 +144,14 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
   }
 }
 
+String _joinedLabel(DateTime dt) {
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+  return 'Joined ${months[dt.month - 1]} ${dt.year}';
+}
+
 // ──────────────────────────────────────────────
 // Profile Section — flat layout, no card
 // ──────────────────────────────────────────────
@@ -205,20 +213,21 @@ class _ProfileSection extends ConsumerWidget {
                   Text(user.bio!, style: AppTypography.bodyMedium),
                 ],
                 const SizedBox(height: 8),
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      size: 12,
-                      color: AppColors.textTertiary,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Joined May 2024',
-                      style: AppTypography.statLabel,
-                    ),
-                  ],
-                ),
+                if (user?.createdAt != null)
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_rounded,
+                        size: 12,
+                        color: AppColors.textTertiary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _joinedLabel(user!.createdAt!),
+                        style: AppTypography.statLabel,
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),

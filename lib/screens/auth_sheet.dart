@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../app_colors.dart';
 import '../app_radius.dart';
+import '../core/supabase_client.dart' as supa;
 import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../services/auth_service.dart';
@@ -169,6 +170,30 @@ class _AuthSheetState extends State<AuthSheet> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
         name: _nameCtrl.text.trim()));
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty || !_emailRegex.hasMatch(email)) {
+      setState(() => _emailError = 'Enter your email address first');
+      _emailFocus.requestFocus();
+      return;
+    }
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() => _loading = true);
+    try {
+      await supa.supabase.auth.resetPasswordForEmail(email);
+      if (mounted) {
+        AppToast.show(context, 'Password reset email sent',
+            icon: Icons.mark_email_read_outlined);
+      }
+    } on AuthException catch (e) {
+      if (mounted) AppToast.show(context, e.message, isError: true);
+    } catch (_) {
+      if (mounted) AppToast.show(context, 'Failed to send reset email', isError: true);
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   // ── Build ──────────────────────────────────
@@ -410,7 +435,30 @@ class _AuthSheetState extends State<AuthSheet> {
           ),
           onSubmitted: isSignUp ? _emailSignUp : _emailSignIn,
         ),
-        const SizedBox(height: 24),
+
+        // Forgot password — sign in only
+        if (!isSignUp) ...[
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: _loading ? null : _forgotPassword,
+              behavior: HitTestBehavior.opaque,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Text(
+                  'Forgot password?',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textAccent,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
 
         // Primary action button
         SizedBox(

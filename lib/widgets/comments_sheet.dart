@@ -26,8 +26,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   String? _replyingToUsername;
-  int? _replyingToIndex;
-  bool _hasText = false;
+  String? _replyingToId;
+  int?    _replyingToIndex;
+  bool    _hasText = false;
   bool _loading = true;
   bool _submitting = false;
 
@@ -78,24 +79,27 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
       }
 
       if (!mounted) return;
+      final flat = (data as List).map((row) {
+        final author = row['author'] as Map<String, dynamic>;
+        return _Comment(
+          id:          row['id'] as String,
+          userId:      author['id'] as String,
+          username:    author['name'] as String? ?? '',
+          avatarUrl:   author['avatar_url'] as String?,
+          replyToId:   row['reply_to_id'] as String?,
+          text:        row['text'] as String,
+          timestamp:   _timeAgo(DateTime.parse(row['created_at'] as String)),
+          likes:       row['likes'] as int? ?? 0,
+          isOwn:       author['id'] == uid,
+          isReply:     row['reply_to_id'] != null,
+          isLikedByMe: likedIds.contains(row['id'] as String),
+        );
+      }).toList();
       setState(() {
         _loading = false;
-        _comments.clear();
-        _comments.addAll((data as List).map((row) {
-          final author = row['author'] as Map<String, dynamic>;
-          return _Comment(
-            id: row['id'] as String,
-            userId: author['id'] as String,
-            username: author['name'] as String? ?? '',
-            avatarUrl: author['avatar_url'] as String?,
-            text: row['text'] as String,
-            timestamp: _timeAgo(DateTime.parse(row['created_at'] as String)),
-            likes: row['likes'] as int? ?? 0,
-            isOwn: author['id'] == uid,
-            isReply: row['reply_to_id'] != null,
-            isLikedByMe: likedIds.contains(row['id'] as String),
-          );
-        }));
+        _comments
+          ..clear()
+          ..addAll(_threadComments(flat));
       });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
@@ -127,32 +131,49 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
       isReply: _replyingToUsername != null,
     );
 
-    final insertAt = _replyingToIndex != null ? _replyingToIndex! + 1 : 0;
+    final replyToId = (_replyingToId?.isNotEmpty == true) ? _replyingToId : null;
+    final insertAt  = _replyingToIndex != null ? _replyingToIndex! + 1 : _comments.length;
     setState(() {
       _comments.insert(insertAt, optimistic);
       _controller.clear();
       _replyingToUsername = null;
-      _replyingToIndex = null;
+      _replyingToId       = null;
+      _replyingToIndex    = null;
     });
     _focusNode.unfocus();
 
     if (uid == null || widget.pollId.isEmpty) return;
     try {
       await supabase.from('comments').insert({
-        'poll_id': widget.pollId,
-        'author_id': uid,
-        'text': body,
+        'poll_id':     widget.pollId,
+        'author_id':   uid,
+        'text':        body,
+        'reply_to_id': replyToId,
       });
+      // Reload so the optimistic entry is replaced with the real DB row
+      // (which has the correct reply_to_id and a real id).
+      if (mounted) await _loadComments();
     } catch (_) {
     } finally {
       _submitting = false;
     }
   }
 
-  void _startReply(String username, int index) {
+  void _startReply(String username, String commentId, int index) {
+    final comment = _comments[index];
+    // Cap at 2 levels: if replying to a reply, attach to its parent thread instead
+    final effectiveParentId = comment.replyToId ?? commentId;
+
+    // Insert after the last existing reply in the same thread
+    int insertIdx = index;
+    for (int i = 0; i < _comments.length; i++) {
+      if (_comments[i].replyToId == effectiveParentId) insertIdx = i;
+    }
+
     setState(() {
       _replyingToUsername = username;
-      _replyingToIndex = index;
+      _replyingToId       = effectiveParentId;
+      _replyingToIndex    = insertIdx;
     });
     _controller.clear();
     Future.delayed(
@@ -162,7 +183,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   void _cancelReply() {
     setState(() {
       _replyingToUsername = null;
-      _replyingToIndex = null;
+      _replyingToId       = null;
+      _replyingToIndex    = null;
     });
     _controller.clear();
     _focusNode.unfocus();
@@ -261,7 +283,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                         itemCount: _comments.length,
                         itemBuilder: (_, i) => _CommentRow(
                           comment: _comments[i],
-                          onReply: () => _startReply(_comments[i].username, i),
+                          onReply: () => _startReply(
+                              _comments[i].username, _comments[i].id, i),
                           onDelete: _comments[i].isOwn
                               ? () => _deleteComment(i)
                               : null,
@@ -456,29 +479,70 @@ class _EmptyComments extends StatelessWidget {
 
 // ─────────────────────────────────────────────
 class _Comment {
-  final String id;
-  final String userId;
-  final String username;
+  final String  id;
+  final String  userId;
+  final String  username;
   final String? avatarUrl;
-  final String text;
-  final String timestamp;
-  final int likes;
-  final bool isOwn;
-  final bool isReply;
-  final bool isLikedByMe;
+  final String? replyToId;
+  final String  text;
+  final String  timestamp;
+  final int     likes;
+  final bool    isOwn;
+  final bool    isReply;
+  final bool    isLikedByMe;
 
   const _Comment({
     required this.id,
     required this.userId,
     required this.username,
     this.avatarUrl,
+    this.replyToId,
     required this.text,
     required this.timestamp,
     required this.likes,
-    this.isOwn = false,
-    this.isReply = false,
+    this.isOwn       = false,
+    this.isReply     = false,
     this.isLikedByMe = false,
   });
+}
+
+// Groups replies under their top-level parent (capped at 2 levels).
+// Any deeper nesting in existing data is flattened to level 2.
+List<_Comment> _threadComments(List<_Comment> flat) {
+  final byId = <String, _Comment>{for (final c in flat) c.id: c};
+
+  String rootId(_Comment c) {
+    var cur = c;
+    while (cur.replyToId != null) {
+      final parent = byId[cur.replyToId!];
+      if (parent == null) break;
+      cur = parent;
+    }
+    return cur.id;
+  }
+
+  final topLevel  = flat.where((c) => c.replyToId == null).toList();
+  final childrenOf = <String, List<_Comment>>{};
+  for (final c in flat) {
+    if (c.replyToId != null) {
+      childrenOf.putIfAbsent(rootId(c), () => []).add(c);
+    }
+  }
+
+  final result = <_Comment>[];
+  final placed = <String>{};
+  for (final p in topLevel) {
+    result.add(p);
+    placed.add(p.id);
+    for (final child in childrenOf[p.id] ?? []) {
+      result.add(child);
+      placed.add(child.id);
+    }
+  }
+  for (final c in flat) {
+    if (!placed.contains(c.id)) result.add(c);
+  }
+  return result;
 }
 
 // ─────────────────────────────────────────────

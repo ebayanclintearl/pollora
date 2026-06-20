@@ -7,10 +7,9 @@ import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
-import '../core/avatar_helper.dart';
 import '../core/supabase_client.dart';
+import '../widgets/profile_avatar.dart';
 import '../models/poll.dart';
-import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/follow_provider.dart';
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
@@ -33,9 +32,10 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
 
   // ── Comment state ──────────────────────────
   final List<_Comment> _comments = [];
-  bool _commentsLoading = true;
-  bool _submitting = false;
+  bool    _commentsLoading = true;
+  bool    _submitting = false;
   String? _replyingToUsername;
+  String? _replyingToId;
   int?    _replyingToIndex;
   bool    _hasText = false;
 
@@ -84,31 +84,49 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
       final data = await supabase
           .from('comments')
           .select('id, text, created_at, likes, reply_to_id, '
-              'author:profiles!author_id(id, name, handle)')
+              'author:profiles!author_id(id, name, handle, avatar_url)')
           .eq('poll_id', widget.pollId)
           .order('created_at', ascending: true);
 
       if (!mounted) return;
       final uid = supabase.auth.currentUser?.id;
+
+      Set<String> likedIds = {};
+      if (uid != null && (data as List).isNotEmpty) {
+        final ids = data.map((r) => r['id'] as String).toList();
+        final liked = await supabase
+            .from('comment_likes')
+            .select('comment_id')
+            .eq('user_id', uid)
+            .inFilter('comment_id', ids);
+        likedIds =
+            (liked as List).map((r) => r['comment_id'] as String).toSet();
+      }
+
+      if (!mounted) return;
+      final flat = (data as List).map((row) {
+        final author = row['author'] as Map<String, dynamic>;
+        return _Comment(
+          id:          row['id'] as String,
+          userId:      author['id'] as String,
+          username:    author['name'] as String? ?? '',
+          handle:      author['handle'] as String? ?? '',
+          avatarUrl:   author['avatar_url'] as String?,
+          replyToId:   row['reply_to_id'] as String?,
+          text:        row['text'] as String,
+          timestamp:   _timeAgo(DateTime.parse(row['created_at'] as String)),
+          likes:       row['likes'] as int? ?? 0,
+          isOwn:       author['id'] == uid,
+          isReply:     row['reply_to_id'] != null,
+          isLikedByMe: likedIds.contains(row['id'] as String),
+        );
+      }).toList();
+
       setState(() {
         _commentsLoading = false;
         _comments
           ..clear()
-          ..addAll((data as List).map((row) {
-            final author = row['author'] as Map<String, dynamic>;
-            return _Comment(
-              id:        row['id'] as String,
-              userId:    author['id'] as String,
-              username:  author['name'] as String? ?? '',
-              handle:    author['handle'] as String? ?? '',
-              text:      row['text'] as String,
-              timestamp: _timeAgo(
-                  DateTime.parse(row['created_at'] as String)),
-              likes:   row['likes'] as int? ?? 0,
-              isOwn:   author['id'] == uid,
-              isReply: row['reply_to_id'] != null,
-            );
-          }));
+          ..addAll(_threadComments(flat));
       });
     } catch (_) {
       if (mounted) setState(() => _commentsLoading = false);
@@ -127,16 +145,19 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     final body =
         _replyingToUsername != null ? '@$_replyingToUsername $text' : text;
 
+    final replyToId = (_replyingToId?.isNotEmpty == true) ? _replyingToId : null;
     final optimistic = _Comment(
-      id:        '',
-      userId:    uid ?? '',
-      username:  me?.name ?? '',
-      handle:    me?.handle ?? '',
-      text:      body,
-      timestamp: 'now',
-      likes:     0,
-      isOwn:     true,
-      isReply:   _replyingToUsername != null,
+      id:          '',
+      userId:      uid ?? '',
+      username:    me?.name ?? '',
+      handle:      me?.handle ?? '',
+      avatarUrl:   me?.avatarUrl,
+      replyToId:   replyToId,
+      text:        body,
+      timestamp:   'now',
+      likes:       0,
+      isOwn:       true,
+      isReply:     _replyingToUsername != null,
     );
 
     final insertAt =
@@ -145,6 +166,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
       _comments.insert(insertAt, optimistic);
       _inputCtrl.clear();
       _replyingToUsername = null;
+      _replyingToId       = null;
       _replyingToIndex    = null;
     });
     _focusNode.unfocus();
@@ -163,20 +185,34 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     if (uid == null) return;
     try {
       await supabase.from('comments').insert({
-        'poll_id':   widget.pollId,
-        'author_id': uid,
-        'text':      body,
+        'poll_id':     widget.pollId,
+        'author_id':   uid,
+        'text':        body,
+        'reply_to_id': replyToId,
       });
+      // Reload so the optimistic entry is replaced with the real DB row.
+      if (mounted) await _loadComments();
     } catch (_) {
     } finally {
       _submitting = false;
     }
   }
 
-  void _startReply(String username, int index) {
+  void _startReply(String username, String commentId, int index) {
+    final comment = _comments[index];
+    // Cap at 2 levels: if replying to a reply, attach to its parent thread instead
+    final effectiveParentId = comment.replyToId ?? commentId;
+
+    // Insert after the last existing reply in the same thread
+    int insertIdx = index;
+    for (int i = 0; i < _comments.length; i++) {
+      if (_comments[i].replyToId == effectiveParentId) insertIdx = i;
+    }
+
     setState(() {
       _replyingToUsername = username;
-      _replyingToIndex    = index;
+      _replyingToId       = effectiveParentId;
+      _replyingToIndex    = insertIdx;
     });
     _inputCtrl.clear();
     Future.delayed(
@@ -186,6 +222,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
   void _cancelReply() {
     setState(() {
       _replyingToUsername = null;
+      _replyingToId       = null;
       _replyingToIndex    = null;
     });
     _focusNode.unfocus();
@@ -379,7 +416,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                             (_, i) => _CommentRow(
                               comment: _comments[i],
                               onReply: () => _startReply(
-                                  _comments[i].username, i),
+                                  _comments[i].username, _comments[i].id, i),
                               onDelete: _comments[i].isOwn
                                   ? () => _deleteComment(i)
                                   : null,
@@ -455,7 +492,6 @@ class _PollCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authUserId  = ref.watch(auth_prov.currentUserProvider)?.id;
     final isFollowing = poll.author.isCurrentUser
         ? false
         : ref.watch(isFollowingProvider(poll.author.id));
@@ -472,22 +508,11 @@ class _PollCard extends ConsumerWidget {
               behavior: HitTestBehavior.opaque,
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AvatarHelper.colorFor(
-                      poll.author.isCurrentUser
-                          ? (authUserId ?? poll.author.id)
-                          : poll.author.id,
-                    ),
-                    child: Text(
-                      AvatarHelper.initialFor(
-                          displayName: poll.author.name),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  ProfileAvatar(
+                    userId:      poll.author.id,
+                    displayName: poll.author.name,
+                    avatarUrl:   poll.author.avatarUrl,
+                    radius:      20,
                   ),
                   const SizedBox(width: 10),
                   Column(
@@ -899,21 +924,23 @@ class _CommentRow extends StatefulWidget {
 
 class _CommentRowState extends State<_CommentRow>
     with SingleTickerProviderStateMixin {
-  bool _liked = false;
+  late bool _liked;
+  late int  _localLikes;
   late AnimationController _likeCtrl;
   late Animation<double>   _likeScale;
 
   @override
   void initState() {
     super.initState();
-    _likeCtrl = AnimationController(
+    _liked      = widget.comment.isLikedByMe;
+    _localLikes = widget.comment.likes;
+    _likeCtrl   = AnimationController(
         duration: const Duration(milliseconds: 350), vsync: this);
-    _likeScale = TweenSequence<double>([
+    _likeScale  = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 1.4, end: 0.9), weight: 30),
       TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 30),
-    ]).animate(
-        CurvedAnimation(parent: _likeCtrl, curve: Curves.easeOut));
+    ]).animate(CurvedAnimation(parent: _likeCtrl, curve: Curves.easeOut));
   }
 
   @override
@@ -922,15 +949,49 @@ class _CommentRowState extends State<_CommentRow>
     super.dispose();
   }
 
-  void _toggleLike() {
+  Future<void> _toggleLike() async {
+    if (widget.comment.id.isEmpty) return;
     HapticFeedback.lightImpact();
-    setState(() => _liked = !_liked);
+    final willLike = !_liked;
+    setState(() {
+      _liked      = willLike;
+      _localLikes = willLike
+          ? _localLikes + 1
+          : (_localLikes - 1).clamp(0, 999999);
+    });
     _likeCtrl.forward(from: 0);
+    final uid = supabase.auth.currentUser?.id;
+    if (uid == null) return;
+    try {
+      if (willLike) {
+        await supabase.from('comment_likes').insert({
+          'comment_id': widget.comment.id,
+          'user_id':    uid,
+        });
+      } else {
+        await supabase.from('comment_likes')
+            .delete()
+            .eq('comment_id', widget.comment.id)
+            .eq('user_id', uid);
+      }
+      await supabase.from('comments')
+          .update({'likes': _localLikes})
+          .eq('id', widget.comment.id);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _liked      = !willLike;
+          _localLikes = willLike
+              ? (_localLikes - 1).clamp(0, 999999)
+              : _localLikes + 1;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final likes = widget.comment.likes + (_liked ? 1 : 0);
+    final likes = _localLikes;
     return Padding(
       padding: EdgeInsets.only(
         bottom: 20,
@@ -939,20 +1000,11 @@ class _CommentRowState extends State<_CommentRow>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor:
-                AvatarHelper.colorFor(widget.comment.userId),
-            child: Text(
-              AvatarHelper.initialFor(
-                  displayName: widget.comment.username),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
-            ),
+          ProfileAvatar(
+            userId:      widget.comment.userId,
+            displayName: widget.comment.username,
+            avatarUrl:   widget.comment.avatarUrl,
+            radius:      16,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1150,12 +1202,7 @@ class _CommentInput extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bottom = MediaQuery.of(context).padding.bottom;
-    final me        = ref.watch(currentUserProvider);
-    final authUser  = ref.watch(auth_prov.currentUserProvider);
-    final avatarColor =
-        AvatarHelper.colorFor(authUser?.id ?? me?.id ?? '');
-    final initial =
-        AvatarHelper.initialFor(displayName: me?.name ?? '');
+    final me     = ref.watch(currentUserProvider);
 
     return Container(
       decoration: const BoxDecoration(
@@ -1206,16 +1253,11 @@ class _CommentInput extends ConsumerWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: avatarColor,
-                  child: Text(initial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                      )),
+                ProfileAvatar(
+                  userId:      me?.id ?? '',
+                  displayName: me?.name,
+                  avatarUrl:   me?.avatarUrl,
+                  radius:      16,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1284,27 +1326,70 @@ class _CommentInput extends ConsumerWidget {
 // Comment model
 // ─────────────────────────────────────────────
 class _Comment {
-  final String id;
-  final String userId;
-  final String username;
-  final String handle;
-  final String text;
-  final String timestamp;
-  final int    likes;
-  final bool   isOwn;
-  final bool   isReply;
+  final String  id;
+  final String  userId;
+  final String  username;
+  final String  handle;
+  final String? avatarUrl;
+  final String? replyToId;
+  final String  text;
+  final String  timestamp;
+  final int     likes;
+  final bool    isOwn;
+  final bool    isReply;
+  final bool    isLikedByMe;
 
   const _Comment({
     required this.id,
     required this.userId,
     required this.username,
     required this.handle,
+    this.avatarUrl,
+    this.replyToId,
     required this.text,
     required this.timestamp,
     required this.likes,
-    this.isOwn  = false,
-    this.isReply = false,
+    this.isOwn       = false,
+    this.isReply     = false,
+    this.isLikedByMe = false,
   });
+}
+
+List<_Comment> _threadComments(List<_Comment> flat) {
+  final byId = <String, _Comment>{for (final c in flat) c.id: c};
+
+  String rootId(_Comment c) {
+    var cur = c;
+    while (cur.replyToId != null) {
+      final parent = byId[cur.replyToId!];
+      if (parent == null) break;
+      cur = parent;
+    }
+    return cur.id;
+  }
+
+  final topLevel   = flat.where((c) => c.replyToId == null).toList();
+  final childrenOf = <String, List<_Comment>>{};
+  for (final c in flat) {
+    if (c.replyToId != null) {
+      childrenOf.putIfAbsent(rootId(c), () => []).add(c);
+    }
+  }
+
+  final result = <_Comment>[];
+  final placed = <String>{};
+  for (final p in topLevel) {
+    result.add(p);
+    placed.add(p.id);
+    for (final child in childrenOf[p.id] ?? []) {
+      result.add(child);
+      placed.add(child.id);
+    }
+  }
+  for (final c in flat) {
+    if (!placed.contains(c.id)) result.add(c);
+  }
+  return result;
 }
 
 // ─────────────────────────────────────────────

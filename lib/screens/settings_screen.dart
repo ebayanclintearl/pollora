@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_review/in_app_review.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -14,6 +17,11 @@ import '../providers/follow_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
 import 'edit_profile_screen.dart';
+
+// ── Update these before App Store submission ──
+const _kPrivacyPolicyUrl = 'https://github.com/clintearlebayan/pollora/blob/main/PRIVACY.md';
+const _kSupportEmail     = 'support@pollora.app';
+const _kAppStoreUrl      = 'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -79,19 +87,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _SettingsRow(
                         icon: Icons.star_outline_rounded,
                         label: 'Rate the App',
-                        onTap: () {},
+                        onTap: () async {
+                          final review = InAppReview.instance;
+                          if (await review.isAvailable()) {
+                            await review.requestReview();
+                          } else {
+                            await review.openStoreListing(
+                                appStoreId: _kAppStoreUrl
+                                    .split('/id')
+                                    .last);
+                          }
+                        },
                         showDivider: true,
                       ),
                       _SettingsRow(
                         icon: Icons.mail_outline_rounded,
                         label: 'Contact Us',
-                        onTap: () {},
+                        onTap: () async {
+                          final uri = Uri(
+                            scheme: 'mailto',
+                            path: _kSupportEmail,
+                            query: 'subject=Pollora%20Support',
+                          );
+                          if (await canLaunchUrl(uri)) {
+                            await launchUrl(uri);
+                          }
+                        },
                         showDivider: true,
                       ),
                       _SettingsRow(
                         icon: Icons.ios_share_rounded,
                         label: 'Share App',
-                        onTap: () {},
+                        onTap: () => Share.share(
+                          'Check out Pollora — a fun polling app!\n$_kAppStoreUrl',
+                        ),
                       ),
                     ],
                   ),
@@ -104,13 +133,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _SettingsRow(
                         icon: Icons.shield_outlined,
                         label: 'Privacy Policy',
-                        onTap: () {},
-                        showDivider: true,
-                      ),
-                      _SettingsRow(
-                        icon: Icons.article_outlined,
-                        label: 'Terms of Service',
-                        onTap: () {},
+                        onTap: () => launchUrl(
+                          Uri.parse(_kPrivacyPolicyUrl),
+                          mode: LaunchMode.externalApplication,
+                        ),
                       ),
                     ],
                   ),

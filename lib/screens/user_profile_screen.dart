@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
+import '../app_icon_sizes.dart';
 import '../app_radius.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
@@ -32,7 +33,7 @@ class UserProfileScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(
-                  AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
+                  AppSpacing.screenH, top + 8, AppSpacing.screenH, 2),
               child: Row(
                 children: [
                   GestureDetector(
@@ -42,18 +43,20 @@ class UserProfileScreen extends ConsumerWidget {
                     },
                     behavior: HitTestBehavior.opaque,
                     child: const SizedBox(
-                      width: 44,
-                      height: 44,
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget,
                       child: Icon(Icons.arrow_back_ios_new_rounded,
-                          color: AppColors.textSecondary, size: 20),
+                          color: AppColors.textSecondary,
+                          size: AppIconSizes.control),
                     ),
                   ),
                   const Spacer(),
                   const SizedBox(
-                    width: 44,
-                    height: 44,
+                    width: AppIconSizes.touchTarget,
+                    height: AppIconSizes.touchTarget,
                     child: Icon(Icons.more_horiz_rounded,
-                        color: AppColors.textSecondary, size: 22),
+                        color: AppColors.textSecondary,
+                        size: AppIconSizes.control),
                   ),
                 ],
               ),
@@ -179,7 +182,7 @@ class UserProfileScreen extends ConsumerWidget {
             )
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+              padding: const EdgeInsets.fromLTRB(0, 0, 0, 100),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   ClipRRect(
@@ -331,7 +334,7 @@ class _UserPollRow extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH, vertical: 14),
             child: Row(
               children: [
                 Expanded(

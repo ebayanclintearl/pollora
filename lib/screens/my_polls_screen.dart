@@ -64,9 +64,9 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 AppSpacing.screenH,
-                top + AppSpacing.screenTop,
+                top + 8,
                 AppSpacing.screenH,
-                0,
+                2,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -82,9 +82,9 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
                       width: AppIconSizes.touchTarget,
                       height: AppIconSizes.touchTarget,
                       child: Icon(
-                        Icons.settings_outlined,
+                        Icons.settings_rounded,
                         color: AppColors.textSecondary,
-                        size: 22,
+                        size: AppIconSizes.control,
                       ),
                     ),
                   ),
@@ -127,7 +127,7 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
 
           // ── Tab content ───────────────────────────
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+            padding: const EdgeInsets.fromLTRB(0, 12, 0, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (_selectedTab == 0)
@@ -610,7 +610,7 @@ class _PollListRow extends StatelessWidget {
           behavior: HitTestBehavior.opaque,
           child: Padding(
             padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                const EdgeInsets.symmetric(horizontal: AppSpacing.screenH, vertical: 14),
             child: Row(
               children: [
                 Expanded(

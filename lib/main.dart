@@ -148,7 +148,9 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   // Incremented when user taps the Feed tab while already on it.
-  final _feedReselectNotifier = ValueNotifier<int>(0);
+  final _feedReselectNotifier  = ValueNotifier<int>(0);
+  // Incremented after a poll is published — feed switches to Latest + scrolls top.
+  final _feedPublishedNotifier = ValueNotifier<int>(0);
 
   // Tracks whether Create screen has unsaved content.
   final _createHasContent = ValueNotifier<bool>(false);
@@ -159,7 +161,10 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _screens = [
-      FeedScreen(reselectNotifier: _feedReselectNotifier),
+      FeedScreen(
+        reselectNotifier: _feedReselectNotifier,
+        publishedNotifier: _feedPublishedNotifier,
+      ),
       CreateScreen(
         onPublished: _onPollPublished,
         hasContentNotifier: _createHasContent,
@@ -171,6 +176,7 @@ class _MainShellState extends State<MainShell> {
   @override
   void dispose() {
     _feedReselectNotifier.dispose();
+    _feedPublishedNotifier.dispose();
     _createHasContent.dispose();
     super.dispose();
   }
@@ -178,6 +184,7 @@ class _MainShellState extends State<MainShell> {
   void _onPollPublished() {
     _createHasContent.value = false;
     setState(() => _currentIndex = 0);
+    _feedPublishedNotifier.value++;
   }
 
   void _onNavTap(int i) {

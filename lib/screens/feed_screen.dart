@@ -21,14 +21,15 @@ import '../providers/search_provider.dart';
 // ─────────────────────────────────────────────
 // Feed tab
 // ─────────────────────────────────────────────
-enum _FeedTab { trending, popular, following }
+enum _FeedTab { latest, trending, popular, following }
 
 // ─────────────────────────────────────────────
 // Feed Screen
 // ─────────────────────────────────────────────
 class FeedScreen extends ConsumerStatefulWidget {
   final ValueNotifier<int>? reselectNotifier;
-  const FeedScreen({super.key, this.reselectNotifier});
+  final ValueNotifier<int>? publishedNotifier;
+  const FeedScreen({super.key, this.reselectNotifier, this.publishedNotifier});
 
   @override
   ConsumerState<FeedScreen> createState() => _FeedScreenState();
@@ -42,7 +43,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   bool _searchActive = false;
   bool _headerVisible = true;
   double _lastScrollOffset = 0;
-  _FeedTab _selectedTab = _FeedTab.trending;
+  _FeedTab _selectedTab = _FeedTab.latest;
 
   // Minimum scroll delta before reacting — prevents jitter on tiny movements.
   static const double _scrollThreshold = 6.0;
@@ -52,11 +53,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     super.initState();
     _scrollController.addListener(_onScroll);
     widget.reselectNotifier?.addListener(_onReselect);
+    widget.publishedNotifier?.addListener(_onPublished);
   }
 
   @override
   void dispose() {
     widget.reselectNotifier?.removeListener(_onReselect);
+    widget.publishedNotifier?.removeListener(_onPublished);
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
@@ -66,6 +69,19 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   void _onReselect() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _onPublished() {
+    // Switch to Latest tab so the new poll is guaranteed to be at index 0,
+    // then scroll to top.
+    setState(() => _selectedTab = _FeedTab.latest);
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         0,
@@ -132,10 +148,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     // SafeArea wraps the scroll view so y=0 is already below the notch;
     // we only need the header's own padding + content + padding.
     const double contentH = 44;
-    const double spacerH =
-        AppSpacing.screenTop + contentH + AppSpacing.screenTop;
-    // Sticky tab bar height (no notch needed — SafeArea handles it)
-    const double tabBarH = 56.0;
+    const double vPad     = 8.0;   // vertical padding above/below header content
+    const double spacerH  = vPad + contentH + vPad;
+    // Sticky tab bar height
+    const double tabBarH  = 44.0;
 
     final searchQuery    = ref.watch(searchQueryProvider);
     final followedIds    = ref.watch(followProvider);
@@ -146,6 +162,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     final hasMore        = ref.watch(pollsHasMoreProvider);
     final newCount       = ref.watch(newPollsCountProvider);
     final polls = switch (_selectedTab) {
+      _FeedTab.latest    => ref.watch(feedPollsProvider),
       _FeedTab.trending  => ref.watch(trendingPollsProvider),
       _FeedTab.popular   => ref.watch(popularPollsProvider),
       _FeedTab.following => ref.watch(followingPollsProvider(followedIds)),
@@ -294,7 +311,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             child: AnimatedOpacity(
               opacity: _headerVisible ? 1.0 : 0.0,
               duration: const Duration(milliseconds: 200),
-              child: _buildHeader(context, top),
+              child: _buildHeader(context, top, vPad),
             ),
           ),
         ],
@@ -303,14 +320,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   // ── Floating header widget ─────────────────
-  Widget _buildHeader(BuildContext context, double top) {
+  Widget _buildHeader(BuildContext context, double top, double vPad) {
     return Container(
       color: AppColors.background,
       padding: EdgeInsets.fromLTRB(
         AppSpacing.screenH,
-        top + AppSpacing.screenTop,
+        top + vPad,
         AppSpacing.screenH,
-        AppSpacing.screenTop,
+        2,
       ),
       child: AnimatedCrossFade(
         duration: const Duration(milliseconds: 220),
@@ -487,6 +504,13 @@ class _PollCardState extends ConsumerState<_PollCard>
 
   late AnimationController _heartCtrl;
   late Animation<double> _heartScale;
+  bool _expanded = false;
+
+  // Show first 2 options + a partial 3rd peeking through the fade.
+  static const _collapsedCount = 2;
+  static const _barGap = 8.0;
+  // How much of the peeking bar is visible before the gradient cuts it.
+  static const _peekH = 48.0;
 
   @override
   void initState() {
@@ -504,6 +528,138 @@ class _PollCardState extends ConsumerState<_PollCard>
   void dispose() {
     _heartCtrl.dispose();
     super.dispose();
+  }
+
+  Widget _optionTile(Poll p, int index, PollOption opt, {bool last = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: last ? 0 : _barGap),
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          ref.read(pollsProvider.notifier).vote(widget.pollId, opt.id);
+        },
+        child: _PollOptionBar(
+          option: opt,
+          totalVotes: p.totalVotes,
+          isVoted: p.votedOptionId == opt.id,
+          hasVoted: p.isVoted,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptions(Poll p) {
+    final options = p.options;
+    final needsFade = !_expanded && options.length > _collapsedCount;
+
+    if (!needsFade) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: options.asMap().entries
+            .map((e) => _optionTile(p, e.key, e.value,
+                last: e.key == options.length - 1))
+            .toList(),
+      );
+    }
+
+    // Collapsed: full visible bars + one partially-visible peeking bar.
+    final fullBars = options.take(_collapsedCount).toList();
+    final peekBar  = options[_collapsedCount];
+    final hidden   = options.length - _collapsedCount;
+
+    void expand() {
+      HapticFeedback.selectionClick();
+      setState(() => _expanded = true);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Full bars — each handles its own vote tap.
+        ...fullBars.asMap().entries.map(
+          (e) => _optionTile(p, e.key, e.value),
+        ),
+
+        // Peek section — tapping anywhere here expands.
+        // The peek bar + the spacing + divider are all inside so the
+        // gradient can cover them seamlessly (no exposed dark gap below).
+        GestureDetector(
+          onTap: expand,
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
+            children: [
+              // Column defines the total height of this section.
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Peek bar — clipped, non-interactive.
+                  ClipRect(
+                    child: SizedBox(
+                      height: _peekH,
+                      child: IgnorePointer(
+                        child: OverflowBox(
+                          maxHeight: double.infinity,
+                          alignment: Alignment.topCenter,
+                          child: _optionTile(
+                              p, _collapsedCount, peekBar, last: true),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Spacing + divider pulled inside so gradient covers them.
+                  const SizedBox(height: 12),
+                  Container(height: 1, color: AppColors.borderSubtle),
+                  const SizedBox(height: 16),
+                ],
+              ),
+              // Gradient: transparent at top → black at bottom
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.65),
+                          Colors.black.withValues(alpha: 0.88),
+                        ],
+                        stops: const [0.0, 0.35, 0.65, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // "Show N more" label — centred in the lower half
+              Positioned(
+                left: 0, right: 0, bottom: 14,
+                child: IgnorePointer(
+                  child: Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Show $hidden more',
+                          style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.keyboard_arrow_down_rounded,
+                            size: 16, color: AppColors.textSecondary),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 
   /// Returns the ID to use for avatar colour — real auth ID for the current
@@ -642,50 +798,20 @@ class _PollCardState extends ConsumerState<_PollCard>
           const SizedBox(height: 16),
 
           // ── Options ──────────────────────────
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...p.options.asMap().entries.map((e) => Padding(
-                    padding: EdgeInsets.only(
-                        bottom: e.key < p.options.length - 1 ? 8 : 0),
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        ref
-                            .read(pollsProvider.notifier)
-                            .vote(widget.pollId, e.value.id);
-                      },
-                      child: _PollOptionBar(
-                        option: e.value,
-                        totalVotes: p.totalVotes,
-                        isVoted: p.votedOptionId == e.value.id,
-                        hasVoted: p.isVoted,
-                      ),
-                    ),
-                  )),
-            ],
+          // GestureDetector with opaque absorbs taps so the outer card
+          // tap-to-navigate doesn't fire when the user taps options or "show more".
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {}, // absorb — inner widgets handle their own taps
+            child: _buildOptions(p),
           ),
 
-          // ── Tap to change hint ────────────────
-          if (p.isVoted) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.touch_app_outlined,
-                    size: 12, color: AppColors.textTertiary),
-                const SizedBox(width: 4),
-                Text(
-                  'Tap any option to change your vote',
-                  style: AppTypography.labelSmall
-                      .copyWith(color: AppColors.textTertiary),
-                ),
-              ],
-            ),
+          // Divider — omitted when collapsed (gradient covers that area instead).
+          if (_expanded || p.options.length <= _collapsedCount) ...[
+            const SizedBox(height: 12),
+            Container(height: 1, color: AppColors.borderSubtle),
+            const SizedBox(height: 12),
           ],
-
-          const SizedBox(height: 12),
-          Container(height: 1, color: AppColors.borderSubtle),
-          const SizedBox(height: 12),
 
           // ── Footer ───────────────────────────
           Row(
@@ -1464,9 +1590,10 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
   });
 
   static const _tabs = [
-    (_FeedTab.trending,  'Trending',  Icons.trending_up_rounded),
-    (_FeedTab.popular,   'Popular',   Icons.bar_chart_rounded),
-    (_FeedTab.following, 'Following', Icons.people_outline_rounded),
+    (_FeedTab.latest,    'Latest'),
+    (_FeedTab.trending,  'Trending'),
+    (_FeedTab.popular,   'Popular'),
+    (_FeedTab.following, 'Following'),
   ];
 
   @override
@@ -1485,59 +1612,55 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
       child: Column(
         children: [
           Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: _tabs.map((entry) {
-                final (tab, label, icon) = entry;
-                final isActive = selected == tab;
-                final color = isActive
-                    ? AppColors.textAccent
-                    : AppColors.textSecondary;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  child: GestureDetector(
-                    onTap: () => onSelect(tab),
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      curve: Curves.easeInOut,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? AppColors.accentPrimaryMuted
-                            : AppColors.surfaceElevated,
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.pill),
-                        border: Border.all(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: _tabs.map((entry) {
+                  final (tab, label) = entry;
+                  final isActive = selected == tab;
+                  final color = isActive
+                      ? AppColors.textAccent
+                      : AppColors.textSecondary;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: GestureDetector(
+                      onTap: () => onSelect(tab),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeInOut,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
                           color: isActive
-                              ? AppColors.accentPrimaryBorder
-                              : AppColors.borderDefault,
-                          width: 1,
+                              ? AppColors.accentPrimaryMuted
+                              : AppColors.surfaceElevated,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.pill),
+                          border: Border.all(
+                            color: isActive
+                                ? AppColors.accentPrimaryBorder
+                                : AppColors.borderDefault,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: isActive
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: color,
+                            height: 1,
+                          ),
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon, size: 14, color: color),
-                          const SizedBox(width: 6),
-                          Text(
-                            label,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              color: color,
-                              height: 1,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
           Container(height: 0.5, color: AppColors.borderDefault),

@@ -33,7 +33,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             // ── Header ──
             Padding(
               padding: const EdgeInsets.fromLTRB(AppSpacing.screenH,
-                  AppSpacing.screenTop, AppSpacing.screenH, AppSpacing.x3),
+                  8, AppSpacing.screenH, 2),
               child: Row(
                 children: [
                   GestureDetector(
@@ -52,8 +52,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text('Settings', style: AppTypography.screenTitle),
+                  const Expanded(
+                    child: Center(
+                      child: Text('Settings', style: AppTypography.screenTitle),
+                    ),
+                  ),
+                  const SizedBox(width: AppIconSizes.touchTarget),
                 ],
               ),
             ),

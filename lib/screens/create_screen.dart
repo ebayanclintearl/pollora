@@ -305,7 +305,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenH, AppSpacing.screenTop, AppSpacing.screenH, 0),
+          AppSpacing.screenH, 8, AppSpacing.screenH, 2),
       child: SizedBox(
         height: AppIconSizes.touchTarget,
         child: Row(
@@ -330,7 +330,6 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                       width: AppIconSizes.touchTarget,
                       height: AppIconSizes.touchTarget),
             ),
-            const SizedBox(width: 4),
             Expanded(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 180),
@@ -338,12 +337,10 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                   _currentStep == 0 ? 'Create Poll' : 'Add Options',
                   key: ValueKey(_currentStep),
                   style: AppTypography.screenTitle,
-                  textAlign:
-                      _currentStep == 0 ? TextAlign.start : TextAlign.center,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-            const SizedBox(width: 4),
             SizedBox(
               width: AppIconSizes.touchTarget,
               child: Row(
@@ -364,7 +361,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
   Widget _buildProgress() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-          AppSpacing.screenH, 16, AppSpacing.screenH, 24),
+          AppSpacing.screenH, 8, AppSpacing.screenH, 12),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.5, end: _currentStep == 0 ? 0.5 : 1.0),
         duration: const Duration(milliseconds: 300),

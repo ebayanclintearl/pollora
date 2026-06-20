@@ -216,7 +216,7 @@ class SwitchAccountSheet extends ConsumerWidget {
                     onTap: () async {
                       HapticFeedback.lightImpact();
                       Navigator.of(context).pop();
-                      await showAuthSheet(context);
+                      await showAuthSheet(context, allowCancel: true);
                     },
                   ),
                   // Sign out

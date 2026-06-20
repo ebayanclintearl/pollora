@@ -11,15 +11,15 @@ import '../widgets/app_toast.dart';
 // ─────────────────────────────────────────────
 // Show helper — call this instead of constructing directly.
 // ─────────────────────────────────────────────
-Future<void> showAuthSheet(BuildContext context) {
+Future<void> showAuthSheet(BuildContext context, {bool allowCancel = false}) {
   return showModalBottomSheet(
     context: context,
-    isDismissible: false,
-    enableDrag: false,
+    isDismissible: allowCancel,
+    enableDrag: allowCancel,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.75),
-    builder: (_) => const AuthSheet(),
+    builder: (_) => AuthSheet(allowCancel: allowCancel),
   );
 }
 
@@ -28,7 +28,8 @@ enum _AuthMode { options, emailSignIn, emailSignUp }
 
 // ─────────────────────────────────────────────
 class AuthSheet extends StatefulWidget {
-  const AuthSheet({super.key});
+  final bool allowCancel;
+  const AuthSheet({super.key, this.allowCancel = false});
 
   @override
   State<AuthSheet> createState() => _AuthSheetState();
@@ -139,7 +140,28 @@ class _AuthSheetState extends State<AuthSheet> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _handle(),
-        const SizedBox(height: 28),
+        if (widget.allowCancel) ...[
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pop(),
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: const BoxDecoration(
+                  color: AppColors.surfaceElevated,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.close_rounded,
+                    color: AppColors.textSecondary, size: 18),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ] else
+          const SizedBox(height: 28),
         // Logo + wordmark
         Row(
           mainAxisAlignment: MainAxisAlignment.center,

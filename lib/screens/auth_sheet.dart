@@ -40,13 +40,35 @@ class _AuthSheetState extends State<AuthSheet> {
   bool _loading = false;
 
   // Email form fields
-  final _nameCtrl     = TextEditingController();
-  final _emailCtrl    = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _nameFocus    = FocusNode();
-  final _emailFocus   = FocusNode();
+  final _nameCtrl      = TextEditingController();
+  final _emailCtrl     = TextEditingController();
+  final _passwordCtrl  = TextEditingController();
+  final _nameFocus     = FocusNode();
+  final _emailFocus    = FocusNode();
   final _passwordFocus = FocusNode();
   bool _passwordVisible = false;
+
+  // Inline field errors — null means no error shown yet
+  String? _nameError;
+  String? _emailError;
+  String? _passwordError;
+
+  static final _emailRegex = RegExp(r'^[\w.+\-]+@[\w\-]+\.[a-zA-Z]{2,}$');
+
+  @override
+  void initState() {
+    super.initState();
+    // Clear per-field error as the user types
+    _nameCtrl.addListener(() {
+      if (_nameError != null) setState(() => _nameError = null);
+    });
+    _emailCtrl.addListener(() {
+      if (_emailError != null) setState(() => _emailError = null);
+    });
+    _passwordCtrl.addListener(() {
+      if (_passwordError != null) setState(() => _passwordError = null);
+    });
+  }
 
   @override
   void dispose() {
@@ -59,13 +81,66 @@ class _AuthSheetState extends State<AuthSheet> {
     super.dispose();
   }
 
+  // ── Validation ────────────────────────────────
+  bool _validateSignIn() {
+    String? emailErr, passErr;
+    final email = _emailCtrl.text.trim();
+    final pass  = _passwordCtrl.text;
+
+    if (email.isEmpty) {
+      emailErr = 'Email is required';
+    } else if (!_emailRegex.hasMatch(email)) {
+      emailErr = 'Enter a valid email address';
+    }
+    if (pass.isEmpty) {
+      passErr = 'Password is required';
+    }
+
+    setState(() { _emailError = emailErr; _passwordError = passErr; });
+    if (emailErr != null) { _emailFocus.requestFocus(); return false; }
+    if (passErr  != null) { _passwordFocus.requestFocus(); return false; }
+    return true;
+  }
+
+  bool _validateSignUp() {
+    String? nameErr, emailErr, passErr;
+    final name  = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final pass  = _passwordCtrl.text;
+
+    if (name.isEmpty) {
+      nameErr = 'Name is required';
+    } else if (name.length < 2) {
+      nameErr = 'Name must be at least 2 characters';
+    }
+    if (email.isEmpty) {
+      emailErr = 'Email is required';
+    } else if (!_emailRegex.hasMatch(email)) {
+      emailErr = 'Enter a valid email address';
+    }
+    if (pass.isEmpty) {
+      passErr = 'Password is required';
+    } else if (pass.length < 6) {
+      passErr = 'Password must be at least 6 characters';
+    }
+
+    setState(() { _nameError = nameErr; _emailError = emailErr; _passwordError = passErr; });
+    if (nameErr  != null) { _nameFocus.requestFocus(); return false; }
+    if (emailErr != null) { _emailFocus.requestFocus(); return false; }
+    if (passErr  != null) { _passwordFocus.requestFocus(); return false; }
+    return true;
+  }
+
+  void _clearErrors() => setState(() {
+    _nameError = _emailError = _passwordError = null;
+  });
+
   // ── Actions ──────────────────────────────────
   Future<void> _run(Future<void> Function() action) async {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _loading = true);
     try {
       await action();
-      // Pop the sheet — _AppEntry rebuilds with isAuthenticated == true.
       if (mounted) Navigator.of(context).pop();
     } on AuthException catch (e) {
       if (mounted) AppToast.show(context, e.message, isError: true);
@@ -83,29 +158,17 @@ class _AuthSheetState extends State<AuthSheet> {
   Future<void> _google() => _run(AuthService.signInWithGoogle);
 
   Future<void> _emailSignIn() async {
-    final email    = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text;
-    if (email.isEmpty || password.isEmpty) {
-      AppToast.show(context, 'Enter email and password', isError: true);
-      return;
-    }
-    await _run(() => AuthService.signInWithEmail(email, password));
+    if (!_validateSignIn()) return;
+    await _run(() => AuthService.signInWithEmail(
+        _emailCtrl.text.trim(), _passwordCtrl.text));
   }
 
   Future<void> _emailSignUp() async {
-    final name     = _nameCtrl.text.trim();
-    final email    = _emailCtrl.text.trim();
-    final password = _passwordCtrl.text;
-    if (name.isEmpty || email.isEmpty || password.isEmpty) {
-      AppToast.show(context, 'Fill in all fields', isError: true);
-      return;
-    }
-    if (password.length < 6) {
-      AppToast.show(context, 'Password must be at least 6 characters', isError: true);
-      return;
-    }
+    if (!_validateSignUp()) return;
     await _run(() => AuthService.signUpWithEmail(
-          email: email, password: password, name: name));
+        email: _emailCtrl.text.trim(),
+        password: _passwordCtrl.text,
+        name: _nameCtrl.text.trim()));
   }
 
   // ── Build ──────────────────────────────────
@@ -309,6 +372,7 @@ class _AuthSheetState extends State<AuthSheet> {
             hint: 'Your name',
             nextFocus: _emailFocus,
             icon: Icons.person_outline_rounded,
+            error: _nameError,
           ),
           const SizedBox(height: 12),
         ],
@@ -320,6 +384,7 @@ class _AuthSheetState extends State<AuthSheet> {
           nextFocus: _passwordFocus,
           keyboardType: TextInputType.emailAddress,
           icon: Icons.mail_outline_rounded,
+          error: _emailError,
         ),
         const SizedBox(height: 12),
 
@@ -330,6 +395,7 @@ class _AuthSheetState extends State<AuthSheet> {
           obscure: !_passwordVisible,
           icon: Icons.lock_outline_rounded,
           isLast: true,
+          error: _passwordError,
           suffix: GestureDetector(
             onTap: () =>
                 setState(() => _passwordVisible = !_passwordVisible),
@@ -388,6 +454,7 @@ class _AuthSheetState extends State<AuthSheet> {
               _nameCtrl.clear();
               _emailCtrl.clear();
               _passwordCtrl.clear();
+              _clearErrors();
               setState(() => _mode = isSignUp
                   ? _AuthMode.emailSignIn
                   : _AuthMode.emailSignUp);
@@ -573,6 +640,7 @@ class _EmailField extends StatelessWidget {
   final bool isLast;
   final Widget? suffix;
   final VoidCallback? onSubmitted;
+  final String? error;
 
   const _EmailField({
     required this.controller,
@@ -585,57 +653,93 @@ class _EmailField extends StatelessWidget {
     this.isLast = false,
     this.suffix,
     this.onSubmitted,
+    this.error,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      keyboardType: keyboardType,
-      obscureText: obscure,
-      textInputAction:
-          isLast ? TextInputAction.done : TextInputAction.next,
-      onSubmitted: (_) {
-        if (nextFocus != null) {
-          FocusScope.of(context).requestFocus(nextFocus);
-        } else {
-          onSubmitted?.call();
-        }
-      },
-      style: AppTypography.titleSmall
-          .copyWith(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: AppTypography.titleSmall
-            .copyWith(color: AppColors.textPlaceholder),
-        prefixIcon: Icon(icon,
-            size: 18, color: AppColors.textTertiary),
-        suffixIcon: suffix != null
-            ? Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: suffix)
-            : null,
-        suffixIconConstraints: const BoxConstraints(minWidth: 44),
-        filled: true,
-        fillColor: AppColors.surfaceElevated,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          borderSide: BorderSide.none,
+    final hasError = error != null && error!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          focusNode: focusNode,
+          keyboardType: keyboardType,
+          obscureText: obscure,
+          textInputAction:
+              isLast ? TextInputAction.done : TextInputAction.next,
+          onSubmitted: (_) {
+            if (nextFocus != null) {
+              FocusScope.of(context).requestFocus(nextFocus);
+            } else {
+              onSubmitted?.call();
+            }
+          },
+          style: AppTypography.titleSmall
+              .copyWith(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTypography.titleSmall
+                .copyWith(color: AppColors.textPlaceholder),
+            prefixIcon: Icon(icon,
+                size: 18,
+                color: hasError
+                    ? AppColors.textDestructive
+                    : AppColors.textTertiary),
+            suffixIcon: suffix != null
+                ? Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: suffix)
+                : null,
+            suffixIconConstraints: const BoxConstraints(minWidth: 44),
+            filled: true,
+            fillColor: hasError
+                ? AppColors.textDestructive.withValues(alpha: 0.08)
+                : AppColors.surfaceElevated,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              borderSide: hasError
+                  ? const BorderSide(
+                      color: AppColors.textDestructive, width: 1.5)
+                  : BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              borderSide: hasError
+                  ? const BorderSide(
+                      color: AppColors.textDestructive, width: 1.5)
+                  : const BorderSide(
+                      color: AppColors.accentPrimaryBorder, width: 1.5),
+            ),
+          ),
+          cursorColor: AppColors.accentPrimary,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.card),
-          borderSide:
-              const BorderSide(color: AppColors.accentPrimaryBorder, width: 1.5),
-        ),
-      ),
-      cursorColor: AppColors.accentPrimary,
+        if (hasError) ...[
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  size: 13, color: AppColors.textDestructive),
+              const SizedBox(width: 5),
+              Text(
+                error!,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textDestructive,
+                  height: 1,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }

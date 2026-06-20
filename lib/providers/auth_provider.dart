@@ -7,6 +7,16 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return supabase.auth.onAuthStateChange;
 });
 
+/// Streams only sign-in and sign-out events — ignores token refreshes.
+/// Use this to avoid rebuilding data providers on routine token rotation.
+final authSignInOutProvider = StreamProvider<AuthChangeEvent>((ref) {
+  return supabase.auth.onAuthStateChange
+      .where((s) =>
+          s.event == AuthChangeEvent.signedIn ||
+          s.event == AuthChangeEvent.signedOut)
+      .map((s) => s.event);
+});
+
 /// True if a valid session exists.
 final isAuthenticatedProvider = Provider<bool>((ref) {
   // While the stream is loading, fall back to the cached session so the

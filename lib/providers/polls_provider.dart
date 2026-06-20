@@ -20,7 +20,7 @@ final newPollsCountProvider = StateProvider<int>((ref) => 0);
 class PollsNotifier extends AsyncNotifier<List<Poll>> {
   @override
   Future<List<Poll>> build() async {
-    ref.watch(auth_prov.authStateProvider);
+    ref.watch(auth_prov.authSignInOutProvider);
     ref.read(pollsHasMoreProvider.notifier).state     = true;
     ref.read(pollsLoadingMoreProvider.notifier).state = false;
     ref.read(newPollsCountProvider.notifier).state    = 0;
@@ -260,7 +260,9 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       await supabase.from('poll_options').insert(optionRows);
     }
 
-    ref.invalidateSelf();
+    // Refresh without going through AsyncLoading (no empty flash).
+    _refreshing = false;
+    await refresh();
   }
 
   Future<void> deletePoll(String pollId) async {

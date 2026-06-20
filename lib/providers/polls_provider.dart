@@ -21,9 +21,17 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
   @override
   Future<List<Poll>> build() async {
     ref.watch(auth_prov.authSignInOutProvider);
-    ref.read(pollsHasMoreProvider.notifier).state     = true;
-    ref.read(pollsLoadingMoreProvider.notifier).state = false;
-    ref.read(newPollsCountProvider.notifier).state    = 0;
+
+    // Defer mutations — modifying other providers synchronously inside
+    // build() is illegal in Riverpod and crashes on provider rebuild.
+    var disposed = false;
+    ref.onDispose(() => disposed = true);
+    Future.microtask(() {
+      if (disposed) return;
+      ref.read(pollsHasMoreProvider.notifier).state     = true;
+      ref.read(pollsLoadingMoreProvider.notifier).state = false;
+      ref.read(newPollsCountProvider.notifier).state    = 0;
+    });
 
     // Subscribe to new polls via Realtime; increment the banner counter.
     final channel = supabase

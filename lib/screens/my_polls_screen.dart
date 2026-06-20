@@ -256,15 +256,21 @@ class _StatsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(currentUserProvider);
+    final user     = ref.watch(currentUserProvider);
+    final myPolls  = ref.watch(myPollsProvider);
+    // Derive live counts from pollsProvider so they update instantly on
+    // delete or vote — no extra DB call needed.
+    final pollsCount    = myPolls.length;
+    final votesReceived = myPolls.fold(0, (sum, p) => sum + p.totalVotes);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 22, 16, 0),
       child: IntrinsicHeight(
         child: Row(
           children: [
-            _StatCell(value: user?.pollsCount ?? 0, label: 'Polls'),
+            _StatCell(value: pollsCount, label: 'Polls'),
             _VerticalDivider(),
-            _StatCell(value: user?.votesReceived ?? 0, label: 'Votes'),
+            _StatCell(value: votesReceived, label: 'Votes'),
             _VerticalDivider(),
             _StatCell(
               value: user?.followersCount ?? 0,

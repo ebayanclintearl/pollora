@@ -414,37 +414,16 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
 
   void _confirmDelete(
       BuildContext context, WidgetRef ref, String pollId) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
-        title: const Text('Delete poll?',
-            style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text(
-          'This can\'t be undone. All votes and comments will be removed.',
-          style: TextStyle(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              try {
-                await ref
-                    .read(pollsProvider.notifier)
-                    .deletePoll(pollId);
-              } catch (_) {}
-            },
-            child: const Text('Delete',
-                style:
-                    TextStyle(color: AppColors.textDestructive)),
-          ),
-        ],
+      backgroundColor: Colors.transparent,
+      builder: (_) => _DeletePollSheet(
+        onConfirm: () async {
+          Navigator.pop(context); // close detail screen
+          try {
+            await ref.read(pollsProvider.notifier).deletePoll(pollId);
+          } catch (_) {}
+        },
       ),
     );
   }
@@ -685,67 +664,63 @@ class _PollCard extends ConsumerWidget {
   }
 
   void _showMenu(BuildContext context, WidgetRef ref) {
+    final bottom = MediaQuery.of(context).padding.bottom;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => SafeArea(
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceCard,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36, height: 4,
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.borderSubtle,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(bottom: bottom + 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36, height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              decoration: BoxDecoration(
+                color: AppColors.borderSubtle,
+                borderRadius: BorderRadius.circular(2),
               ),
-              if (poll.author.isCurrentUser)
-                ListTile(
-                  leading: const Icon(Icons.delete_outline_rounded,
-                      color: AppColors.textDestructive),
-                  title: const Text('Delete poll',
-                      style:
-                          TextStyle(color: AppColors.textDestructive)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    onDelete();
-                  },
-                )
-              else ...[
-                ListTile(
-                  leading: const Icon(Icons.link_rounded,
-                      color: AppColors.textSecondary),
-                  title: const Text('Copy link'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Clipboard.setData(ClipboardData(
-                        text:
-                            'https://pollora.app/poll/${poll.id}'));
-                    AppToast.show(context, 'Link copied');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.flag_outlined,
-                      color: AppColors.textDestructive),
-                  title: const Text('Report poll',
-                      style:
-                          TextStyle(color: AppColors.textDestructive)),
-                  onTap: () {
-                    Navigator.pop(context);
-                    onReport();
-                  },
-                ),
-              ],
-              const SizedBox(height: 8),
+            ),
+            if (poll.author.isCurrentUser)
+              ListTile(
+                leading: const Icon(Icons.delete_outline_rounded,
+                    color: AppColors.textDestructive),
+                title: const Text('Delete poll',
+                    style: TextStyle(color: AppColors.textDestructive)),
+                onTap: () {
+                  Navigator.pop(context);
+                  onDelete();
+                },
+              )
+            else ...[
+              ListTile(
+                leading: const Icon(Icons.link_rounded,
+                    color: AppColors.textSecondary),
+                title: const Text('Copy link'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Clipboard.setData(ClipboardData(
+                      text: 'https://pollora.app/poll/${poll.id}'));
+                  AppToast.show(context, 'Link copied');
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.flag_outlined,
+                    color: AppColors.textDestructive),
+                title: const Text('Report poll',
+                    style: TextStyle(color: AppColors.textDestructive)),
+                onTap: () {
+                  Navigator.pop(context);
+                  onReport();
+                },
+              ),
             ],
-          ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
@@ -1335,6 +1310,105 @@ class _Comment {
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Delete poll confirmation — bottom sheet
+// ─────────────────────────────────────────────
+class _DeletePollSheet extends StatelessWidget {
+  final Future<void> Function() onConfirm;
+  const _DeletePollSheet({required this.onConfirm});
+
+  @override
+  Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).padding.bottom;
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: EdgeInsets.fromLTRB(24, 0, 24, bottom + 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.borderSubtle,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Icon(Icons.delete_outline_rounded,
+              size: 36, color: AppColors.textDestructive),
+          const SizedBox(height: 14),
+          const Text(
+            'Delete poll?',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'This can\'t be undone. All votes and\ncomments will be removed.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await onConfirm();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.textDestructive,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                ),
+              ),
+              child: const Text('Delete',
+                  style: TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w700)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                ),
+              ),
+              child: const Text('Cancel',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 String _fmt(int n) {
   if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
   if (n >= 1000) {

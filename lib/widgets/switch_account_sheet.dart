@@ -6,6 +6,7 @@ import '../app_radius.dart';
 import '../app_typography.dart';
 import '../core/avatar_helper.dart';
 import '../providers/auth_provider.dart';
+import '../screens/auth_sheet.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
 
@@ -204,7 +205,9 @@ class SwitchAccountSheet extends ConsumerWidget {
               clipBehavior: Clip.antiAlias,
               child: Column(
                 children: [
-                  // Add another account — signs out so user can re-auth
+                  // Add another account — opens sign-in without signing out.
+                  // Supabase replaces the session on success; cancel leaves
+                  // the current account untouched.
                   _ActionRow(
                     icon: Icons.person_add_outlined,
                     title: 'Add another account',
@@ -212,7 +215,8 @@ class SwitchAccountSheet extends ConsumerWidget {
                     showDivider: true,
                     onTap: () async {
                       HapticFeedback.lightImpact();
-                      await doSignOut();
+                      Navigator.of(context).pop();
+                      await showAuthSheet(context);
                     },
                   ),
                   // Sign out

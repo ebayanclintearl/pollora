@@ -17,6 +17,7 @@ import 'screens/my_polls_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'screens/poll_detail_screen.dart';
 import 'screens/follow_list_screen.dart';
+import 'widgets/pressable.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -148,7 +149,7 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   // Incremented when user taps the Feed tab while already on it.
-  final _feedReselectNotifier  = ValueNotifier<int>(0);
+  final _feedReselectNotifier = ValueNotifier<int>(0);
   // Incremented after a poll is published — feed switches to Latest + scrolls top.
   final _feedPublishedNotifier = ValueNotifier<int>(0);
 
@@ -279,7 +280,9 @@ class _PolloraBottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.navBackground,
         border: Border(
-          top: BorderSide(color: AppColors.borderDefault.withValues(alpha: 0.6), width: 0.5),
+          top: BorderSide(
+              color: AppColors.borderDefault.withValues(alpha: 0.6),
+              width: 0.5),
         ),
       ),
       child: SizedBox(
@@ -296,7 +299,7 @@ class _PolloraBottomNav extends StatelessWidget {
                 label: 'Feed',
                 onTap: onTap,
               ),
-              _CreateFAB(onTap: () => onTap(1)),
+              _CreateFAB(onTap: () => onTap(1), isActive: currentIndex == 1),
               _NavTab(
                 index: 2,
                 currentIndex: currentIndex,
@@ -313,7 +316,7 @@ class _PolloraBottomNav extends StatelessWidget {
   }
 }
 
-class _NavTab extends StatelessWidget {
+class _NavTab extends StatefulWidget {
   final int index;
   final int currentIndex;
   final IconData icon;
@@ -331,80 +334,149 @@ class _NavTab extends StatelessWidget {
   });
 
   @override
+  State<_NavTab> createState() => _NavTabState();
+}
+
+class _NavTabState extends State<_NavTab> with SingleTickerProviderStateMixin {
+  late final AnimationController _pop;
+  late final Animation<double> _popScale;
+
+  bool get _isActive => widget.index == widget.currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    // One-shot "pop" the icon does the moment this tab becomes active.
+    _pop = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 420));
+    _popScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.22)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 42,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.22, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 58,
+      ),
+    ]).animate(_pop);
+  }
+
+  @override
+  void didUpdateWidget(covariant _NavTab old) {
+    super.didUpdateWidget(old);
+    final wasActive = old.index == old.currentIndex;
+    if (!wasActive && _isActive) _pop.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _pop.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isActive = index == currentIndex;
+    final isActive = _isActive;
 
     return Expanded(
       child: Semantics(
-        label: label,
+        label: widget.label,
         selected: isActive,
         button: true,
-        child: GestureDetector(
-        onTap: () => onTap(index),
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: Icon(
-                isActive ? activeIcon : icon,
-                key: ValueKey(isActive),
-                size: 24,
-                color: isActive ? AppColors.navActive : AppColors.navInactive,
+        child: Pressable(
+          onTap: () => widget.onTap(widget.index),
+          pressedScale: 0.86,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ScaleTransition(
+                scale: _popScale,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, anim) => ScaleTransition(
+                    scale: Tween(begin: 0.7, end: 1.0).animate(anim),
+                    child: FadeTransition(opacity: anim, child: child),
+                  ),
+                  child: Icon(
+                    isActive ? widget.activeIcon : widget.icon,
+                    key: ValueKey(isActive),
+                    size: 24,
+                    color:
+                        isActive ? AppColors.navActive : AppColors.navInactive,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 180),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? AppColors.navActive : AppColors.navInactive,
-                height: 1,
+              const SizedBox(height: 3),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive ? AppColors.navActive : AppColors.navInactive,
+                  height: 1,
+                ),
+                child: Text(widget.label),
               ),
-              child: Text(label),
-            ),
-          ],
+            ],
+          ),
         ),
-        ), // GestureDetector
-      ), // Semantics
+      ),
     );
   }
 }
 
 class _CreateFAB extends StatelessWidget {
   final VoidCallback onTap;
+  final bool isActive;
 
-  const _CreateFAB({required this.onTap});
+  const _CreateFAB({required this.onTap, required this.isActive});
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       label: 'Create poll',
       button: true,
-      child: GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 72,
-        child: Center(
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: AppColors.accentPrimary,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.add_rounded,
-              color: Colors.white,
-              size: 24,
+      selected: isActive,
+      child: Pressable(
+        onTap: onTap,
+        pressedScale: 0.84,
+        child: SizedBox(
+          width: 72,
+          child: Center(
+            child: AnimatedScale(
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutBack,
+              scale: isActive ? 1.08 : 1.0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.easeOut,
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.accentPrimary,
+                  shape: BoxShape.circle,
+                  // Soft accent glow blooms when Create is the active tab.
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.accentPrimary
+                          .withValues(alpha: isActive ? 0.55 : 0.0),
+                      blurRadius: isActive ? 18 : 0,
+                      spreadRadius: isActive ? 1 : 0,
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.add_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
             ),
           ),
         ),
       ),
-      ), // GestureDetector
-    ); // Semantics
+    );
   }
 }

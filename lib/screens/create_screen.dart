@@ -380,7 +380,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
   }
 
   Widget _buildStep1() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

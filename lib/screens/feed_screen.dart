@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/poll_image.dart';
+import '../widgets/pressable.dart';
 import '../widgets/profile_avatar.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
@@ -148,23 +149,23 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     // SafeArea wraps the scroll view so y=0 is already below the notch;
     // we only need the header's own padding + content + padding.
     const double contentH = 44;
-    const double vPad     = 8.0;   // vertical padding above/below header content
-    const double spacerH  = vPad + contentH + vPad;
+    const double vPad = 8.0; // vertical padding above/below header content
+    const double spacerH = vPad + contentH + vPad;
     // Sticky tab bar height
-    const double tabBarH  = 44.0;
+    const double tabBarH = 44.0;
 
-    final searchQuery    = ref.watch(searchQueryProvider);
-    final followedIds    = ref.watch(followProvider);
-    final pollsAsync     = ref.watch(pollsProvider);
-    final isLoading      = pollsAsync.isLoading;
-    final hasError       = pollsAsync.hasError;
-    final isLoadingMore  = ref.watch(pollsLoadingMoreProvider);
-    final hasMore        = ref.watch(pollsHasMoreProvider);
-    final newCount       = ref.watch(newPollsCountProvider);
+    final searchQuery = ref.watch(searchQueryProvider);
+    final followedIds = ref.watch(followProvider);
+    final pollsAsync = ref.watch(pollsProvider);
+    final isLoading = pollsAsync.isLoading;
+    final hasError = pollsAsync.hasError;
+    final isLoadingMore = ref.watch(pollsLoadingMoreProvider);
+    final hasMore = ref.watch(pollsHasMoreProvider);
+    final newCount = ref.watch(newPollsCountProvider);
     final polls = switch (_selectedTab) {
-      _FeedTab.latest    => ref.watch(feedPollsProvider),
-      _FeedTab.trending  => ref.watch(trendingPollsProvider),
-      _FeedTab.popular   => ref.watch(popularPollsProvider),
+      _FeedTab.latest => ref.watch(feedPollsProvider),
+      _FeedTab.trending => ref.watch(trendingPollsProvider),
+      _FeedTab.popular => ref.watch(popularPollsProvider),
       _FeedTab.following => ref.watch(followingPollsProvider(followedIds)),
     };
     final suggestionsAsync = ref.watch(searchSuggestionsProvider);
@@ -178,129 +179,130 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           SafeArea(
             bottom: false,
             child: RefreshIndicator(
-            onRefresh: _onRefresh,
-            color: AppColors.accentPrimary,
-            backgroundColor: AppColors.surfaceCard,
-            strokeWidth: 2.5,
-            displacement: spacerH + tabBarH + 8,
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // Reserve space for the floating header (below notch).
-                const SliverToBoxAdapter(child: SizedBox(height: spacerH)),
+              onRefresh: _onRefresh,
+              color: AppColors.accentPrimary,
+              backgroundColor: AppColors.surfaceCard,
+              strokeWidth: 2.5,
+              displacement: spacerH + tabBarH + 8,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  // Reserve space for the floating header (below notch).
+                  const SliverToBoxAdapter(child: SizedBox(height: spacerH)),
 
-                // ── New-polls banner (above tab bar) ─
-                if (newCount > 0 && !_searchActive)
-                  SliverToBoxAdapter(
-                    child: _NewPollsBanner(
-                      count: newCount,
-                      onTap: _onRefresh,
+                  // ── New-polls banner (above tab bar) ─
+                  if (newCount > 0 && !_searchActive)
+                    SliverToBoxAdapter(
+                      child: _NewPollsBanner(
+                        count: newCount,
+                        onTap: _onRefresh,
+                      ),
                     ),
-                  ),
 
-                // ── Sticky tab bar ───────────────
-                if (!_searchActive)
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _FeedTabDelegate(
-                      selected: _selectedTab,
-                      onSelect: (tab) {
-                        HapticFeedback.selectionClick();
-                        setState(() => _selectedTab = tab);
-                      },
-                      height: tabBarH,
+                  // ── Sticky tab bar ───────────────
+                  if (!_searchActive)
+                    SliverPersistentHeader(
+                      pinned: true,
+                      delegate: _FeedTabDelegate(
+                        selected: _selectedTab,
+                        onSelect: (tab) {
+                          HapticFeedback.selectionClick();
+                          setState(() => _selectedTab = tab);
+                        },
+                        height: tabBarH,
+                      ),
                     ),
-                  ),
 
-                // ── Content ─────────────────────
-                if (isLoading)
-                  SliverPadding(
-                    padding: const EdgeInsets.only(bottom: 100),
-                    sliver: SliverList(
+                  // ── Content ─────────────────────
+                  if (isLoading)
+                    SliverPadding(
+                      padding: const EdgeInsets.only(bottom: 100),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (_, i) => i.isOdd
+                              ? Container(
+                                  height: 1, color: AppColors.borderSubtle)
+                              : const _SkeletonCard(),
+                          childCount: 7,
+                        ),
+                      ),
+                    )
+                  else if (hasError)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _ErrorState(
+                        onRetry: () => ref.invalidate(pollsProvider),
+                      ),
+                    )
+                  else if (_searchActive && searchQuery.isNotEmpty)
+                    if (suggestionsAsync.isLoading)
+                      const SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(
+                                  AppColors.textTertiary),
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      _buildSuggestions(context, suggestions, searchQuery)
+                  else if (polls.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _selectedTab == _FeedTab.following
+                          ? const _FollowingEmptyState()
+                          : const _EmptyState(query: ''),
+                    )
+                  else ...[
+                    SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (_, i) => i.isOdd
                             ? Container(
                                 height: 1, color: AppColors.borderSubtle)
-                            : const _SkeletonCard(),
-                        childCount: 7,
+                            : _FeedItem(pollId: polls[i ~/ 2].id),
+                        childCount: polls.length * 2 - 1,
                       ),
                     ),
-                  )
-                else if (hasError)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _ErrorState(
-                      onRetry: () => ref.invalidate(pollsProvider),
-                    ),
-                  )
-                else if (_searchActive && searchQuery.isNotEmpty)
-                  if (suggestionsAsync.isLoading)
-                    const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(
-                        child: SizedBox(
-                          width: 20, height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation(
-                                AppColors.textTertiary),
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    _buildSuggestions(context, suggestions, searchQuery)
-                else if (polls.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: _selectedTab == _FeedTab.following
-                        ? const _FollowingEmptyState()
-                        : const _EmptyState(query: ''),
-                  )
-                else ...[
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) => i.isOdd
-                          ? Container(
-                              height: 1, color: AppColors.borderSubtle)
-                          : _FeedItem(pollId: polls[i ~/ 2].id),
-                      childCount: polls.length * 2 - 1,
-                    ),
-                  ),
-                  // Pagination footer
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 100,
-                      child: isLoadingMore
-                          ? const Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation(
-                                      AppColors.textTertiary),
-                                ),
-                              ),
-                            )
-                          : hasMore
-                              ? const SizedBox.shrink()
-                              : const Center(
-                                  child: Text(
-                                    'You\'re all caught up',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textTertiary,
-                                    ),
+                    // Pagination footer
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 100,
+                        child: isLoadingMore
+                            ? const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation(
+                                        AppColors.textTertiary),
                                   ),
                                 ),
+                              )
+                            : hasMore
+                                ? const SizedBox.shrink()
+                                : const Center(
+                                    child: Text(
+                                      'You\'re all caught up',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ),
+                                  ),
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
           ), // SafeArea
 
           // ── Floating header ───────────────────
@@ -374,8 +376,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                   prefixIcon: const Icon(Icons.search_rounded,
                       color: AppColors.textTertiary,
                       size: AppIconSizes.control),
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 ),
                 cursorColor: AppColors.accentPrimary,
               ),
@@ -405,10 +406,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       );
     }
 
-    final users =
-        items.whereType<UserSearchItem>().toList();
-    final polls =
-        items.whereType<PollSearchItem>().toList();
+    final users = items.whereType<UserSearchItem>().toList();
+    final polls = items.whereType<PollSearchItem>().toList();
 
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
@@ -501,16 +500,11 @@ class _PollCard extends ConsumerStatefulWidget {
 
 class _PollCardState extends ConsumerState<_PollCard>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _heartCtrl;
   late Animation<double> _heartScale;
-  bool _expanded = false;
 
-  // Show first 2 options + a partial 3rd peeking through the fade.
-  static const _collapsedCount = 2;
+  // Vertical gap between option bars.
   static const _barGap = 8.0;
-  // How much of the peeking bar is visible before the gradient cuts it.
-  static const _peekH = 48.0;
 
   @override
   void initState() {
@@ -533,11 +527,12 @@ class _PollCardState extends ConsumerState<_PollCard>
   Widget _optionTile(Poll p, int index, PollOption opt, {bool last = false}) {
     return Padding(
       padding: EdgeInsets.only(bottom: last ? 0 : _barGap),
-      child: GestureDetector(
+      child: Pressable(
         onTap: () {
           HapticFeedback.selectionClick();
           ref.read(pollsProvider.notifier).vote(widget.pollId, opt.id);
         },
+        pressedScale: 0.975,
         child: _PollOptionBar(
           option: opt,
           totalVotes: p.totalVotes,
@@ -550,115 +545,14 @@ class _PollCardState extends ConsumerState<_PollCard>
 
   Widget _buildOptions(Poll p) {
     final options = p.options;
-    final needsFade = !_expanded && options.length > _collapsedCount;
-
-    if (!needsFade) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: options.asMap().entries
-            .map((e) => _optionTile(p, e.key, e.value,
-                last: e.key == options.length - 1))
-            .toList(),
-      );
-    }
-
-    // Collapsed: full visible bars + one partially-visible peeking bar.
-    final fullBars = options.take(_collapsedCount).toList();
-    final peekBar  = options[_collapsedCount];
-    final hidden   = options.length - _collapsedCount;
-
-    void expand() {
-      HapticFeedback.selectionClick();
-      setState(() => _expanded = true);
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Full bars — each handles its own vote tap.
-        ...fullBars.asMap().entries.map(
-          (e) => _optionTile(p, e.key, e.value),
-        ),
-
-        // Peek section — tapping anywhere here expands.
-        // The peek bar + the spacing + divider are all inside so the
-        // gradient can cover them seamlessly (no exposed dark gap below).
-        GestureDetector(
-          onTap: expand,
-          behavior: HitTestBehavior.opaque,
-          child: Stack(
-            children: [
-              // Column defines the total height of this section.
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Peek bar — clipped, non-interactive.
-                  ClipRect(
-                    child: SizedBox(
-                      height: _peekH,
-                      child: IgnorePointer(
-                        child: OverflowBox(
-                          maxHeight: double.infinity,
-                          alignment: Alignment.topCenter,
-                          child: _optionTile(
-                              p, _collapsedCount, peekBar, last: true),
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Spacing + divider pulled inside so gradient covers them.
-                  const SizedBox(height: 12),
-                  Container(height: 1, color: AppColors.borderSubtle),
-                  const SizedBox(height: 16),
-                ],
-              ),
-              // Gradient: transparent at top → black at bottom
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.65),
-                          Colors.black.withValues(alpha: 0.88),
-                        ],
-                        stops: const [0.0, 0.35, 0.65, 1.0],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              // "Show N more" label — centred in the lower half
-              Positioned(
-                left: 0, right: 0, bottom: 14,
-                child: IgnorePointer(
-                  child: Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Show $hidden more',
-                          style: AppTypography.labelMedium.copyWith(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.keyboard_arrow_down_rounded,
-                            size: 16, color: AppColors.textSecondary),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      children: options
+          .asMap()
+          .entries
+          .map((e) =>
+              _optionTile(p, e.key, e.value, last: e.key == options.length - 1))
+          .toList(),
     );
   }
 
@@ -686,265 +580,262 @@ class _PollCardState extends ConsumerState<_PollCard>
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
-      onTap: () => Navigator.of(context)
-          .pushNamed('/poll-detail', arguments: p.id),
+      onTap: () =>
+          Navigator.of(context).pushNamed('/poll-detail', arguments: p.id),
       child: Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.screenH,
-        vertical: AppSpacing.cardPad,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Author row — tappable ────────────
-          GestureDetector(
-            onTap: () => Navigator.of(context)
-                .pushNamed('/user-profile', arguments: p.author),
-            behavior: HitTestBehavior.opaque,
-            child: Row(
-              children: [
-                ProfileAvatar(
-                  userId: _avatarId(p.author),
-                  displayName: p.author.name,
-                  avatarUrl: p.author.avatarUrl,
-                  radius: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Text(
-                        p.author.name,
-                        style: AppTypography.labelMedium.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w700,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.screenH,
+          vertical: AppSpacing.cardPad,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Author row — tappable ────────────
+            GestureDetector(
+              onTap: () => Navigator.of(context)
+                  .pushNamed('/user-profile', arguments: p.author),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  ProfileAvatar(
+                    userId: _avatarId(p.author),
+                    displayName: p.author.name,
+                    avatarUrl: p.author.avatarUrl,
+                    radius: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          p.author.name,
+                          style: AppTypography.labelMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          width: 2,
+                          height: 2,
+                          decoration: const BoxDecoration(
+                              color: AppColors.textTertiary,
+                              shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          p.timeAgo,
+                          style: AppTypography.labelMedium
+                              .copyWith(color: AppColors.textTertiary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (p.author.isCurrentUser)
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showPollMenu(context, ref, p.id),
+                      child: const SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Center(
+                          child: Icon(Icons.more_horiz_rounded,
+                              size: 18, color: AppColors.textTertiary),
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 2,
-                        height: 2,
-                        decoration: const BoxDecoration(
-                            color: AppColors.textTertiary,
-                            shape: BoxShape.circle),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        p.timeAgo,
-                        style: AppTypography.labelMedium
-                            .copyWith(color: AppColors.textTertiary),
-                      ),
-                    ],
-                  ),
-                ),
-                if (p.author.isCurrentUser)
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _showPollMenu(context, ref, p.id),
-                    child: const SizedBox(
-                      width: 32, height: 32,
-                      child: Center(
-                        child: Icon(Icons.more_horiz_rounded,
-                            size: 18, color: AppColors.textTertiary),
+                    )
+                  else ...[
+                    _InlineFollowButton(userId: p.author.id),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => _showOthersPollMenu(context, ref, p.id),
+                      child: const SizedBox(
+                        width: 32,
+                        height: 32,
+                        child: Center(
+                          child: Icon(Icons.more_horiz_rounded,
+                              size: 18, color: AppColors.textTertiary),
+                        ),
                       ),
                     ),
-                  )
-                else ...[
-                  _InlineFollowButton(userId: p.author.id),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _showOthersPollMenu(context, ref, p.id),
-                    child: const SizedBox(
-                      width: 32, height: 32,
-                      child: Center(
-                        child: Icon(Icons.more_horiz_rounded,
-                            size: 18, color: AppColors.textTertiary),
-                      ),
-                    ),
-                  ),
+                  ],
                 ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Question — tappable to open detail ─
-          GestureDetector(
-            onTap: () => Navigator.of(context)
-                .pushNamed('/poll-detail', arguments: p.id),
-            behavior: HitTestBehavior.opaque,
-            child: Text(p.question, style: AppTypography.cardTitle),
-          ),
-
-          // ── Cover image (optional) ────────────
-          if (p.coverImagePath != null) ...[
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: PollImage(path: p.coverImagePath),
               ),
             ),
-          ],
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 8),
 
-          // ── Options ──────────────────────────
-          // GestureDetector with opaque absorbs taps so the outer card
-          // tap-to-navigate doesn't fire when the user taps options or "show more".
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {}, // absorb — inner widgets handle their own taps
-            child: _buildOptions(p),
-          ),
+            // ── Question — tappable to open detail ─
+            GestureDetector(
+              onTap: () => Navigator.of(context)
+                  .pushNamed('/poll-detail', arguments: p.id),
+              behavior: HitTestBehavior.opaque,
+              child: Text(p.question, style: AppTypography.cardTitle),
+            ),
 
-          // Divider — omitted when collapsed (gradient covers that area instead).
-          if (_expanded || p.options.length <= _collapsedCount) ...[
+            // ── Cover image (optional) ────────────
+            if (p.coverImagePath != null) ...[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.card),
+                child: AspectRatio(
+                  aspectRatio: 16 / 9,
+                  child: PollImage(path: p.coverImagePath),
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 16),
+
+            // ── Options ──────────────────────────
+            // GestureDetector with opaque absorbs taps so the outer card
+            // tap-to-navigate doesn't fire when the user taps options.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {}, // absorb — inner widgets handle their own taps
+              child: _buildOptions(p),
+            ),
+
             const SizedBox(height: 12),
             Container(height: 1, color: AppColors.borderSubtle),
             const SizedBox(height: 12),
-          ],
 
-          // ── Footer ───────────────────────────
-          Row(
-            children: [
-              const Icon(Icons.how_to_vote_outlined,
-                  size: AppIconSizes.inline,
-                  color: AppColors.textTertiary),
-              const SizedBox(width: 4),
-              Text(
-                '${_fmtVotes(p.totalVotes)} votes',
-                style: AppTypography.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              // Comments
-              Semantics(
-                label: 'Comments, ${p.commentCount}',
-                button: true,
-                child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    barrierColor: Colors.black.withValues(alpha: 0.5),
-                    builder: (_) => CommentsSheet(
-                      pollId: p.id,
-                      pollQuestion: p.question,
-                      commentCount: p.commentCount,
-                    ),
-                  );
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  constraints: const BoxConstraints(
-                    minWidth: AppIconSizes.touchTarget,
-                    minHeight: AppIconSizes.touchTarget,
+            // ── Footer ───────────────────────────
+            Row(
+              children: [
+                const Icon(Icons.how_to_vote_outlined,
+                    size: AppIconSizes.inline, color: AppColors.textTertiary),
+                const SizedBox(width: 4),
+                Text(
+                  '${_fmtVotes(p.totalVotes)} votes',
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
                   ),
-                  alignment: Alignment.center,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.chat_bubble_outline_rounded,
-                          size: AppIconSizes.control,
-                          color: AppColors.textTertiary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${p.commentCount}',
-                        style: AppTypography.labelMedium
-                            .copyWith(color: AppColors.textTertiary),
+                ),
+                const Spacer(),
+                // Comments
+                Semantics(
+                  label: 'Comments, ${p.commentCount}',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        barrierColor: Colors.black.withValues(alpha: 0.5),
+                        builder: (_) => CommentsSheet(
+                          pollId: p.id,
+                          pollQuestion: p.question,
+                          commentCount: p.commentCount,
+                        ),
+                      );
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: AppIconSizes.touchTarget,
+                        minHeight: AppIconSizes.touchTarget,
                       ),
-                    ],
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.chat_bubble_outline_rounded,
+                              size: AppIconSizes.control,
+                              color: AppColors.textTertiary),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${p.commentCount}',
+                            style: AppTypography.labelMedium
+                                .copyWith(color: AppColors.textTertiary),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              ), // Semantics: Comments
-              // Favorite with bounce
-              Semantics(
-                label: p.isFavorited ? 'Unlike poll' : 'Like poll',
-                button: true,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    ref
-                        .read(pollsProvider.notifier)
-                        .toggleFavorite(widget.pollId);
-                    _heartCtrl.forward(from: 0);
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: SizedBox(
-                    width: AppIconSizes.touchTarget,
-                    height: AppIconSizes.touchTarget,
-                    child: Center(
-                      child: ScaleTransition(
-                        scale: _heartScale,
-                        child: Icon(
-                          p.isFavorited
-                              ? Icons.favorite_rounded
-                              : Icons.favorite_border_rounded,
-                          size: AppIconSizes.control,
-                          color: p.isFavorited
-                              ? const Color(0xFFFF5C7A)
-                              : AppColors.textTertiary,
+                ), // Semantics: Comments
+                // Favorite with bounce
+                Semantics(
+                  label: p.isFavorited ? 'Unlike poll' : 'Like poll',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      ref
+                          .read(pollsProvider.notifier)
+                          .toggleFavorite(widget.pollId);
+                      _heartCtrl.forward(from: 0);
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget,
+                      child: Center(
+                        child: ScaleTransition(
+                          scale: _heartScale,
+                          child: Icon(
+                            p.isFavorited
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            size: AppIconSizes.control,
+                            color: p.isFavorited
+                                ? const Color(0xFFFF5C7A)
+                                : AppColors.textTertiary,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              // Share
-              Semantics(
-                label: 'Share poll',
-                button: true,
-                child: GestureDetector(
-                  onTap: () async {
-                    HapticFeedback.lightImpact();
-                    final result = await Share.share(
-                      '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
-                      subject: p.question,
-                    );
-                    if (result.status == ShareResultStatus.success &&
-                        context.mounted) {
-                      ref.read(pollsProvider.notifier).share(widget.pollId);
-                      AppToast.show(context, 'Poll shared',
-                          icon: Icons.ios_share_rounded);
-                    }
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: SizedBox(
-                    width: AppIconSizes.touchTarget,
-                    height: AppIconSizes.touchTarget,
-                    child: Center(
-                      child: Icon(Icons.ios_share_rounded,
-                          size: AppIconSizes.control,
-                          color: p.hasShared
-                              ? AppColors.accentPrimary
-                              : AppColors.textTertiary),
+                // Share
+                Semantics(
+                  label: 'Share poll',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () async {
+                      HapticFeedback.lightImpact();
+                      final result = await Share.share(
+                        '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
+                        subject: p.question,
+                      );
+                      if (result.status == ShareResultStatus.success &&
+                          context.mounted) {
+                        ref.read(pollsProvider.notifier).share(widget.pollId);
+                        AppToast.show(context, 'Poll shared',
+                            icon: Icons.ios_share_rounded);
+                      }
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: AppIconSizes.touchTarget,
+                      height: AppIconSizes.touchTarget,
+                      child: Center(
+                        child: Icon(Icons.ios_share_rounded,
+                            size: AppIconSizes.control,
+                            color: p.hasShared
+                                ? AppColors.accentPrimary
+                                : AppColors.textTertiary),
+                      ),
                     ),
                   ),
-                ),
-              ), // Semantics: Share
-            ],
-          ),
-        ],
+                ), // Semantics: Share
+              ],
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 }
 
 String _fmtVotes(int n) {
   if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M';
-  if (n >= 10000)   return '${(n / 1000).toStringAsFixed(0)}K';
-  if (n >= 1000)    return '${(n / 1000).toStringAsFixed(1)}K';
+  if (n >= 10000) return '${(n / 1000).toStringAsFixed(0)}K';
+  if (n >= 1000) return '${(n / 1000).toStringAsFixed(1)}K';
   return n.toString();
 }
 
@@ -964,7 +855,8 @@ void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId) {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             decoration: BoxDecoration(
               color: AppColors.borderSubtle,
@@ -972,13 +864,13 @@ void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId) {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.link_rounded,
-                color: AppColors.textSecondary),
+            leading:
+                const Icon(Icons.link_rounded, color: AppColors.textSecondary),
             title: const Text('Copy link'),
             onTap: () {
               Navigator.pop(context);
-              Clipboard.setData(ClipboardData(
-                  text: 'https://pollora.app/poll/$pollId'));
+              Clipboard.setData(
+                  ClipboardData(text: 'https://pollora.app/poll/$pollId'));
               AppToast.show(context, 'Link copied');
             },
           ),
@@ -1014,7 +906,8 @@ void _showPollMenu(BuildContext context, WidgetRef ref, String pollId) {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 36, height: 4,
+            width: 36,
+            height: 4,
             margin: const EdgeInsets.only(top: 12, bottom: 8),
             decoration: BoxDecoration(
               color: AppColors.borderSubtle,
@@ -1110,8 +1003,7 @@ void _confirmDeletePoll(BuildContext context, WidgetRef ref, String pollId) {
                 ),
               ),
               child: const Text('Delete',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(height: 10),
@@ -1159,13 +1051,10 @@ class _InlineFollowButton extends ConsumerWidget {
         margin: const EdgeInsets.only(right: 4),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isFollowing
-              ? Colors.transparent
-              : AppColors.accentPrimary,
+          color: isFollowing ? Colors.transparent : AppColors.accentPrimary,
           border: Border.all(
-            color: isFollowing
-                ? AppColors.borderSubtle
-                : AppColors.accentPrimary,
+            color:
+                isFollowing ? AppColors.borderSubtle : AppColors.accentPrimary,
           ),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -1174,9 +1063,7 @@ class _InlineFollowButton extends ConsumerWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: isFollowing
-                ? AppColors.textSecondary
-                : Colors.white,
+            color: isFollowing ? AppColors.textSecondary : Colors.white,
           ),
         ),
       ),
@@ -1204,8 +1091,12 @@ class _PollOptionBar extends StatefulWidget {
   State<_PollOptionBar> createState() => _PollOptionBarState();
 }
 
-class _PollOptionBarState extends State<_PollOptionBar> {
+class _PollOptionBarState extends State<_PollOptionBar>
+    with SingleTickerProviderStateMixin {
   bool _animIn = false;
+
+  late final AnimationController _pulse;
+  late final Animation<double> _pulseScale;
 
   @override
   void initState() {
@@ -1213,6 +1104,33 @@ class _PollOptionBarState extends State<_PollOptionBar> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _animIn = true);
     });
+    // A gentle there-and-back scale pulse confirming a vote landed.
+    _pulse = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 340));
+    _pulseScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.035)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 45,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.035, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 55,
+      ),
+    ]).animate(_pulse);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PollOptionBar old) {
+    super.didUpdateWidget(old);
+    if (!old.isVoted && widget.isVoted) _pulse.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
   }
 
   @override
@@ -1226,89 +1144,94 @@ class _PollOptionBarState extends State<_PollOptionBar> {
             constraints.maxWidth * widget.option.percentage(widget.totalVotes);
         final showFill = widget.hasVoted && _animIn;
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: barH,
-          decoration: BoxDecoration(
-            color: AppColors.pollBarTrack,
-            borderRadius: BorderRadius.circular(AppRadius.pollBar),
-          ),
-          foregroundDecoration: widget.isVoted
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.pollBar),
-                  border: Border.all(
-                      color: AppColors.accentPrimary, width: 1.5),
-                )
-              : null,
-          clipBehavior: Clip.hardEdge,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Fill bar
-              Align(
-                alignment: Alignment.centerLeft,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeOutCubic,
-                  width: showFill ? fillWidth : 0,
-                  height: barH,
-                  color: widget.isVoted
-                      ? AppColors.pollBarLeading
-                      : AppColors.pollBarOther,
-                ),
-              ),
-              // Option image (1:1, left-anchored)
-              if (hasImage)
-                Positioned(
-                  left: 0, top: 0, bottom: 0,
-                  child: AspectRatio(
-                    aspectRatio: 1.0,
-                    child: PollImage(path: widget.option.imagePath),
+        return ScaleTransition(
+          scale: _pulseScale,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: barH,
+            decoration: BoxDecoration(
+              color: AppColors.pollBarTrack,
+              borderRadius: BorderRadius.circular(AppRadius.pollBar),
+            ),
+            foregroundDecoration: widget.isVoted
+                ? BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppRadius.pollBar),
+                    border:
+                        Border.all(color: AppColors.accentPrimary, width: 1.5),
+                  )
+                : null,
+            clipBehavior: Clip.hardEdge,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Fill bar
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutCubic,
+                    width: showFill ? fillWidth : 0,
+                    height: barH,
+                    color: widget.isVoted
+                        ? AppColors.pollBarLeading
+                        : AppColors.pollBarOther,
                   ),
                 ),
-              // Text + percentage
-              Padding(
-                padding: EdgeInsets.only(
-                  left: hasImage ? barH + 10.0 : 12.0,
-                  right: 12.0,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        widget.option.text,
-                        style: AppTypography.titleSmall.copyWith(
-                          fontWeight: widget.isVoted
-                              ? FontWeight.w700
-                              : FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                // Option image (1:1, left-anchored)
+                if (hasImage)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    child: AspectRatio(
+                      aspectRatio: 1.0,
+                      child: PollImage(path: widget.option.imagePath),
                     ),
-                    const SizedBox(width: 8),
-                    if (widget.hasVoted) ...[
-                      if (widget.isVoted)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 4),
-                          child: Icon(
-                            Icons.check_circle_rounded,
-                            size: AppIconSizes.inline,
-                            color: Colors.white,
+                  ),
+                // Text + percentage
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: hasImage ? barH + 10.0 : 12.0,
+                    right: 12.0,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.option.text,
+                          style: AppTypography.titleSmall.copyWith(
+                            fontWeight: widget.isVoted
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (widget.hasVoted) ...[
+                        if (widget.isVoted)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 4),
+                            child: Icon(
+                              Icons.check_circle_rounded,
+                              size: AppIconSizes.inline,
+                              color: Colors.white,
+                            ),
+                          ),
+                        Text(
+                          '${widget.option.percentageInt(widget.totalVotes)}%',
+                          style: AppTypography.bodySmall.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                            letterSpacing: 0,
                           ),
                         ),
-                      Text(
-                        '${widget.option.percentageInt(widget.totalVotes)}%',
-                        style: AppTypography.bodySmall.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                          letterSpacing: 0,
-                        ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -1326,7 +1249,8 @@ class _SuggestionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screenH, 8, AppSpacing.screenH, 4),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenH, 8, AppSpacing.screenH, 4),
       child: Text(
         title,
         style: AppTypography.labelSmall.copyWith(
@@ -1403,9 +1327,7 @@ class _UserSuggestionRow extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isFollowing
-                        ? AppColors.textPrimary
-                        : Colors.white,
+                    color: isFollowing ? AppColors.textPrimary : Colors.white,
                     height: 1,
                   ),
                 ),
@@ -1513,8 +1435,7 @@ class _SkeletonCardState extends State<_SkeletonCard>
     return AnimatedBuilder(
       animation: _anim,
       builder: (_, __) {
-        final c =
-            AppColors.surfaceElevated.withValues(alpha: _anim.value);
+        final c = AppColors.surfaceElevated.withValues(alpha: _anim.value);
 
         BoxDecoration sk(double r) =>
             BoxDecoration(color: c, borderRadius: BorderRadius.circular(r));
@@ -1534,14 +1455,10 @@ class _SkeletonCardState extends State<_SkeletonCard>
                     decoration:
                         BoxDecoration(color: c, shape: BoxShape.circle)),
                 const SizedBox(width: 8),
-                Container(
-                    width: 120, height: 9, decoration: sk(4)),
+                Container(width: 120, height: 9, decoration: sk(4)),
               ]),
               const SizedBox(height: 8),
-              Container(
-                  width: double.infinity,
-                  height: 12,
-                  decoration: sk(6)),
+              Container(width: double.infinity, height: 12, decoration: sk(6)),
               const SizedBox(height: 8),
               Container(width: 170, height: 12, decoration: sk(6)),
               const SizedBox(height: 16),
@@ -1578,9 +1495,9 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
   });
 
   static const _tabs = [
-    (_FeedTab.latest,    'Latest'),
-    (_FeedTab.trending,  'Trending'),
-    (_FeedTab.popular,   'Popular'),
+    (_FeedTab.latest, 'Latest'),
+    (_FeedTab.trending, 'Trending'),
+    (_FeedTab.popular, 'Popular'),
     (_FeedTab.following, 'Following'),
   ];
 
@@ -1589,8 +1506,7 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
   @override
   double get maxExtent => height;
   @override
-  bool shouldRebuild(_FeedTabDelegate old) =>
-      old.selected != selected;
+  bool shouldRebuild(_FeedTabDelegate old) => old.selected != selected;
 
   @override
   Widget build(
@@ -1607,14 +1523,13 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
                 children: _tabs.map((entry) {
                   final (tab, label) = entry;
                   final isActive = selected == tab;
-                  final color = isActive
-                      ? AppColors.textAccent
-                      : AppColors.textSecondary;
+                  final color =
+                      isActive ? AppColors.textAccent : AppColors.textSecondary;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
+                    child: Pressable(
                       onTap: () => onSelect(tab),
-                      behavior: HitTestBehavior.opaque,
+                      pressedScale: 0.93,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
@@ -1624,8 +1539,7 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
                           color: isActive
                               ? AppColors.accentPrimaryMuted
                               : AppColors.surfaceElevated,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.pill),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: isActive
                                 ? AppColors.accentPrimaryBorder
@@ -1637,9 +1551,8 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
                           label,
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: isActive
-                                ? FontWeight.w600
-                                : FontWeight.w400,
+                            fontWeight:
+                                isActive ? FontWeight.w600 : FontWeight.w400,
                             color: color,
                             height: 1,
                           ),
@@ -1691,14 +1604,14 @@ class _FollowingEmptyState extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           'No one followed yet',
-          style: AppTypography.titleMedium
-              .copyWith(fontWeight: FontWeight.w600),
+          style:
+              AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
           'Follow users to see their polls here',
-          style: AppTypography.bodyMedium
-              .copyWith(color: AppColors.textTertiary),
+          style:
+              AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
         ),
       ],
     );
@@ -1734,9 +1647,7 @@ class _EmptyState extends StatelessWidget {
                   color: AppColors.surfaceElevated, shape: BoxShape.circle),
             ),
             Icon(
-              isSearch
-                  ? Icons.search_off_rounded
-                  : Icons.bar_chart_rounded,
+              isSearch ? Icons.search_off_rounded : Icons.bar_chart_rounded,
               size: AppIconSizes.empty,
               color: AppColors.textTertiary,
             ),
@@ -1745,16 +1656,14 @@ class _EmptyState extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           isSearch ? 'No results found' : 'Nothing here yet',
-          style: AppTypography.titleMedium
-              .copyWith(fontWeight: FontWeight.w600),
+          style:
+              AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Text(
-          isSearch
-              ? '"$query" didn\'t match anything'
-              : 'Pull down to refresh',
-          style: AppTypography.bodyMedium
-              .copyWith(color: AppColors.textTertiary),
+          isSearch ? '"$query" didn\'t match anything' : 'Pull down to refresh',
+          style:
+              AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
           textAlign: TextAlign.center,
         ),
       ],
@@ -1796,8 +1705,7 @@ class _ErrorState extends StatelessWidget {
             onRetry();
           },
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             decoration: BoxDecoration(
               color: AppColors.accentPrimary,
               borderRadius: BorderRadius.circular(AppRadius.pill),

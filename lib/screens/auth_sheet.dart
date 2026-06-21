@@ -59,7 +59,7 @@ class _AuthSheetState extends State<AuthSheet> {
   @override
   void initState() {
     super.initState();
-    // Clear per-field error as the user types
+    // Clear per-field error as the user types or taps into the field
     _nameCtrl.addListener(() {
       if (_nameError != null) setState(() => _nameError = null);
     });
@@ -68,6 +68,15 @@ class _AuthSheetState extends State<AuthSheet> {
     });
     _passwordCtrl.addListener(() {
       if (_passwordError != null) setState(() => _passwordError = null);
+    });
+    _nameFocus.addListener(() {
+      if (_nameFocus.hasFocus && _nameError != null) setState(() => _nameError = null);
+    });
+    _emailFocus.addListener(() {
+      if (_emailFocus.hasFocus && _emailError != null) setState(() => _emailError = null);
+    });
+    _passwordFocus.addListener(() {
+      if (_passwordFocus.hasFocus && _passwordError != null) setState(() => _passwordError = null);
     });
   }
 
@@ -199,24 +208,29 @@ class _AuthSheetState extends State<AuthSheet> {
   // ── Build ──────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).padding.bottom;
+    final mq         = MediaQuery.of(context);
+    final safeBottom = mq.padding.bottom;
+    final keyboard   = mq.viewInsets.bottom;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       behavior: HitTestBehavior.translucent,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF1C1C1C),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.fromLTRB(
-            AppSpacing.screenH, 12, AppSpacing.screenH, bottom + 24),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 280),
-          curve: Curves.easeInOut,
-          child: _mode == _AuthMode.options
-              ? _buildOptions()
-              : _buildEmailForm(),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: keyboard),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1C1C1C),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+              AppSpacing.screenH, 12, AppSpacing.screenH, safeBottom + 24),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 280),
+            curve: Curves.easeInOut,
+            child: _mode == _AuthMode.options
+                ? _buildOptions()
+                : _buildEmailForm(),
+          ),
         ),
       ),
     );

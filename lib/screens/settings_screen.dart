@@ -17,6 +17,7 @@ import '../providers/follow_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
 import 'edit_profile_screen.dart';
+import 'web_view_screen.dart';
 
 // ── Update these before App Store submission ──
 const _kPrivacyPolicyUrl = 'https://github.com/clintearlebayan/pollora/blob/main/PRIVACY.md';
@@ -133,9 +134,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _SettingsRow(
                         icon: Icons.shield_outlined,
                         label: 'Privacy Policy',
-                        onTap: () => launchUrl(
-                          Uri.parse(_kPrivacyPolicyUrl),
-                          mode: LaunchMode.externalApplication,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WebViewScreen(
+                              title: 'Privacy Policy',
+                              url: _kPrivacyPolicyUrl,
+                            ),
+                          ),
                         ),
                       ),
                     ],

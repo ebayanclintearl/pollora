@@ -15,6 +15,7 @@ import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/poll_image.dart';
+import '../widgets/pressable.dart';
 
 // ─────────────────────────────────────────────
 // Poll Detail — unified poll + comments page
@@ -29,25 +30,23 @@ class PollDetailScreen extends ConsumerStatefulWidget {
 
 class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     with SingleTickerProviderStateMixin {
-
   // ── Comment state ──────────────────────────
   final List<_Comment> _comments = [];
-  bool    _commentsLoading = true;
-  bool    _submitting = false;
+  bool _commentsLoading = true;
+  bool _submitting = false;
   String? _replyingToUsername;
   String? _replyingToId;
-  int?    _replyingToIndex;
-  bool    _hasText = false;
+  int? _replyingToIndex;
+  bool _hasText = false;
 
   // ── UI controllers ─────────────────────────
-  final _inputCtrl   = TextEditingController();
-  final _focusNode   = FocusNode();
-  final _scrollCtrl  = ScrollController();
+  final _inputCtrl = TextEditingController();
+  final _focusNode = FocusNode();
+  final _scrollCtrl = ScrollController();
 
   // ── Favorite animation ─────────────────────
   late AnimationController _heartCtrl;
-  late Animation<double>   _heartScale;
-
+  late Animation<double> _heartScale;
 
   @override
   void initState() {
@@ -57,7 +56,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     _heartScale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.35), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 1.35, end: 0.90), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 0.90, end: 1.0),  weight: 30),
+      TweenSequenceItem(tween: Tween(begin: 0.90, end: 1.0), weight: 30),
     ]).animate(CurvedAnimation(parent: _heartCtrl, curve: Curves.easeOut));
 
     _inputCtrl.addListener(() {
@@ -107,17 +106,17 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
       final flat = (data as List).map((row) {
         final author = row['author'] as Map<String, dynamic>;
         return _Comment(
-          id:          row['id'] as String,
-          userId:      author['id'] as String,
-          username:    author['name'] as String? ?? '',
-          handle:      author['handle'] as String? ?? '',
-          avatarUrl:   author['avatar_url'] as String?,
-          replyToId:   row['reply_to_id'] as String?,
-          text:        row['text'] as String,
-          timestamp:   _timeAgo(DateTime.parse(row['created_at'] as String)),
-          likes:       row['likes'] as int? ?? 0,
-          isOwn:       author['id'] == uid,
-          isReply:     row['reply_to_id'] != null,
+          id: row['id'] as String,
+          userId: author['id'] as String,
+          username: author['name'] as String? ?? '',
+          handle: author['handle'] as String? ?? '',
+          avatarUrl: author['avatar_url'] as String?,
+          replyToId: row['reply_to_id'] as String?,
+          text: row['text'] as String,
+          timestamp: _timeAgo(DateTime.parse(row['created_at'] as String)),
+          likes: row['likes'] as int? ?? 0,
+          isOwn: author['id'] == uid,
+          isReply: row['reply_to_id'] != null,
           isLikedByMe: likedIds.contains(row['id'] as String),
         );
       }).toList();
@@ -141,23 +140,24 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     HapticFeedback.lightImpact();
 
     final uid = supabase.auth.currentUser?.id;
-    final me  = ref.read(currentUserProvider);
+    final me = ref.read(currentUserProvider);
     final body =
         _replyingToUsername != null ? '@$_replyingToUsername $text' : text;
 
-    final replyToId = (_replyingToId?.isNotEmpty == true) ? _replyingToId : null;
+    final replyToId =
+        (_replyingToId?.isNotEmpty == true) ? _replyingToId : null;
     final optimistic = _Comment(
-      id:          '',
-      userId:      uid ?? '',
-      username:    me?.name ?? '',
-      handle:      me?.handle ?? '',
-      avatarUrl:   me?.avatarUrl,
-      replyToId:   replyToId,
-      text:        body,
-      timestamp:   'now',
-      likes:       0,
-      isOwn:       true,
-      isReply:     _replyingToUsername != null,
+      id: '',
+      userId: uid ?? '',
+      username: me?.name ?? '',
+      handle: me?.handle ?? '',
+      avatarUrl: me?.avatarUrl,
+      replyToId: replyToId,
+      text: body,
+      timestamp: 'now',
+      likes: 0,
+      isOwn: true,
+      isReply: _replyingToUsername != null,
     );
 
     final insertAt =
@@ -166,8 +166,8 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
       _comments.insert(insertAt, optimistic);
       _inputCtrl.clear();
       _replyingToUsername = null;
-      _replyingToId       = null;
-      _replyingToIndex    = null;
+      _replyingToId = null;
+      _replyingToIndex = null;
     });
     _focusNode.unfocus();
 
@@ -185,9 +185,9 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     if (uid == null) return;
     try {
       await supabase.from('comments').insert({
-        'poll_id':     widget.pollId,
-        'author_id':   uid,
-        'text':        body,
+        'poll_id': widget.pollId,
+        'author_id': uid,
+        'text': body,
         'reply_to_id': replyToId,
       });
       // Reload so the optimistic entry is replaced with the real DB row.
@@ -211,8 +211,8 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
 
     setState(() {
       _replyingToUsername = username;
-      _replyingToId       = effectiveParentId;
-      _replyingToIndex    = insertIdx;
+      _replyingToId = effectiveParentId;
+      _replyingToIndex = insertIdx;
     });
     _inputCtrl.clear();
     Future.delayed(
@@ -222,8 +222,8 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
   void _cancelReply() {
     setState(() {
       _replyingToUsername = null;
-      _replyingToId       = null;
-      _replyingToIndex    = null;
+      _replyingToId = null;
+      _replyingToIndex = null;
     });
     _focusNode.unfocus();
   }
@@ -242,8 +242,10 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final top  = MediaQuery.of(context).padding.top;
-    final poll = ref.watch(pollsProvider).valueOrNull
+    final top = MediaQuery.of(context).padding.top;
+    final poll = ref
+        .watch(pollsProvider)
+        .valueOrNull
         ?.where((p) => p.id == widget.pollId)
         .firstOrNull;
 
@@ -271,8 +273,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                          AppSpacing.screenH, top + 12,
-                          AppSpacing.screenH, 0),
+                          AppSpacing.screenH, top + 12, AppSpacing.screenH, 0),
                       child: Row(
                         children: [
                           GestureDetector(
@@ -282,16 +283,14 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                             },
                             behavior: HitTestBehavior.opaque,
                             child: const SizedBox(
-                              width: 44, height: 44,
-                              child: Icon(
-                                  Icons.arrow_back_ios_new_rounded,
-                                  color: AppColors.textSecondary,
-                                  size: 20),
+                              width: 44,
+                              height: 44,
+                              child: Icon(Icons.arrow_back_ios_new_rounded,
+                                  color: AppColors.textSecondary, size: 20),
                             ),
                           ),
                           const SizedBox(width: 6),
-                          const Text('Poll',
-                              style: AppTypography.screenTitle),
+                          const Text('Poll', style: AppTypography.screenTitle),
                         ],
                       ),
                     ),
@@ -319,9 +318,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                               subject: poll.question,
                             );
                             if (result.status == ShareResultStatus.success) {
-                              ref
-                                  .read(pollsProvider.notifier)
-                                  .share(poll.id);
+                              ref.read(pollsProvider.notifier).share(poll.id);
                             }
                           },
                           onFavorite: () {
@@ -333,8 +330,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                           onVote: (optId) => ref
                               .read(pollsProvider.notifier)
                               .vote(poll.id, optId),
-                          onDelete: () =>
-                              _confirmDelete(context, ref, poll.id),
+                          onDelete: () => _confirmDelete(context, ref, poll.id),
                           onReport: () => AppToast.show(context,
                               'Poll reported — thanks for the feedback'),
                         ),
@@ -389,20 +385,17 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                     else if (_comments.isEmpty)
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 32),
+                          padding: const EdgeInsets.symmetric(vertical: 32),
                           child: Column(
                             children: [
-                              const Icon(
-                                  Icons.chat_bubble_outline_rounded,
-                                  size: 36,
-                                  color: AppColors.textTertiary),
+                              const Icon(Icons.chat_bubble_outline_rounded,
+                                  size: 36, color: AppColors.textTertiary),
                               const SizedBox(height: 10),
                               Text(
                                 'No comments yet\nBe the first to comment!',
                                 textAlign: TextAlign.center,
-                                style: AppTypography.bodySmall.copyWith(
-                                    color: AppColors.textTertiary),
+                                style: AppTypography.bodySmall
+                                    .copyWith(color: AppColors.textTertiary),
                               ),
                             ],
                           ),
@@ -427,8 +420,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                       ),
 
                     // Bottom spacing above input
-                    const SliverToBoxAdapter(
-                        child: SizedBox(height: 100)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 100)),
                   ],
                 ],
               ),
@@ -438,19 +430,18 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
           // ── Sticky comment input ────────────
           _CommentInput(
             controller: _inputCtrl,
-            focusNode:  _focusNode,
-            hasText:    _hasText,
+            focusNode: _focusNode,
+            hasText: _hasText,
             replyingTo: _replyingToUsername,
             onCancelReply: _cancelReply,
-            onSubmit:   _submitComment,
+            onSubmit: _submitComment,
           ),
         ],
       ),
     );
   }
 
-  void _confirmDelete(
-      BuildContext context, WidgetRef ref, String pollId) {
+  void _confirmDelete(BuildContext context, WidgetRef ref, String pollId) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -509,10 +500,10 @@ class _PollCard extends ConsumerWidget {
               child: Row(
                 children: [
                   ProfileAvatar(
-                    userId:      poll.author.id,
+                    userId: poll.author.id,
                     displayName: poll.author.name,
-                    avatarUrl:   poll.author.avatarUrl,
-                    radius:      20,
+                    avatarUrl: poll.author.avatarUrl,
+                    radius: 20,
                   ),
                   const SizedBox(width: 10),
                   Column(
@@ -547,7 +538,8 @@ class _PollCard extends ConsumerWidget {
               behavior: HitTestBehavior.opaque,
               onTap: () => _showMenu(context, ref),
               child: const SizedBox(
-                width: 32, height: 32,
+                width: 32,
+                height: 32,
                 child: Center(
                   child: Icon(Icons.more_horiz_rounded,
                       size: 18, color: AppColors.textTertiary),
@@ -562,8 +554,7 @@ class _PollCard extends ConsumerWidget {
         // ── Question ─────────────────────────
         Text(
           poll.question,
-          style: AppTypography.cardTitle
-              .copyWith(fontSize: 20, height: 1.35),
+          style: AppTypography.cardTitle.copyWith(fontSize: 20, height: 1.35),
         ),
 
         // ── Cover image ─────────────────────
@@ -584,16 +575,17 @@ class _PollCard extends ConsumerWidget {
         ...poll.options.asMap().entries.map((e) => Padding(
               padding: EdgeInsets.only(
                   bottom: e.key < poll.options.length - 1 ? 10 : 0),
-              child: GestureDetector(
+              child: Pressable(
                 onTap: () {
                   HapticFeedback.selectionClick();
                   onVote(e.value.id);
                 },
+                pressedScale: 0.975,
                 child: _OptionBar(
-                  option:     e.value,
+                  option: e.value,
                   totalVotes: poll.totalVotes,
-                  isVoted:    poll.votedOptionId == e.value.id,
-                  hasVoted:   poll.isVoted,
+                  isVoted: poll.votedOptionId == e.value.id,
+                  hasVoted: poll.isVoted,
                 ),
               ),
             )),
@@ -606,9 +598,7 @@ class _PollCard extends ConsumerWidget {
             SizedBox(width: 4),
             Text('Tap any option to change your vote',
                 style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textTertiary,
-                    height: 1)),
+                    fontSize: 11, color: AppColors.textTertiary, height: 1)),
           ]),
         ],
 
@@ -629,10 +619,10 @@ class _PollCard extends ConsumerWidget {
           if (poll.isVoted) ...[
             const SizedBox(width: 8),
             Container(
-              width: 3, height: 3,
+              width: 3,
+              height: 3,
               decoration: const BoxDecoration(
-                  color: AppColors.textTertiary,
-                  shape: BoxShape.circle),
+                  color: AppColors.textTertiary, shape: BoxShape.circle),
             ),
             const SizedBox(width: 8),
             Text('You voted',
@@ -648,7 +638,8 @@ class _PollCard extends ConsumerWidget {
             onTap: onFavorite,
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               child: Center(
                 child: ScaleTransition(
                   scale: heartScale,
@@ -671,7 +662,8 @@ class _PollCard extends ConsumerWidget {
             onTap: onShare,
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               child: Center(
                 child: Icon(Icons.ios_share_rounded,
                     size: AppIconSizes.control,
@@ -703,7 +695,8 @@ class _PollCard extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               margin: const EdgeInsets.only(top: 12, bottom: 8),
               decoration: BoxDecoration(
                 color: AppColors.borderSubtle,
@@ -771,16 +764,12 @@ class _FollowChip extends ConsumerWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 4),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isFollowing
-              ? Colors.transparent
-              : AppColors.accentPrimary,
+          color: isFollowing ? Colors.transparent : AppColors.accentPrimary,
           border: Border.all(
-            color: isFollowing
-                ? AppColors.borderSubtle
-                : AppColors.accentPrimary,
+            color:
+                isFollowing ? AppColors.borderSubtle : AppColors.accentPrimary,
           ),
           borderRadius: BorderRadius.circular(20),
         ),
@@ -789,9 +778,7 @@ class _FollowChip extends ConsumerWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: isFollowing
-                ? AppColors.textSecondary
-                : Colors.white,
+            color: isFollowing ? AppColors.textSecondary : Colors.white,
           ),
         ),
       ),
@@ -818,11 +805,10 @@ class _OptionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = option.imagePath != null;
-    final barH    = hasImage ? 72.0 : 52.0;
+    final barH = hasImage ? 72.0 : 52.0;
 
     return LayoutBuilder(builder: (_, constraints) {
-      final fillW =
-          constraints.maxWidth * option.percentage(totalVotes);
+      final fillW = constraints.maxWidth * option.percentage(totalVotes);
       return AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         height: barH,
@@ -832,10 +818,8 @@ class _OptionBar extends StatelessWidget {
         ),
         foregroundDecoration: isVoted
             ? BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(AppRadius.pollBar),
-                border: Border.all(
-                    color: AppColors.accentPrimary, width: 1.5),
+                borderRadius: BorderRadius.circular(AppRadius.pollBar),
+                border: Border.all(color: AppColors.accentPrimary, width: 1.5),
               )
             : null,
         clipBehavior: Clip.hardEdge,
@@ -847,16 +831,17 @@ class _OptionBar extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 500),
                 curve: Curves.easeOutCubic,
-                width:  hasVoted ? fillW : 0,
+                width: hasVoted ? fillW : 0,
                 height: barH,
-                color: isVoted
-                    ? AppColors.pollBarLeading
-                    : AppColors.pollBarOther,
+                color:
+                    isVoted ? AppColors.pollBarLeading : AppColors.pollBarOther,
               ),
             ),
             if (hasImage)
               Positioned(
-                left: 0, top: 0, bottom: 0,
+                left: 0,
+                top: 0,
+                bottom: 0,
                 child: AspectRatio(
                   aspectRatio: 1.0,
                   child: PollImage(path: option.imagePath),
@@ -864,7 +849,7 @@ class _OptionBar extends StatelessWidget {
               ),
             Padding(
               padding: EdgeInsets.only(
-                left:  hasImage ? barH + 12.0 : 14.0,
+                left: hasImage ? barH + 12.0 : 14.0,
                 right: 14.0,
               ),
               child: Row(
@@ -872,9 +857,8 @@ class _OptionBar extends StatelessWidget {
                   Expanded(
                     child: Text(option.text,
                         style: AppTypography.titleSmall.copyWith(
-                          fontWeight: isVoted
-                              ? FontWeight.w700
-                              : FontWeight.w600,
+                          fontWeight:
+                              isVoted ? FontWeight.w700 : FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis),
                   ),
@@ -884,8 +868,7 @@ class _OptionBar extends StatelessWidget {
                       const Padding(
                         padding: EdgeInsets.only(right: 6),
                         child: Icon(Icons.check_circle_rounded,
-                            size: AppIconSizes.inline,
-                            color: Colors.white),
+                            size: AppIconSizes.inline, color: Colors.white),
                       ),
                     Text('${option.percentageInt(totalVotes)}%',
                         style: AppTypography.bodySmall.copyWith(
@@ -908,7 +891,7 @@ class _OptionBar extends StatelessWidget {
 // Comment row
 // ─────────────────────────────────────────────
 class _CommentRow extends StatefulWidget {
-  final _Comment     comment;
+  final _Comment comment;
   final VoidCallback onReply;
   final VoidCallback? onDelete;
 
@@ -925,18 +908,18 @@ class _CommentRow extends StatefulWidget {
 class _CommentRowState extends State<_CommentRow>
     with SingleTickerProviderStateMixin {
   late bool _liked;
-  late int  _localLikes;
+  late int _localLikes;
   late AnimationController _likeCtrl;
-  late Animation<double>   _likeScale;
+  late Animation<double> _likeScale;
 
   @override
   void initState() {
     super.initState();
-    _liked      = widget.comment.isLikedByMe;
+    _liked = widget.comment.isLikedByMe;
     _localLikes = widget.comment.likes;
-    _likeCtrl   = AnimationController(
+    _likeCtrl = AnimationController(
         duration: const Duration(milliseconds: 350), vsync: this);
-    _likeScale  = TweenSequence<double>([
+    _likeScale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.4), weight: 40),
       TweenSequenceItem(tween: Tween(begin: 1.4, end: 0.9), weight: 30),
       TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 30),
@@ -954,10 +937,9 @@ class _CommentRowState extends State<_CommentRow>
     HapticFeedback.lightImpact();
     final willLike = !_liked;
     setState(() {
-      _liked      = willLike;
-      _localLikes = willLike
-          ? _localLikes + 1
-          : (_localLikes - 1).clamp(0, 999999);
+      _liked = willLike;
+      _localLikes =
+          willLike ? _localLikes + 1 : (_localLikes - 1).clamp(0, 999999);
     });
     _likeCtrl.forward(from: 0);
     final uid = supabase.auth.currentUser?.id;
@@ -966,24 +948,24 @@ class _CommentRowState extends State<_CommentRow>
       if (willLike) {
         await supabase.from('comment_likes').insert({
           'comment_id': widget.comment.id,
-          'user_id':    uid,
+          'user_id': uid,
         });
       } else {
-        await supabase.from('comment_likes')
+        await supabase
+            .from('comment_likes')
             .delete()
             .eq('comment_id', widget.comment.id)
             .eq('user_id', uid);
       }
-      await supabase.from('comments')
-          .update({'likes': _localLikes})
-          .eq('id', widget.comment.id);
+      await supabase
+          .from('comments')
+          .update({'likes': _localLikes}).eq('id', widget.comment.id);
     } catch (_) {
       if (mounted) {
         setState(() {
-          _liked      = !willLike;
-          _localLikes = willLike
-              ? (_localLikes - 1).clamp(0, 999999)
-              : _localLikes + 1;
+          _liked = !willLike;
+          _localLikes =
+              willLike ? (_localLikes - 1).clamp(0, 999999) : _localLikes + 1;
         });
       }
     }
@@ -1001,10 +983,10 @@ class _CommentRowState extends State<_CommentRow>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ProfileAvatar(
-            userId:      widget.comment.userId,
+            userId: widget.comment.userId,
             displayName: widget.comment.username,
-            avatarUrl:   widget.comment.avatarUrl,
-            radius:      16,
+            avatarUrl: widget.comment.avatarUrl,
+            radius: 16,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1039,9 +1021,9 @@ class _CommentRowState extends State<_CommentRow>
                 const SizedBox(height: 8),
                 // Like / Reply / Delete
                 Row(children: [
-                  GestureDetector(
+                  Pressable(
                     onTap: _toggleLike,
-                    behavior: HitTestBehavior.opaque,
+                    pressedScale: 0.88,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                           vertical: 4, horizontal: 2),
@@ -1077,12 +1059,11 @@ class _CommentRowState extends State<_CommentRow>
                     ),
                   ),
                   const SizedBox(width: 16),
-                  GestureDetector(
+                  Pressable(
                     onTap: widget.onReply,
-                    behavior: HitTestBehavior.opaque,
+                    pressedScale: 0.9,
                     child: const Padding(
-                      padding: EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 2),
+                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                       child: Text('Reply',
                           style: TextStyle(
                             fontSize: 12,
@@ -1094,12 +1075,12 @@ class _CommentRowState extends State<_CommentRow>
                   ),
                   if (widget.onDelete != null) ...[
                     const SizedBox(width: 16),
-                    GestureDetector(
+                    Pressable(
                       onTap: widget.onDelete,
-                      behavior: HitTestBehavior.opaque,
+                      pressedScale: 0.9,
                       child: const Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 2),
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                         child: Text('Delete',
                             style: TextStyle(
                               fontSize: 12,
@@ -1134,7 +1115,8 @@ class _CommentSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             decoration: const BoxDecoration(
               color: AppColors.surfaceElevated,
               shape: BoxShape.circle,
@@ -1184,10 +1166,10 @@ class _CommentSkeleton extends StatelessWidget {
 // ─────────────────────────────────────────────
 class _CommentInput extends ConsumerWidget {
   final TextEditingController controller;
-  final FocusNode             focusNode;
-  final bool                  hasText;
-  final String?               replyingTo;
-  final VoidCallback          onCancelReply;
+  final FocusNode focusNode;
+  final bool hasText;
+  final String? replyingTo;
+  final VoidCallback onCancelReply;
   final Future<void> Function() onSubmit;
 
   const _CommentInput({
@@ -1202,13 +1184,12 @@ class _CommentInput extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bottom = MediaQuery.of(context).padding.bottom;
-    final me     = ref.watch(currentUserProvider);
+    final me = ref.watch(currentUserProvider);
 
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.background,
-        border: Border(
-            top: BorderSide(color: Color(0xFF2A2A2A), width: 0.5)),
+        border: Border(top: BorderSide(color: Color(0xFF2A2A2A), width: 0.5)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1217,8 +1198,7 @@ class _CommentInput extends ConsumerWidget {
           if (replyingTo != null)
             Container(
               color: AppColors.surfaceElevated,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
                   const Icon(Icons.reply_rounded,
@@ -1233,9 +1213,9 @@ class _CommentInput extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  GestureDetector(
+                  Pressable(
                     onTap: onCancelReply,
-                    behavior: HitTestBehavior.opaque,
+                    pressedScale: 0.85,
                     child: const Padding(
                       padding: EdgeInsets.all(4),
                       child: Icon(Icons.close_rounded,
@@ -1248,31 +1228,28 @@ class _CommentInput extends ConsumerWidget {
 
           // Input row
           Padding(
-            padding: EdgeInsets.fromLTRB(
-                16, 10, 16, bottom > 0 ? bottom : 12),
+            padding: EdgeInsets.fromLTRB(16, 10, 16, bottom > 0 ? bottom : 12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 ProfileAvatar(
-                  userId:      me?.id ?? '',
+                  userId: me?.id ?? '',
                   displayName: me?.name,
-                  avatarUrl:   me?.avatarUrl,
-                  radius:      16,
+                  avatarUrl: me?.avatarUrl,
+                  radius: 16,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Container(
-                    constraints:
-                        const BoxConstraints(maxHeight: 120),
+                    constraints: const BoxConstraints(maxHeight: 120),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceElevated,
-                      borderRadius:
-                          BorderRadius.circular(AppRadius.card),
+                      borderRadius: BorderRadius.circular(AppRadius.card),
                     ),
                     child: TextField(
-                      controller:    controller,
-                      focusNode:     focusNode,
-                      maxLines:      null,
+                      controller: controller,
+                      focusNode: focusNode,
+                      maxLines: null,
                       textInputAction: TextInputAction.newline,
                       style: const TextStyle(
                         fontSize: 14,
@@ -1280,24 +1257,24 @@ class _CommentInput extends ConsumerWidget {
                         height: 1.4,
                       ),
                       decoration: const InputDecoration(
-                        hintText:    'Write a comment…',
+                        hintText: 'Write a comment…',
                         hintStyle: TextStyle(
-                            color: AppColors.textTertiary,
-                            fontSize: 14),
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        border:      InputBorder.none,
+                            color: AppColors.textTertiary, fontSize: 14),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        border: InputBorder.none,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                GestureDetector(
+                Pressable(
                   onTap: hasText ? onSubmit : null,
-                  behavior: HitTestBehavior.opaque,
+                  pressedScale: 0.86,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    width: 36, height: 36,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: hasText
                           ? AppColors.accentPrimary
@@ -1307,9 +1284,7 @@ class _CommentInput extends ConsumerWidget {
                     child: Icon(
                       Icons.arrow_upward_rounded,
                       size: 18,
-                      color: hasText
-                          ? Colors.white
-                          : AppColors.textTertiary,
+                      color: hasText ? Colors.white : AppColors.textTertiary,
                     ),
                   ),
                 ),
@@ -1326,18 +1301,18 @@ class _CommentInput extends ConsumerWidget {
 // Comment model
 // ─────────────────────────────────────────────
 class _Comment {
-  final String  id;
-  final String  userId;
-  final String  username;
-  final String  handle;
+  final String id;
+  final String userId;
+  final String username;
+  final String handle;
   final String? avatarUrl;
   final String? replyToId;
-  final String  text;
-  final String  timestamp;
-  final int     likes;
-  final bool    isOwn;
-  final bool    isReply;
-  final bool    isLikedByMe;
+  final String text;
+  final String timestamp;
+  final int likes;
+  final bool isOwn;
+  final bool isReply;
+  final bool isLikedByMe;
 
   const _Comment({
     required this.id,
@@ -1349,8 +1324,8 @@ class _Comment {
     required this.text,
     required this.timestamp,
     required this.likes,
-    this.isOwn       = false,
-    this.isReply     = false,
+    this.isOwn = false,
+    this.isReply = false,
     this.isLikedByMe = false,
   });
 }
@@ -1368,7 +1343,7 @@ List<_Comment> _threadComments(List<_Comment> flat) {
     return cur.id;
   }
 
-  final topLevel   = flat.where((c) => c.replyToId == null).toList();
+  final topLevel = flat.where((c) => c.replyToId == null).toList();
   final childrenOf = <String, List<_Comment>>{};
   for (final c in flat) {
     if (c.replyToId != null) {
@@ -1466,8 +1441,7 @@ class _DeletePollSheet extends StatelessWidget {
                 ),
               ),
               child: const Text('Delete',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ),
           const SizedBox(height: 10),
@@ -1506,9 +1480,9 @@ String _fmt(int n) {
 
 String _timeAgo(DateTime dt) {
   final diff = DateTime.now().difference(dt);
-  if (diff.inDays >= 7)     return '${diff.inDays ~/ 7}w';
-  if (diff.inDays > 0)      return '${diff.inDays}d';
-  if (diff.inHours > 0)     return '${diff.inHours}h';
-  if (diff.inMinutes > 0)   return '${diff.inMinutes}m';
+  if (diff.inDays >= 7) return '${diff.inDays ~/ 7}w';
+  if (diff.inDays > 0) return '${diff.inDays}d';
+  if (diff.inHours > 0) return '${diff.inHours}h';
+  if (diff.inMinutes > 0) return '${diff.inMinutes}m';
   return 'now';
 }

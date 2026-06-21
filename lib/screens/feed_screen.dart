@@ -610,7 +610,7 @@ class _PollCardState extends ConsumerState<_PollCard>
                         Text(
                           p.author.name,
                           style: AppTypography.labelMedium.copyWith(
-                            color: AppColors.textSecondary,
+                            color: AppColors.textPrimary,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

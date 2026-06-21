@@ -8,6 +8,7 @@ import '../app_spacing.dart';
 import '../app_typography.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/pressable.dart';
 
 // ─────────────────────────────────────────────
 // Show helper — call this instead of constructing directly.
@@ -41,11 +42,11 @@ class _AuthSheetState extends State<AuthSheet> {
   bool _loading = false;
 
   // Email form fields
-  final _nameCtrl      = TextEditingController();
-  final _emailCtrl     = TextEditingController();
-  final _passwordCtrl  = TextEditingController();
-  final _nameFocus     = FocusNode();
-  final _emailFocus    = FocusNode();
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _nameFocus = FocusNode();
+  final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
   bool _passwordVisible = false;
 
@@ -70,13 +71,16 @@ class _AuthSheetState extends State<AuthSheet> {
       if (_passwordError != null) setState(() => _passwordError = null);
     });
     _nameFocus.addListener(() {
-      if (_nameFocus.hasFocus && _nameError != null) setState(() => _nameError = null);
+      if (_nameFocus.hasFocus && _nameError != null)
+        setState(() => _nameError = null);
     });
     _emailFocus.addListener(() {
-      if (_emailFocus.hasFocus && _emailError != null) setState(() => _emailError = null);
+      if (_emailFocus.hasFocus && _emailError != null)
+        setState(() => _emailError = null);
     });
     _passwordFocus.addListener(() {
-      if (_passwordFocus.hasFocus && _passwordError != null) setState(() => _passwordError = null);
+      if (_passwordFocus.hasFocus && _passwordError != null)
+        setState(() => _passwordError = null);
     });
   }
 
@@ -95,7 +99,7 @@ class _AuthSheetState extends State<AuthSheet> {
   bool _validateSignIn() {
     String? emailErr, passErr;
     final email = _emailCtrl.text.trim();
-    final pass  = _passwordCtrl.text;
+    final pass = _passwordCtrl.text;
 
     if (email.isEmpty) {
       emailErr = 'Email is required';
@@ -106,17 +110,26 @@ class _AuthSheetState extends State<AuthSheet> {
       passErr = 'Password is required';
     }
 
-    setState(() { _emailError = emailErr; _passwordError = passErr; });
-    if (emailErr != null) { _emailFocus.requestFocus(); return false; }
-    if (passErr  != null) { _passwordFocus.requestFocus(); return false; }
+    setState(() {
+      _emailError = emailErr;
+      _passwordError = passErr;
+    });
+    if (emailErr != null) {
+      _emailFocus.requestFocus();
+      return false;
+    }
+    if (passErr != null) {
+      _passwordFocus.requestFocus();
+      return false;
+    }
     return true;
   }
 
   bool _validateSignUp() {
     String? nameErr, emailErr, passErr;
-    final name  = _nameCtrl.text.trim();
+    final name = _nameCtrl.text.trim();
     final email = _emailCtrl.text.trim();
-    final pass  = _passwordCtrl.text;
+    final pass = _passwordCtrl.text;
 
     if (name.isEmpty) {
       nameErr = 'Name is required';
@@ -134,16 +147,29 @@ class _AuthSheetState extends State<AuthSheet> {
       passErr = 'Password must be at least 6 characters';
     }
 
-    setState(() { _nameError = nameErr; _emailError = emailErr; _passwordError = passErr; });
-    if (nameErr  != null) { _nameFocus.requestFocus(); return false; }
-    if (emailErr != null) { _emailFocus.requestFocus(); return false; }
-    if (passErr  != null) { _passwordFocus.requestFocus(); return false; }
+    setState(() {
+      _nameError = nameErr;
+      _emailError = emailErr;
+      _passwordError = passErr;
+    });
+    if (nameErr != null) {
+      _nameFocus.requestFocus();
+      return false;
+    }
+    if (emailErr != null) {
+      _emailFocus.requestFocus();
+      return false;
+    }
+    if (passErr != null) {
+      _passwordFocus.requestFocus();
+      return false;
+    }
     return true;
   }
 
   void _clearErrors() => setState(() {
-    _nameError = _emailError = _passwordError = null;
-  });
+        _nameError = _emailError = _passwordError = null;
+      });
 
   // ── Actions ──────────────────────────────────
   Future<void> _run(Future<void> Function() action) async {
@@ -164,7 +190,7 @@ class _AuthSheetState extends State<AuthSheet> {
     }
   }
 
-  Future<void> _apple()  => _run(AuthService.signInWithApple);
+  Future<void> _apple() => _run(AuthService.signInWithApple);
   Future<void> _google() => _run(AuthService.signInWithGoogle);
 
   Future<void> _emailSignIn() async {
@@ -199,7 +225,8 @@ class _AuthSheetState extends State<AuthSheet> {
     } on AuthException catch (e) {
       if (mounted) AppToast.show(context, e.message, isError: true);
     } catch (_) {
-      if (mounted) AppToast.show(context, 'Failed to send reset email', isError: true);
+      if (mounted)
+        AppToast.show(context, 'Failed to send reset email', isError: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -208,9 +235,9 @@ class _AuthSheetState extends State<AuthSheet> {
   // ── Build ──────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final mq         = MediaQuery.of(context);
+    final mq = MediaQuery.of(context);
     final safeBottom = mq.padding.bottom;
-    final keyboard   = mq.viewInsets.bottom;
+    final keyboard = mq.viewInsets.bottom;
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -293,18 +320,15 @@ class _AuthSheetState extends State<AuthSheet> {
         const SizedBox(height: 8),
         const Text(
           'Vote on things that matter',
-          style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textTertiary,
-              height: 1),
+          style:
+              TextStyle(fontSize: 14, color: AppColors.textTertiary, height: 1),
         ),
         const SizedBox(height: 36),
 
         // Apple
         _SocialButton(
           label: 'Continue with Apple',
-          icon: const Icon(Icons.apple_rounded,
-              color: Colors.white, size: 20),
+          icon: const Icon(Icons.apple_rounded, color: Colors.white, size: 20),
           backgroundColor: const Color(0xFF000000),
           textColor: Colors.white,
           loading: _loading,
@@ -325,14 +349,16 @@ class _AuthSheetState extends State<AuthSheet> {
 
         // Divider
         Row(children: [
-          const Expanded(child: Divider(color: Color(0xFF2A2A2A), thickness: 1)),
+          const Expanded(
+              child: Divider(color: Color(0xFF2A2A2A), thickness: 1)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text('or',
                 style: AppTypography.labelSmall
                     .copyWith(color: AppColors.textTertiary)),
           ),
-          const Expanded(child: Divider(color: Color(0xFF2A2A2A), thickness: 1)),
+          const Expanded(
+              child: Divider(color: Color(0xFF2A2A2A), thickness: 1)),
         ]),
         const SizedBox(height: 20),
 
@@ -436,8 +462,7 @@ class _AuthSheetState extends State<AuthSheet> {
           isLast: true,
           error: _passwordError,
           suffix: GestureDetector(
-            onTap: () =>
-                setState(() => _passwordVisible = !_passwordVisible),
+            onTap: () => setState(() => _passwordVisible = !_passwordVisible),
             behavior: HitTestBehavior.opaque,
             child: Icon(
               _passwordVisible
@@ -479,9 +504,8 @@ class _AuthSheetState extends State<AuthSheet> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: _loading
-                ? null
-                : (isSignUp ? _emailSignUp : _emailSignIn),
+            onPressed:
+                _loading ? null : (isSignUp ? _emailSignUp : _emailSignIn),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accentPrimary,
               disabledBackgroundColor: AppColors.surfaceElevated,
@@ -517,9 +541,8 @@ class _AuthSheetState extends State<AuthSheet> {
               _emailCtrl.clear();
               _passwordCtrl.clear();
               _clearErrors();
-              setState(() => _mode = isSignUp
-                  ? _AuthMode.emailSignIn
-                  : _AuthMode.emailSignUp);
+              setState(() => _mode =
+                  isSignUp ? _AuthMode.emailSignIn : _AuthMode.emailSignUp);
               Future.delayed(const Duration(milliseconds: 200), () {
                 if (mounted) {
                   (isSignUp ? _emailFocus : _nameFocus).requestFocus();
@@ -591,18 +614,16 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
       onTap: loading ? null : onTap,
-      behavior: HitTestBehavior.opaque,
+      pressedScale: 0.97,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         height: 52,
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(AppRadius.button),
-          border: border
-              ? Border.all(color: const Color(0xFF3A3A3A))
-              : null,
+          border: border ? Border.all(color: const Color(0xFF3A3A3A)) : null,
         ),
         child: loading
             ? const Center(
@@ -611,8 +632,8 @@ class _SocialButton extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.textSecondary)),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.textSecondary)),
                 ),
               )
             : Row(
@@ -659,8 +680,8 @@ class _GooglePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = size.width * 0.22
         ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(
-          Rect.fromCircle(center: c, radius: r * 0.72), start, sweep, false, paint);
+      canvas.drawArc(Rect.fromCircle(center: c, radius: r * 0.72), start, sweep,
+          false, paint);
     }
 
     // Blue
@@ -729,8 +750,7 @@ class _EmailField extends StatelessWidget {
           focusNode: focusNode,
           keyboardType: keyboardType,
           obscureText: obscure,
-          textInputAction:
-              isLast ? TextInputAction.done : TextInputAction.next,
+          textInputAction: isLast ? TextInputAction.done : TextInputAction.next,
           onSubmitted: (_) {
             if (nextFocus != null) {
               FocusScope.of(context).requestFocus(nextFocus);
@@ -738,8 +758,8 @@ class _EmailField extends StatelessWidget {
               onSubmitted?.call();
             }
           },
-          style: AppTypography.titleSmall
-              .copyWith(color: AppColors.textPrimary),
+          style:
+              AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: AppTypography.titleSmall
@@ -751,8 +771,7 @@ class _EmailField extends StatelessWidget {
                     : AppColors.textTertiary),
             suffixIcon: suffix != null
                 ? Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: suffix)
+                    padding: const EdgeInsets.only(right: 12), child: suffix)
                 : null,
             suffixIconConstraints: const BoxConstraints(minWidth: 44),
             filled: true,

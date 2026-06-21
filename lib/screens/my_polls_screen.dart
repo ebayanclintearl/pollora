@@ -10,6 +10,7 @@ import '../models/poll.dart';
 import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
+import '../widgets/pressable.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/switch_account_sheet.dart';
 import 'follow_list_screen.dart';
@@ -58,86 +59,86 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
         backgroundColor: AppColors.surfaceCard,
         strokeWidth: 2.5,
         child: CustomScrollView(
-        slivers: [
-          // ── Screen header ─────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppSpacing.screenH,
-                top + 8,
-                AppSpacing.screenH,
-                2,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Profile', style: AppTypography.screenTitle),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const SettingsScreen()),
-                    ),
-                    behavior: HitTestBehavior.opaque,
-                    child: const SizedBox(
-                      width: AppIconSizes.touchTarget,
-                      height: AppIconSizes.touchTarget,
-                      child: Icon(
-                        Icons.settings_rounded,
-                        color: AppColors.textSecondary,
-                        size: AppIconSizes.control,
+          slivers: [
+            // ── Screen header ─────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  AppSpacing.screenH,
+                  top + 8,
+                  AppSpacing.screenH,
+                  2,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Profile', style: AppTypography.screenTitle),
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const SettingsScreen()),
+                      ),
+                      behavior: HitTestBehavior.opaque,
+                      child: const SizedBox(
+                        width: AppIconSizes.touchTarget,
+                        height: AppIconSizes.touchTarget,
+                        child: Icon(
+                          Icons.settings_rounded,
+                          color: AppColors.textSecondary,
+                          size: AppIconSizes.control,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          // ── Profile info — flat, no card ──────────
-          SliverToBoxAdapter(
-            child: GestureDetector(
-              onTap: _showSwitchAccountSheet,
-              behavior: HitTestBehavior.opaque,
-              child: const _ProfileSection(),
-            ),
-          ),
-
-          // ── Stats — flat, no card ─────────────────
-          const SliverToBoxAdapter(child: _StatsRow()),
-
-          // ── Thin separator ────────────────────────
-          SliverToBoxAdapter(
-            child: Container(
-              height: 0.5,
-              margin: const EdgeInsets.only(top: 20),
-              color: const Color(0xFF242424),
-            ),
-          ),
-
-          // ── Underline tabs ────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: _UnderlineTabs(
-                selected: _selectedTab,
-                onChanged: (i) => setState(() => _selectedTab = i),
+            // ── Profile info — flat, no card ──────────
+            SliverToBoxAdapter(
+              child: GestureDetector(
+                onTap: _showSwitchAccountSheet,
+                behavior: HitTestBehavior.opaque,
+                child: const _ProfileSection(),
               ),
             ),
-          ),
 
-          // ── Tab content ───────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(0, 12, 0, 100),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                if (_selectedTab == 0)
-                  _PollListSection(polls: myPolls)
-                else
-                  _FavoritesSection(polls: favorites),
-              ]),
+            // ── Stats — flat, no card ─────────────────
+            const SliverToBoxAdapter(child: _StatsRow()),
+
+            // ── Thin separator ────────────────────────
+            SliverToBoxAdapter(
+              child: Container(
+                height: 0.5,
+                margin: const EdgeInsets.only(top: 20),
+                color: const Color(0xFF242424),
+              ),
             ),
-          ),
-        ],
+
+            // ── Underline tabs ────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: _UnderlineTabs(
+                  selected: _selectedTab,
+                  onChanged: (i) => setState(() => _selectedTab = i),
+                ),
+              ),
+            ),
+
+            // ── Tab content ───────────────────────────
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(0, 12, 0, 100),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  if (_selectedTab == 0)
+                    _PollListSection(polls: myPolls)
+                  else
+                    _FavoritesSection(polls: favorites),
+                ]),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -146,8 +147,18 @@ class _MyPollsScreenState extends ConsumerState<MyPollsScreen> {
 
 String _joinedLabel(DateTime dt) {
   const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
   return 'Joined ${months[dt.month - 1]} ${dt.year}';
 }
@@ -186,8 +197,7 @@ class _ProfileSection extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: AppColors.accentPrimary,
-                    border: Border.all(
-                        color: AppColors.background, width: 2),
+                    border: Border.all(color: AppColors.background, width: 2),
                   ),
                   child: const Icon(
                     Icons.edit_rounded,
@@ -245,11 +255,11 @@ class _StatsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user     = ref.watch(currentUserProvider);
-    final myPolls  = ref.watch(myPollsProvider);
+    final user = ref.watch(currentUserProvider);
+    final myPolls = ref.watch(myPollsProvider);
     // Derive live counts from pollsProvider so they update instantly on
     // delete or vote — no extra DB call needed.
-    final pollsCount    = myPolls.length;
+    final pollsCount = myPolls.length;
     final votesReceived = myPolls.fold(0, (sum, p) => sum + p.totalVotes);
 
     return Padding(
@@ -369,8 +379,7 @@ class _UnderlineTabs extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onChanged;
 
-  const _UnderlineTabs(
-      {required this.selected, required this.onChanged});
+  const _UnderlineTabs({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -414,12 +423,12 @@ class _UnderlineTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final isActive = index == selected;
     return Expanded(
-      child: GestureDetector(
+      child: Pressable(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap(index);
         },
-        behavior: HitTestBehavior.opaque,
+        pressedScale: 0.95,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -442,8 +451,7 @@ class _UnderlineTab extends StatelessWidget {
                     duration: const Duration(milliseconds: 180),
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                       color: isActive
                           ? AppColors.textPrimary
                           : AppColors.textTertiary,
@@ -459,9 +467,7 @@ class _UnderlineTab extends StatelessWidget {
               curve: Curves.easeOut,
               height: 2,
               decoration: BoxDecoration(
-                color: isActive
-                    ? AppColors.accentPrimary
-                    : Colors.transparent,
+                color: isActive ? AppColors.accentPrimary : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
             ),
@@ -598,8 +604,8 @@ class _PollListRow extends StatelessWidget {
           onTap: onTap,
           behavior: HitTestBehavior.opaque,
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: AppSpacing.screenH, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenH, vertical: 14),
             child: Row(
               children: [
                 Expanded(

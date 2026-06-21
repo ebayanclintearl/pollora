@@ -5,6 +5,7 @@ import '../app_colors.dart';
 import '../app_radius.dart';
 import '../core/supabase_client.dart';
 import '../providers/users_provider.dart';
+import 'pressable.dart';
 import 'profile_avatar.dart';
 
 class CommentsSheet extends ConsumerStatefulWidget {
@@ -27,8 +28,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   final FocusNode _focusNode = FocusNode();
   String? _replyingToUsername;
   String? _replyingToId;
-  int?    _replyingToIndex;
-  bool    _hasText = false;
+  int? _replyingToIndex;
+  bool _hasText = false;
   bool _loading = true;
   bool _submitting = false;
 
@@ -59,7 +60,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     try {
       final data = await supabase
           .from('comments')
-          .select('id, text, created_at, likes, reply_to_id, author:profiles!author_id(id, name, handle, avatar_url)')
+          .select(
+              'id, text, created_at, likes, reply_to_id, author:profiles!author_id(id, name, handle, avatar_url)')
           .eq('poll_id', widget.pollId)
           .order('created_at', ascending: true);
 
@@ -75,23 +77,24 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
             .select('comment_id')
             .eq('user_id', uid)
             .inFilter('comment_id', ids);
-        likedIds = (liked as List).map((r) => r['comment_id'] as String).toSet();
+        likedIds =
+            (liked as List).map((r) => r['comment_id'] as String).toSet();
       }
 
       if (!mounted) return;
       final flat = (data as List).map((row) {
         final author = row['author'] as Map<String, dynamic>;
         return _Comment(
-          id:          row['id'] as String,
-          userId:      author['id'] as String,
-          username:    author['name'] as String? ?? '',
-          avatarUrl:   author['avatar_url'] as String?,
-          replyToId:   row['reply_to_id'] as String?,
-          text:        row['text'] as String,
-          timestamp:   _timeAgo(DateTime.parse(row['created_at'] as String)),
-          likes:       row['likes'] as int? ?? 0,
-          isOwn:       author['id'] == uid,
-          isReply:     row['reply_to_id'] != null,
+          id: row['id'] as String,
+          userId: author['id'] as String,
+          username: author['name'] as String? ?? '',
+          avatarUrl: author['avatar_url'] as String?,
+          replyToId: row['reply_to_id'] as String?,
+          text: row['text'] as String,
+          timestamp: _timeAgo(DateTime.parse(row['created_at'] as String)),
+          likes: row['likes'] as int? ?? 0,
+          isOwn: author['id'] == uid,
+          isReply: row['reply_to_id'] != null,
           isLikedByMe: likedIds.contains(row['id'] as String),
         );
       }).toList();
@@ -116,7 +119,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     final uid = supabase.auth.currentUser?.id;
     final me = ref.read(currentUserProvider);
 
-    final body = _replyingToUsername != null ? '@$_replyingToUsername $text' : text;
+    final body =
+        _replyingToUsername != null ? '@$_replyingToUsername $text' : text;
 
     // Optimistic insert
     final optimistic = _Comment(
@@ -131,23 +135,25 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
       isReply: _replyingToUsername != null,
     );
 
-    final replyToId = (_replyingToId?.isNotEmpty == true) ? _replyingToId : null;
-    final insertAt  = _replyingToIndex != null ? _replyingToIndex! + 1 : _comments.length;
+    final replyToId =
+        (_replyingToId?.isNotEmpty == true) ? _replyingToId : null;
+    final insertAt =
+        _replyingToIndex != null ? _replyingToIndex! + 1 : _comments.length;
     setState(() {
       _comments.insert(insertAt, optimistic);
       _controller.clear();
       _replyingToUsername = null;
-      _replyingToId       = null;
-      _replyingToIndex    = null;
+      _replyingToId = null;
+      _replyingToIndex = null;
     });
     _focusNode.unfocus();
 
     if (uid == null || widget.pollId.isEmpty) return;
     try {
       await supabase.from('comments').insert({
-        'poll_id':     widget.pollId,
-        'author_id':   uid,
-        'text':        body,
+        'poll_id': widget.pollId,
+        'author_id': uid,
+        'text': body,
         'reply_to_id': replyToId,
       });
       // Reload so the optimistic entry is replaced with the real DB row
@@ -172,8 +178,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
 
     setState(() {
       _replyingToUsername = username;
-      _replyingToId       = effectiveParentId;
-      _replyingToIndex    = insertIdx;
+      _replyingToId = effectiveParentId;
+      _replyingToIndex = insertIdx;
     });
     _controller.clear();
     Future.delayed(
@@ -183,8 +189,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
   void _cancelReply() {
     setState(() {
       _replyingToUsername = null;
-      _replyingToId       = null;
-      _replyingToIndex    = null;
+      _replyingToId = null;
+      _replyingToIndex = null;
     });
     _controller.clear();
     _focusNode.unfocus();
@@ -241,7 +247,8 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceElevated,
                     borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -318,9 +325,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                       ),
                     ),
                   ),
-                  GestureDetector(
+                  Pressable(
                     onTap: _cancelReply,
-                    behavior: HitTestBehavior.opaque,
+                    pressedScale: 0.85,
                     child: const SizedBox(
                       width: 40,
                       height: 36,
@@ -401,8 +408,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                 const SizedBox(width: 8),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: GestureDetector(
+                  child: Pressable(
                     onTap: _hasText ? _submitComment : null,
+                    pressedScale: 0.86,
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       curve: Curves.easeOut,
@@ -417,9 +425,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                       child: Icon(
                         Icons.arrow_upward_rounded,
                         size: 18,
-                        color: _hasText
-                            ? Colors.white
-                            : AppColors.textTertiary,
+                        color: _hasText ? Colors.white : AppColors.textTertiary,
                       ),
                     ),
                   ),
@@ -479,17 +485,17 @@ class _EmptyComments extends StatelessWidget {
 
 // ─────────────────────────────────────────────
 class _Comment {
-  final String  id;
-  final String  userId;
-  final String  username;
+  final String id;
+  final String userId;
+  final String username;
   final String? avatarUrl;
   final String? replyToId;
-  final String  text;
-  final String  timestamp;
-  final int     likes;
-  final bool    isOwn;
-  final bool    isReply;
-  final bool    isLikedByMe;
+  final String text;
+  final String timestamp;
+  final int likes;
+  final bool isOwn;
+  final bool isReply;
+  final bool isLikedByMe;
 
   const _Comment({
     required this.id,
@@ -500,8 +506,8 @@ class _Comment {
     required this.text,
     required this.timestamp,
     required this.likes,
-    this.isOwn       = false,
-    this.isReply     = false,
+    this.isOwn = false,
+    this.isReply = false,
     this.isLikedByMe = false,
   });
 }
@@ -521,7 +527,7 @@ List<_Comment> _threadComments(List<_Comment> flat) {
     return cur.id;
   }
 
-  final topLevel  = flat.where((c) => c.replyToId == null).toList();
+  final topLevel = flat.where((c) => c.replyToId == null).toList();
   final childrenOf = <String, List<_Comment>>{};
   for (final c in flat) {
     if (c.replyToId != null) {
@@ -596,9 +602,8 @@ class _CommentRowState extends State<_CommentRow>
     final willLike = !_liked;
     setState(() {
       _liked = willLike;
-      _localLikes = willLike
-          ? _localLikes + 1
-          : (_localLikes - 1).clamp(0, 999999);
+      _localLikes =
+          willLike ? _localLikes + 1 : (_localLikes - 1).clamp(0, 999999);
     });
     _likeCtrl.forward(from: 0);
 
@@ -610,25 +615,25 @@ class _CommentRowState extends State<_CommentRow>
           'comment_id': widget.comment.id,
           'user_id': uid,
         });
-        await supabase.from('comments')
-            .update({'likes': _localLikes})
-            .eq('id', widget.comment.id);
+        await supabase
+            .from('comments')
+            .update({'likes': _localLikes}).eq('id', widget.comment.id);
       } else {
-        await supabase.from('comment_likes')
+        await supabase
+            .from('comment_likes')
             .delete()
             .eq('comment_id', widget.comment.id)
             .eq('user_id', uid);
-        await supabase.from('comments')
-            .update({'likes': _localLikes})
-            .eq('id', widget.comment.id);
+        await supabase
+            .from('comments')
+            .update({'likes': _localLikes}).eq('id', widget.comment.id);
       }
     } catch (_) {
       if (mounted) {
         setState(() {
           _liked = !willLike;
-          _localLikes = willLike
-              ? (_localLikes - 1).clamp(0, 999999)
-              : _localLikes + 1;
+          _localLikes =
+              willLike ? (_localLikes - 1).clamp(0, 999999) : _localLikes + 1;
         });
       }
     }
@@ -693,9 +698,9 @@ class _CommentRowState extends State<_CommentRow>
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    GestureDetector(
+                    Pressable(
                       onTap: _toggleLike,
-                      behavior: HitTestBehavior.opaque,
+                      pressedScale: 0.88,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                             vertical: 6, horizontal: 2),
@@ -733,9 +738,9 @@ class _CommentRowState extends State<_CommentRow>
                       ),
                     ),
                     const SizedBox(width: 18),
-                    GestureDetector(
+                    Pressable(
                       onTap: widget.onReply,
-                      behavior: HitTestBehavior.opaque,
+                      pressedScale: 0.9,
                       child: const Padding(
                         padding:
                             EdgeInsets.symmetric(vertical: 6, horizontal: 2),
@@ -752,9 +757,9 @@ class _CommentRowState extends State<_CommentRow>
                     ),
                     if (widget.onDelete != null) ...[
                       const SizedBox(width: 18),
-                      GestureDetector(
+                      Pressable(
                         onTap: widget.onDelete,
-                        behavior: HitTestBehavior.opaque,
+                        pressedScale: 0.9,
                         child: const Padding(
                           padding:
                               EdgeInsets.symmetric(vertical: 6, horizontal: 2),

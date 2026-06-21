@@ -5,6 +5,7 @@ import '../app_colors.dart';
 import '../app_radius.dart';
 import '../app_typography.dart';
 import '../core/avatar_helper.dart';
+import '../widgets/pressable.dart';
 import '../widgets/profile_avatar.dart';
 import '../providers/auth_provider.dart';
 import '../providers/users_provider.dart' as users_prov;
@@ -100,9 +101,9 @@ class SwitchAccountSheet extends ConsumerWidget {
                   ),
                 ),
                 // Close button
-                GestureDetector(
+                Pressable(
                   onTap: () => Navigator.of(context).pop(),
-                  behavior: HitTestBehavior.opaque,
+                  pressedScale: 0.85,
                   child: Container(
                     width: 32,
                     height: 32,
@@ -131,8 +132,7 @@ class SwitchAccountSheet extends ConsumerWidget {
                   width: 1.5,
                 ),
               ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
               child: Row(
                 children: [
                   // Avatar
@@ -254,12 +254,11 @@ class _ActionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        GestureDetector(
+        Pressable(
           onTap: onTap,
-          behavior: HitTestBehavior.opaque,
+          pressedScale: 0.97,
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
             child: Row(
               children: [
                 Icon(

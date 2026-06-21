@@ -12,6 +12,7 @@ import '../models/user.dart';
 import '../providers/follow_provider.dart';
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
+import '../widgets/pressable.dart';
 
 class UserProfileScreen extends ConsumerWidget {
   final AppUser user;
@@ -23,7 +24,8 @@ class UserProfileScreen extends ConsumerWidget {
     final isFollowing = ref.watch(isFollowingProvider(user.id));
     final userPolls = ref.watch(pollsByUserProvider(user.id));
     // Use full profile for bio + fresh counts; fall back to passed user while loading.
-    final fullUser = ref.watch(fullProfileProvider(user.id)).valueOrNull ?? user;
+    final fullUser =
+        ref.watch(fullProfileProvider(user.id)).valueOrNull ?? user;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -103,8 +105,7 @@ class UserProfileScreen extends ConsumerWidget {
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceElevated,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.pill),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: const Text(
                             'Follows you',
@@ -139,9 +140,11 @@ class UserProfileScreen extends ConsumerWidget {
                     _DivLine(),
                     _StatCell(value: fullUser.votesReceived, label: 'Votes'),
                     _DivLine(),
-                    _StatCell(value: fullUser.followersCount, label: 'Followers'),
+                    _StatCell(
+                        value: fullUser.followersCount, label: 'Followers'),
                     _DivLine(),
-                    _StatCell(value: fullUser.followingCount, label: 'Following'),
+                    _StatCell(
+                        value: fullUser.followingCount, label: 'Following'),
                   ],
                 ),
               ),
@@ -170,8 +173,7 @@ class UserProfileScreen extends ConsumerWidget {
           if (userPolls.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
-              child: _EmptyPolls(
-                  name: user.name.split(' ').first),
+              child: _EmptyPolls(name: user.name.split(' ').first),
             )
           else
             SliverPadding(
@@ -241,12 +243,12 @@ class _FollowButton extends StatelessWidget {
       border = null;
     }
 
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
+      pressedScale: 0.93,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -323,11 +325,12 @@ class _UserPollRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        GestureDetector(
+        Pressable(
           onTap: onTap,
-          behavior: HitTestBehavior.opaque,
+          pressedScale: 0.98,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenH, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenH, vertical: 14),
             child: Row(
               children: [
                 Expanded(
@@ -390,8 +393,8 @@ class _EmptyPolls extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           '$name hasn\'t posted yet',
-          style: AppTypography.titleSmall
-              .copyWith(color: AppColors.textPrimary),
+          style:
+              AppTypography.titleSmall.copyWith(color: AppColors.textPrimary),
         ),
         const SizedBox(height: 6),
         const Text(

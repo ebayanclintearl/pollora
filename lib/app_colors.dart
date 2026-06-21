@@ -15,13 +15,14 @@ class AppColors {
   static const Color accentPrimaryMuted = Color(0x405B4FE8);
   static const Color accentPrimaryBorder = Color(0x995B4FE8);
 
-  // Text — proper hierarchy: white > grey 67% > grey 40% > grey 33%
+  // Text — cool-neutral ramp (subtle blue undertone harmonises with the
+  // indigo accent and reads crisper than pure grey on near-black).
   static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFAAAAAA); // was #E6E6E6 — too light, no hierarchy
-  static const Color textTertiary = Color(0xFF666666);  // timestamps, metadata
+  static const Color textSecondary = Color(0xFFBFC3CC); // secondary copy, counts
+  static const Color textTertiary = Color(0xFF787D88);  // timestamps, metadata, icons
   static const Color textAccent = Color(0xFFB8B3FF);    // accent tinted text / stats
-  static const Color textPlaceholder = Color(0xFF606060);
-  static const Color textDestructive = Color(0xFFFF5555);
+  static const Color textPlaceholder = Color(0xFF5C616B);
+  static const Color textDestructive = Color(0xFFFF5566);
   static const Color textSuccess = Color(0xFF4CAF50);
 
   // Border — very subtle, no harsh lines
@@ -36,5 +37,5 @@ class AppColors {
   // Navigation
   static const Color navBackground = Color(0xFF0A0A0A);
   static const Color navActive = Color(0xFFB8B3FF);
-  static const Color navInactive = Color(0xFF5C5C5C); // was #AFAFAF — too bright
+  static const Color navInactive = Color(0xFF6B707A); // cool-neutral, brighter for legibility
 }

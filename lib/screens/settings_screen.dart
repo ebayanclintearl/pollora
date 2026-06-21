@@ -12,6 +12,7 @@ import '../app_typography.dart';
 import '../core/avatar_helper.dart';
 import '../providers/auth_provider.dart';
 import '../providers/users_provider.dart' as users_prov;
+import '../widgets/pressable.dart';
 import '../widgets/profile_avatar.dart';
 import '../providers/follow_provider.dart';
 import '../services/auth_service.dart';
@@ -20,9 +21,11 @@ import 'edit_profile_screen.dart';
 import 'web_view_screen.dart';
 
 // ── Update these before App Store submission ──
-const _kPrivacyPolicyUrl = 'https://github.com/clintearlebayan/pollora/blob/main/PRIVACY.md';
-const _kSupportEmail     = 'support@pollora.app';
-const _kAppStoreUrl      = 'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission
+const _kPrivacyPolicyUrl =
+    'https://github.com/clintearlebayan/pollora/blob/main/PRIVACY.md';
+const _kSupportEmail = 'support@pollora.app';
+const _kAppStoreUrl =
+    'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -41,8 +44,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             // ── Header ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.screenH,
-                  8, AppSpacing.screenH, 2),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenH, 8, AppSpacing.screenH, 2),
               child: Row(
                 children: [
                   GestureDetector(
@@ -94,9 +97,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             await review.requestReview();
                           } else {
                             await review.openStoreListing(
-                                appStoreId: _kAppStoreUrl
-                                    .split('/id')
-                                    .last);
+                                appStoreId: _kAppStoreUrl.split('/id').last);
                           }
                         },
                         showDivider: true,
@@ -158,7 +159,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         // pollsProvider auto-reloads via authStateProvider watch
                       } catch (e) {
                         if (context.mounted) {
-                          AppToast.show(context, 'Sign out failed', isError: true);
+                          AppToast.show(context, 'Sign out failed',
+                              isError: true);
                         }
                       }
                     },
@@ -337,12 +339,12 @@ class _SettingsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        GestureDetector(
+        Pressable(
           onTap: () {
             HapticFeedback.selectionClick();
             onTap();
           },
-          behavior: HitTestBehavior.opaque,
+          pressedScale: 0.98,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -369,4 +371,3 @@ class _SettingsRow extends StatelessWidget {
     );
   }
 }
-

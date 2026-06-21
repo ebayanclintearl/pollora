@@ -1523,8 +1523,6 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
                 children: _tabs.map((entry) {
                   final (tab, label) = entry;
                   final isActive = selected == tab;
-                  final color =
-                      isActive ? AppColors.textAccent : AppColors.textSecondary;
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: Pressable(
@@ -1537,12 +1535,12 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? AppColors.accentPrimaryMuted
-                              : AppColors.surfaceElevated,
+                              ? AppColors.accentPrimary
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: isActive
-                                ? AppColors.accentPrimaryBorder
+                                ? AppColors.accentPrimary
                                 : AppColors.borderDefault,
                             width: 1,
                           ),
@@ -1552,8 +1550,10 @@ class _FeedTabDelegate extends SliverPersistentHeaderDelegate {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight:
-                                isActive ? FontWeight.w600 : FontWeight.w400,
-                            color: color,
+                                isActive ? FontWeight.w700 : FontWeight.w500,
+                            color: isActive
+                                ? Colors.white
+                                : AppColors.textSecondary,
                             height: 1,
                           ),
                         ),

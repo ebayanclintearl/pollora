@@ -6,9 +6,9 @@ import '../app_radius.dart';
 import '../core/supabase_client.dart';
 import '../providers/moderation_provider.dart';
 import '../providers/users_provider.dart';
-import 'app_toast.dart';
 import 'pressable.dart';
 import 'profile_avatar.dart';
+import 'report_sheet.dart';
 
 class CommentsSheet extends ConsumerStatefulWidget {
   final String pollId;
@@ -211,18 +211,10 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     }
   }
 
-  Future<void> _reportComment(String commentId) async {
+  void _reportComment(String commentId) {
     if (commentId.isEmpty) return;
-    final ok = await reportContent(targetType: 'comment', targetId: commentId);
-    if (mounted) {
-      AppToast.show(
-        context,
-        ok
-            ? 'Report received — we\'ll review within 24 hours'
-            : 'Couldn\'t submit report. Try again.',
-        isError: !ok,
-      );
-    }
+    showReportSheet(context,
+        targetType: 'comment', targetLabel: 'comment', targetId: commentId);
   }
 
   @override

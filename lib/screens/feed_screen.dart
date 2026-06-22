@@ -7,6 +7,7 @@ import '../widgets/comments_sheet.dart';
 import '../widgets/poll_image.dart';
 import '../widgets/pressable.dart';
 import '../widgets/profile_avatar.dart';
+import '../widgets/report_sheet.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -882,19 +883,10 @@ void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId,
                 color: AppColors.textDestructive),
             title: const Text('Report poll',
                 style: TextStyle(color: AppColors.textDestructive)),
-            onTap: () async {
+            onTap: () {
               Navigator.pop(sheetCtx);
-              final ok =
-                  await reportContent(targetType: 'poll', targetId: pollId);
-              if (context.mounted) {
-                AppToast.show(
-                  context,
-                  ok
-                      ? 'Report received — we\'ll review within 24 hours'
-                      : 'Couldn\'t submit report. Try again.',
-                  isError: !ok,
-                );
-              }
+              showReportSheet(context,
+                  targetType: 'poll', targetLabel: 'poll', targetId: pollId);
             },
           ),
           ListTile(

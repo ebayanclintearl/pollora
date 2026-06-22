@@ -17,6 +17,7 @@ import '../providers/users_provider.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/poll_image.dart';
 import '../widgets/pressable.dart';
+import '../widgets/report_sheet.dart';
 
 // ─────────────────────────────────────────────
 // Poll Detail — unified poll + comments page
@@ -243,18 +244,10 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     }
   }
 
-  Future<void> _reportComment(String commentId) async {
+  void _reportComment(String commentId) {
     if (commentId.isEmpty) return;
-    final ok = await reportContent(targetType: 'comment', targetId: commentId);
-    if (mounted) {
-      AppToast.show(
-        context,
-        ok
-            ? 'Report received — we\'ll review within 24 hours'
-            : 'Couldn\'t submit report. Try again.',
-        isError: !ok,
-      );
-    }
+    showReportSheet(context,
+        targetType: 'comment', targetLabel: 'comment', targetId: commentId);
   }
 
   // ── Build ──────────────────────────────────
@@ -749,19 +742,12 @@ class _PollCard extends ConsumerWidget {
                     color: AppColors.textDestructive),
                 title: const Text('Report poll',
                     style: TextStyle(color: AppColors.textDestructive)),
-                onTap: () async {
+                onTap: () {
                   Navigator.pop(context);
-                  final ok = await reportContent(
-                      targetType: 'poll', targetId: poll.id);
-                  if (context.mounted) {
-                    AppToast.show(
-                      context,
-                      ok
-                          ? 'Report received — we\'ll review within 24 hours'
-                          : 'Couldn\'t submit report. Try again.',
-                      isError: !ok,
-                    );
-                  }
+                  showReportSheet(context,
+                      targetType: 'poll',
+                      targetLabel: 'poll',
+                      targetId: poll.id);
                 },
               ),
               ListTile(

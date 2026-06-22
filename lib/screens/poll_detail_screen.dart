@@ -11,6 +11,7 @@ import '../core/supabase_client.dart';
 import '../widgets/profile_avatar.dart';
 import '../models/poll.dart';
 import '../providers/follow_provider.dart';
+import '../providers/moderation_provider.dart';
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
 import '../widgets/app_toast.dart';
@@ -121,11 +122,15 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
         );
       }).toList();
 
+      // Hide comments from users the current user has blocked.
+      final blocked = ref.read(blockProvider);
+      final visible = flat.where((c) => !blocked.contains(c.userId)).toList();
+
       setState(() {
         _commentsLoading = false;
         _comments
           ..clear()
-          ..addAll(_threadComments(flat));
+          ..addAll(_threadComments(visible));
       });
     } catch (_) {
       if (mounted) setState(() => _commentsLoading = false);
@@ -238,6 +243,20 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     }
   }
 
+  Future<void> _reportComment(String commentId) async {
+    if (commentId.isEmpty) return;
+    final ok = await reportContent(targetType: 'comment', targetId: commentId);
+    if (mounted) {
+      AppToast.show(
+        context,
+        ok
+            ? 'Report received — we\'ll review within 24 hours'
+            : 'Couldn\'t submit report. Try again.',
+        isError: !ok,
+      );
+    }
+  }
+
   // ── Build ──────────────────────────────────
 
   @override
@@ -331,8 +350,6 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                               .read(pollsProvider.notifier)
                               .vote(poll.id, optId),
                           onDelete: () => _confirmDelete(context, ref, poll.id),
-                          onReport: () => AppToast.show(context,
-                              'Poll reported — thanks for the feedback'),
                         ),
                       ),
                     ),
@@ -413,6 +430,9 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                               onDelete: _comments[i].isOwn
                                   ? () => _deleteComment(i)
                                   : null,
+                              onReport: _comments[i].isOwn
+                                  ? null
+                                  : () => _reportComment(_comments[i].id),
                             ),
                             childCount: _comments.length,
                           ),
@@ -468,7 +488,6 @@ class _PollCard extends ConsumerWidget {
   final Future<void> Function() onShare;
   final void Function(String optionId) onVote;
   final VoidCallback onDelete;
-  final VoidCallback onReport;
 
   const _PollCard({
     required this.poll,
@@ -478,7 +497,6 @@ class _PollCard extends ConsumerWidget {
     required this.onShare,
     required this.onVote,
     required this.onDelete,
-    required this.onReport,
   });
 
   @override
@@ -731,9 +749,31 @@ class _PollCard extends ConsumerWidget {
                     color: AppColors.textDestructive),
                 title: const Text('Report poll',
                     style: TextStyle(color: AppColors.textDestructive)),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final ok = await reportContent(
+                      targetType: 'poll', targetId: poll.id);
+                  if (context.mounted) {
+                    AppToast.show(
+                      context,
+                      ok
+                          ? 'Report received — we\'ll review within 24 hours'
+                          : 'Couldn\'t submit report. Try again.',
+                      isError: !ok,
+                    );
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.block_rounded,
+                    color: AppColors.textDestructive),
+                title: Text('Block ${poll.author.name}',
+                    style: const TextStyle(color: AppColors.textDestructive)),
                 onTap: () {
                   Navigator.pop(context);
-                  onReport();
+                  ref.read(blockProvider.notifier).block(poll.author.id);
+                  AppToast.show(context,
+                      'Blocked — you won\'t see their content anymore');
                 },
               ),
             ],
@@ -894,11 +934,13 @@ class _CommentRow extends StatefulWidget {
   final _Comment comment;
   final VoidCallback onReply;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
 
   const _CommentRow({
     required this.comment,
     required this.onReply,
     this.onDelete,
+    this.onReport,
   });
 
   @override
@@ -1086,6 +1128,24 @@ class _CommentRowState extends State<_CommentRow>
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: AppColors.textDestructive,
+                              height: 1,
+                            )),
+                      ),
+                    ),
+                  ],
+                  if (widget.onReport != null) ...[
+                    const SizedBox(width: 16),
+                    Pressable(
+                      onTap: widget.onReport,
+                      pressedScale: 0.9,
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                        child: Text('Report',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textTertiary,
                               height: 1,
                             )),
                       ),

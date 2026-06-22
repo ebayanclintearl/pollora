@@ -15,14 +15,18 @@ import '../providers/users_provider.dart' as users_prov;
 import '../widgets/pressable.dart';
 import '../widgets/profile_avatar.dart';
 import '../providers/follow_provider.dart';
+import '../providers/moderation_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
+import 'blocked_accounts_screen.dart';
 import 'edit_profile_screen.dart';
 import 'web_view_screen.dart';
 
 // ── Update these before App Store submission ──
 const _kPrivacyPolicyUrl =
     'https://github.com/clintearlebayan/pollora/blob/main/PRIVACY.md';
+const _kTermsUrl =
+    'https://github.com/clintearlebayan/pollora/blob/main/TERMS.md';
 const _kSupportEmail = 'support@pollora.app';
 const _kAppStoreUrl =
     'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission
@@ -144,6 +148,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                           ),
                         ),
+                        showDivider: true,
+                      ),
+                      _SettingsRow(
+                        icon: Icons.article_outlined,
+                        label: 'Terms of Service',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const WebViewScreen(
+                              title: 'Terms of Service',
+                              url: _kTermsUrl,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Account ──
+                  const _SectionLabel('Account'),
+                  _SettingsCard(
+                    children: [
+                      _SettingsRow(
+                        icon: Icons.block_rounded,
+                        label: 'Blocked Accounts',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BlockedAccountsScreen(),
+                          ),
+                        ),
+                        showDivider: true,
+                      ),
+                      _SettingsRow(
+                        icon: Icons.delete_outline_rounded,
+                        label: 'Delete Account',
+                        destructive: true,
+                        onTap: () => _confirmDeleteAccount(context, ref),
                       ),
                     ],
                   ),
@@ -208,6 +251,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────
+// Delete account — confirm, then permanently delete via RPC
+// ─────────────────────────────────────────────
+Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  HapticFeedback.mediumImpact();
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dctx) => AlertDialog(
+      backgroundColor: AppColors.surfaceCard,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text(
+        'Delete account?',
+        style: TextStyle(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      content: const Text(
+        'This permanently deletes your profile, polls, votes and comments. '
+        'This cannot be undone.',
+        style: TextStyle(
+            fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dctx).pop(false),
+          child: const Text('Cancel',
+              style: TextStyle(color: AppColors.textSecondary)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dctx).pop(true),
+          child: const Text('Delete',
+              style: TextStyle(
+                  color: AppColors.textDestructive,
+                  fontWeight: FontWeight.w700)),
+        ),
+      ],
+    ),
+  );
+
+  if (confirmed != true) return;
+
+  try {
+    await AuthService.deleteAccount();
+    if (context.mounted) {
+      ref.invalidate(followProvider);
+      ref.invalidate(blockProvider);
+      // Drop back to the root; the auth gate takes over once signed out.
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+  } catch (_) {
+    if (context.mounted) {
+      AppToast.show(context, 'Couldn\'t delete account. Try again.',
+          isError: true);
+    }
   }
 }
 
@@ -327,16 +429,20 @@ class _SettingsRow extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool showDivider;
+  final bool destructive;
 
   const _SettingsRow({
     required this.icon,
     required this.label,
     required this.onTap,
     this.showDivider = false,
+    this.destructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tint =
+        destructive ? AppColors.textDestructive : AppColors.textSecondary;
     return Column(
       children: [
         Pressable(
@@ -349,14 +455,21 @@ class _SettingsRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(icon,
-                    size: AppIconSizes.control, color: AppColors.textSecondary),
+                Icon(icon, size: AppIconSizes.control, color: tint),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(label, style: AppTypography.titleSmall),
+                  child: Text(
+                    label,
+                    style: destructive
+                        ? AppTypography.titleSmall
+                            .copyWith(color: AppColors.textDestructive)
+                        : AppTypography.titleSmall,
+                  ),
                 ),
-                const Icon(Icons.chevron_right_rounded,
-                    size: AppIconSizes.control, color: AppColors.textTertiary),
+                if (!destructive)
+                  const Icon(Icons.chevron_right_rounded,
+                      size: AppIconSizes.control,
+                      color: AppColors.textTertiary),
               ],
             ),
           ),

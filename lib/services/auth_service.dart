@@ -25,7 +25,8 @@ class AuthService {
     );
 
     final idToken = credential.identityToken;
-    if (idToken == null) throw Exception('Apple Sign-In failed: no identity token');
+    if (idToken == null)
+      throw Exception('Apple Sign-In failed: no identity token');
 
     await supabase.auth.signInWithIdToken(
       provider: OAuthProvider.apple,
@@ -75,13 +76,25 @@ class AuthService {
     await supabase.auth.signOut();
   }
 
+  // ── Delete account ───────────────────────────
+  /// Permanently deletes the current user. The `delete_current_user` RPC
+  /// removes the auth row, which cascades through every table (polls,
+  /// votes, comments, follows, favorites, reports, blocks) and clears the
+  /// user's avatar files. The local session is then cleared.
+  static Future<void> deleteAccount() async {
+    await supabase.rpc('delete_current_user');
+    // Local scope: the server-side user is already gone, so just clear the
+    // local session rather than attempting a server round-trip.
+    await supabase.auth.signOut(scope: SignOutScope.local);
+  }
+
   // ── Helpers ──────────────────────────────────
   static String _generateNonce([int length = 32]) {
     const charset =
         '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
     final random = Random.secure();
-    return List.generate(
-        length, (_) => charset[random.nextInt(charset.length)]).join();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
   }
 
   static String _sha256(String input) {

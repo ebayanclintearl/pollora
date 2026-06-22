@@ -16,6 +16,7 @@ import '../models/poll.dart';
 import '../models/user.dart';
 import '../providers/auth_provider.dart' as auth_prov;
 import '../providers/follow_provider.dart';
+import '../providers/moderation_provider.dart';
 import '../providers/polls_provider.dart';
 import '../providers/search_provider.dart';
 
@@ -648,7 +649,8 @@ class _PollCardState extends ConsumerState<_PollCard>
                     _InlineFollowButton(userId: p.author.id),
                     GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: () => _showOthersPollMenu(context, ref, p.id),
+                      onTap: () => _showOthersPollMenu(
+                          context, ref, p.id, p.author.id, p.author.name),
                       child: const SizedBox(
                         width: 32,
                         height: 32,
@@ -840,12 +842,13 @@ String _fmtVotes(int n) {
 }
 
 // ── ⋯ menu for other people's polls ───────────
-void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId) {
+void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId,
+    String authorId, String authorName) {
   final bottom = MediaQuery.of(context).padding.bottom;
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (_) => Container(
+    builder: (sheetCtx) => Container(
       decoration: const BoxDecoration(
         color: AppColors.surfaceCard,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -868,7 +871,7 @@ void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId) {
                 const Icon(Icons.link_rounded, color: AppColors.textSecondary),
             title: const Text('Copy link'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.pop(sheetCtx);
               Clipboard.setData(
                   ClipboardData(text: 'https://pollora.app/poll/$pollId'));
               AppToast.show(context, 'Link copied');
@@ -879,9 +882,31 @@ void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId) {
                 color: AppColors.textDestructive),
             title: const Text('Report poll',
                 style: TextStyle(color: AppColors.textDestructive)),
+            onTap: () async {
+              Navigator.pop(sheetCtx);
+              final ok =
+                  await reportContent(targetType: 'poll', targetId: pollId);
+              if (context.mounted) {
+                AppToast.show(
+                  context,
+                  ok
+                      ? 'Report received — we\'ll review within 24 hours'
+                      : 'Couldn\'t submit report. Try again.',
+                  isError: !ok,
+                );
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.block_rounded,
+                color: AppColors.textDestructive),
+            title: Text('Block $authorName',
+                style: const TextStyle(color: AppColors.textDestructive)),
             onTap: () {
-              Navigator.pop(context);
-              AppToast.show(context, 'Poll reported — thanks for the feedback');
+              Navigator.pop(sheetCtx);
+              ref.read(blockProvider.notifier).block(authorId);
+              AppToast.show(
+                  context, 'Blocked — you won\'t see their content anymore');
             },
           ),
           const SizedBox(height: 8),

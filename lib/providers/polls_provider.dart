@@ -1,15 +1,17 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:supabase_flutter/supabase_flutter.dart' show PostgresChangeEvent;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgresChangeEvent;
 import '../core/supabase_client.dart';
 import '../models/poll.dart';
 import 'auth_provider.dart' as auth_prov;
+import 'moderation_provider.dart';
 
 const _pageSize = 20;
 
 // ── Pagination side-state ─────────────────────
-final pollsHasMoreProvider     = StateProvider<bool>((ref) => true);
+final pollsHasMoreProvider = StateProvider<bool>((ref) => true);
 final pollsLoadingMoreProvider = StateProvider<bool>((ref) => false);
 
 // ── Real-time new-poll counter ─────────────────
@@ -28,9 +30,9 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     ref.onDispose(() => disposed = true);
     Future.microtask(() {
       if (disposed) return;
-      ref.read(pollsHasMoreProvider.notifier).state     = true;
+      ref.read(pollsHasMoreProvider.notifier).state = true;
       ref.read(pollsLoadingMoreProvider.notifier).state = false;
-      ref.read(newPollsCountProvider.notifier).state    = 0;
+      ref.read(newPollsCountProvider.notifier).state = 0;
     });
 
     // Subscribe to new polls via Realtime; increment the banner counter.
@@ -72,8 +74,8 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
             .order('created_at', ascending: false)
             .limit(_pageSize);
 
-    Map<String, String> votedOptions   = {};
-    Set<String>         favoritedPolls = {};
+    Map<String, String> votedOptions = {};
+    Set<String> favoritedPolls = {};
 
     Set<String> sharedPolls = {};
 
@@ -114,8 +116,8 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       return Poll.fromJson(
         json as Map<String, dynamic>,
         votedOptionId: votedOptions[id],
-        isFavorited:   favoritedPolls.contains(id),
-        hasShared:     sharedPolls.contains(id),
+        isFavorited: favoritedPolls.contains(id),
+        hasShared: sharedPolls.contains(id),
         currentUserId: uid,
       );
     }).toList();
@@ -138,8 +140,9 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
   }
 
   Future<void> loadMore() async {
-    if (ref.read(pollsLoadingMoreProvider) ||
-        !ref.read(pollsHasMoreProvider)) { return; }
+    if (ref.read(pollsLoadingMoreProvider) || !ref.read(pollsHasMoreProvider)) {
+      return;
+    }
 
     final current = state.valueOrNull ?? [];
     if (current.isEmpty) return;
@@ -147,7 +150,7 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     ref.read(pollsLoadingMoreProvider.notifier).state = true;
     try {
       final cursor = current.last.createdAt;
-      final more   = await _fetch(cursor: cursor);
+      final more = await _fetch(cursor: cursor);
       ref.read(pollsHasMoreProvider.notifier).state = more.length >= _pageSize;
       state = AsyncData([...current, ...more]);
     } catch (_) {
@@ -160,7 +163,7 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
   List<Poll> get _current => state.valueOrNull ?? const [];
 
   // Track in-flight mutations so rapid taps can't fire duplicate DB calls.
-  final _votingPolls     = <String>{};
+  final _votingPolls = <String>{};
   final _favoritingPolls = <String>{};
   bool _refreshing = false;
 
@@ -178,7 +181,8 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       final prev = poll.votedOptionId;
       final opts = poll.options.map((o) {
         if (o.id == optionId) return o.copyWith(votes: o.votes + 1);
-        if (o.id == prev)     return o.copyWith(votes: (o.votes - 1).clamp(0, 999999));
+        if (o.id == prev)
+          return o.copyWith(votes: (o.votes - 1).clamp(0, 999999));
         return o;
       }).toList();
       return poll.copyWith(options: opts, votedOptionId: optionId);
@@ -249,11 +253,15 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
           localPoll.coverImagePath, 'poll-covers', uid);
       if (coverResult != null) uploaded.add(coverResult);
 
-      final row = await supabase.from('polls').insert({
-        'author_id':       uid,
-        'question':        localPoll.question,
-        'cover_image_url': coverResult?.url,
-      }).select().single();
+      final row = await supabase
+          .from('polls')
+          .insert({
+            'author_id': uid,
+            'question': localPoll.question,
+            'cover_image_url': coverResult?.url,
+          })
+          .select()
+          .single();
 
       final pollId = row['id'] as String;
 
@@ -261,12 +269,13 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
         final optionRows = <Map<String, dynamic>>[];
         for (int i = 0; i < localPoll.options.length; i++) {
           final opt = localPoll.options[i];
-          final img = await _uploadImageTracked(opt.imagePath, 'poll-options', uid);
+          final img =
+              await _uploadImageTracked(opt.imagePath, 'poll-options', uid);
           if (img != null) uploaded.add(img);
           optionRows.add({
-            'poll_id':   pollId,
-            'text':      opt.text,
-            'position':  i,
+            'poll_id': pollId,
+            'text': opt.text,
+            'position': i,
             'image_url': img?.url,
           });
         }
@@ -294,7 +303,11 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     // Optimistic remove
     state = AsyncData(_current.where((p) => p.id != pollId).toList());
     try {
-      await supabase.from('polls').delete().eq('id', pollId).eq('author_id', uid);
+      await supabase
+          .from('polls')
+          .delete()
+          .eq('id', pollId)
+          .eq('author_id', uid);
     } catch (_) {
       state = AsyncData(snapshot);
       rethrow;
@@ -337,9 +350,11 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     if (!file.existsSync()) return null;
 
     const maxBytes = 5 * 1024 * 1024;
-    if (await file.length() > maxBytes) throw Exception('Image must be under 5 MB');
+    if (await file.length() > maxBytes)
+      throw Exception('Image must be under 5 MB');
 
-    final ext      = p.extension(localPath).isNotEmpty ? p.extension(localPath) : '.jpg';
+    final ext =
+        p.extension(localPath).isNotEmpty ? p.extension(localPath) : '.jpg';
     final fileName = '$uid/${DateTime.now().millisecondsSinceEpoch}$ext';
 
     await supabase.storage.from(bucket).upload(fileName, file);
@@ -352,32 +367,44 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
 final pollsProvider =
     AsyncNotifierProvider<PollsNotifier, List<Poll>>(PollsNotifier.new);
 
-/// Newest-first (full loaded list).
+/// Newest-first (full loaded list), minus blocked authors.
 final feedPollsProvider = Provider<List<Poll>>((ref) {
   final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
-  return [...polls]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  final blocked = ref.watch(blockProvider);
+  return polls.where((p) => !blocked.contains(p.author.id)).toList()
+    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
-/// Trending: engagement score within last 7 days.
+/// Trending: engagement score within last 7 days, minus blocked authors.
 final trendingPollsProvider = Provider<List<Poll>>((ref) {
-  final polls  = ref.watch(pollsProvider).valueOrNull ?? const [];
+  final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
+  final blocked = ref.watch(blockProvider);
   final cutoff = DateTime.now().subtract(const Duration(days: 7));
   int score(Poll p) => p.totalVotes + p.commentCount * 3;
-  return polls.where((p) => p.createdAt.isAfter(cutoff)).toList()
+  return polls
+      .where(
+          (p) => p.createdAt.isAfter(cutoff) && !blocked.contains(p.author.id))
+      .toList()
     ..sort((a, b) => score(b).compareTo(score(a)));
 });
 
-/// Popular: sorted by total votes.
+/// Popular: sorted by total votes, minus blocked authors.
 final popularPollsProvider = Provider<List<Poll>>((ref) {
   final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
-  return [...polls]..sort((a, b) => b.totalVotes.compareTo(a.totalVotes));
+  final blocked = ref.watch(blockProvider);
+  return polls.where((p) => !blocked.contains(p.author.id)).toList()
+    ..sort((a, b) => b.totalVotes.compareTo(a.totalVotes));
 });
 
-/// Following: polls from followed users.
+/// Following: polls from followed users, minus blocked authors.
 final followingPollsProvider =
     Provider.family<List<Poll>, Set<String>>((ref, followedIds) {
   final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
-  return polls.where((p) => followedIds.contains(p.author.id)).toList()
+  final blocked = ref.watch(blockProvider);
+  return polls
+      .where((p) =>
+          followedIds.contains(p.author.id) && !blocked.contains(p.author.id))
+      .toList()
     ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
@@ -398,8 +425,7 @@ final favoritePollsProvider = Provider<List<Poll>>((ref) {
 });
 
 /// Polls by a specific author.
-final pollsByUserProvider =
-    Provider.family<List<Poll>, String>((ref, userId) {
+final pollsByUserProvider = Provider.family<List<Poll>, String>((ref, userId) {
   final polls = ref.watch(pollsProvider).valueOrNull ?? const [];
   return polls
       .where((p) => p.author.id == userId && p.sharedBy == null)

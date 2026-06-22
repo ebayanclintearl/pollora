@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../app_colors.dart';
 import '../app_radius.dart';
 import '../core/supabase_client.dart';
+import '../providers/moderation_provider.dart';
 import '../providers/users_provider.dart';
+import 'app_toast.dart';
 import 'pressable.dart';
 import 'profile_avatar.dart';
 
@@ -98,11 +100,14 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
           isLikedByMe: likedIds.contains(row['id'] as String),
         );
       }).toList();
+      // Hide comments from users the current user has blocked.
+      final blocked = ref.read(blockProvider);
+      final visible = flat.where((c) => !blocked.contains(c.userId)).toList();
       setState(() {
         _loading = false;
         _comments
           ..clear()
-          ..addAll(_threadComments(flat));
+          ..addAll(_threadComments(visible));
       });
     } catch (_) {
       if (mounted) setState(() => _loading = false);
@@ -206,6 +211,20 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     }
   }
 
+  Future<void> _reportComment(String commentId) async {
+    if (commentId.isEmpty) return;
+    final ok = await reportContent(targetType: 'comment', targetId: commentId);
+    if (mounted) {
+      AppToast.show(
+        context,
+        ok
+            ? 'Report received — we\'ll review within 24 hours'
+            : 'Couldn\'t submit report. Try again.',
+        isError: !ok,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).padding.bottom;
@@ -295,6 +314,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
                           onDelete: _comments[i].isOwn
                               ? () => _deleteComment(i)
                               : null,
+                          onReport: _comments[i].isOwn
+                              ? null
+                              : () => _reportComment(_comments[i].id),
                         ),
                       ),
           ),
@@ -556,11 +578,13 @@ class _CommentRow extends StatefulWidget {
   final _Comment comment;
   final VoidCallback onReply;
   final VoidCallback? onDelete;
+  final VoidCallback? onReport;
 
   const _CommentRow({
     required this.comment,
     required this.onReply,
     this.onDelete,
+    this.onReport,
   });
 
   @override
@@ -769,6 +793,26 @@ class _CommentRowState extends State<_CommentRow>
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: AppColors.textDestructive,
+                              height: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (widget.onReport != null) ...[
+                      const SizedBox(width: 18),
+                      Pressable(
+                        onTap: widget.onReport,
+                        pressedScale: 0.9,
+                        child: const Padding(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                          child: Text(
+                            'Report',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textTertiary,
                               height: 1,
                             ),
                           ),

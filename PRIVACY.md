@@ -57,7 +57,7 @@ Your data is stored on Supabase servers. Passwords are never stored — authenti
 
 ## 5. Data Retention
 
-Your data is retained as long as your account exists. If you delete your account, your profile, polls, votes, and comments will be permanently deleted.
+Your data is retained as long as your account exists. You can permanently delete your account at any time from **Settings → Account → Delete Account**. Deleting your account immediately and permanently removes your profile, polls, votes, comments, and uploaded images.
 
 ---
 
@@ -66,7 +66,8 @@ Your data is retained as long as your account exists. If you delete your account
 You may at any time:
 - Edit or delete your profile information
 - Delete polls and comments you have created
-- Request full deletion of your account and all associated data by contacting us
+- Block or report other users and their content
+- Permanently delete your account and all associated data from within the app (Settings → Account → Delete Account)
 
 ---
 

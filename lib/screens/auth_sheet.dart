@@ -40,6 +40,11 @@ class AuthSheet extends StatefulWidget {
 class _AuthSheetState extends State<AuthSheet> {
   _AuthMode _mode = _AuthMode.options;
   bool _loading = false;
+  // Which social provider is mid sign-in, so only that button spins.
+  // 'apple' | 'google' | null.
+  String? _busyProvider;
+  // Sign-in failure shown inline (a bottom SnackBar would hide behind the sheet).
+  String? _authError;
 
   // Email form fields
   final _nameCtrl = TextEditingController();
@@ -169,29 +174,76 @@ class _AuthSheetState extends State<AuthSheet> {
 
   void _clearErrors() => setState(() {
         _nameError = _emailError = _passwordError = null;
+        _authError = null;
       });
 
+  // Inline error banner — visible inside the sheet (a bottom SnackBar would
+  // render underneath the modal and never be seen).
+  Widget _errorBanner() {
+    if (_authError == null) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.textDestructive.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border:
+            Border.all(color: AppColors.textDestructive.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline_rounded,
+              size: 16, color: AppColors.textDestructive),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              _authError!,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: AppColors.textDestructive,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Actions ──────────────────────────────────
-  Future<void> _run(Future<void> Function() action) async {
+  Future<void> _run(Future<void> Function() action, {String? provider}) async {
+    if (_loading) return; // ignore taps while another sign-in is in flight
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _busyProvider = provider;
+      _authError = null;
+    });
     try {
       await action();
       if (mounted) Navigator.of(context).pop();
     } on AuthException catch (e) {
-      if (mounted) AppToast.show(context, e.message, isError: true);
+      if (mounted) setState(() => _authError = e.message);
     } catch (e) {
-      if (mounted) {
-        final msg = e.toString().replaceAll('Exception: ', '');
-        AppToast.show(context, msg, isError: true);
+      final msg = e.toString().replaceAll('Exception: ', '');
+      // User-initiated cancel isn't an error worth surfacing.
+      if (mounted && !msg.toLowerCase().contains('cancel')) {
+        setState(() => _authError = msg);
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _busyProvider = null;
+        });
+      }
     }
   }
 
-  Future<void> _apple() => _run(AuthService.signInWithApple);
-  Future<void> _google() => _run(AuthService.signInWithGoogle);
+  Future<void> _apple() => _run(AuthService.signInWithApple, provider: 'apple');
+  Future<void> _google() =>
+      _run(AuthService.signInWithGoogle, provider: 'google');
 
   Future<void> _emailSignIn() async {
     if (!_validateSignIn()) return;
@@ -325,13 +377,15 @@ class _AuthSheetState extends State<AuthSheet> {
         ),
         const SizedBox(height: 36),
 
+        _errorBanner(),
+
         // Apple
         _SocialButton(
           label: 'Continue with Apple',
           icon: const Icon(Icons.apple_rounded, color: Colors.white, size: 20),
           backgroundColor: const Color(0xFF000000),
           textColor: Colors.white,
-          loading: _loading,
+          loading: _busyProvider == 'apple',
           onTap: _apple,
         ),
         const SizedBox(height: 12),
@@ -342,7 +396,7 @@ class _AuthSheetState extends State<AuthSheet> {
           icon: _GoogleIcon(),
           backgroundColor: const Color(0xFF2A2A2A),
           textColor: AppColors.textPrimary,
-          loading: _loading,
+          loading: _busyProvider == 'google',
           onTap: _google,
         ),
         const SizedBox(height: 20),
@@ -498,6 +552,8 @@ class _AuthSheetState extends State<AuthSheet> {
           ),
         ],
         const SizedBox(height: 16),
+
+        _errorBanner(),
 
         // Primary action button
         SizedBox(

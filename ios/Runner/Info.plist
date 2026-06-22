@@ -51,10 +51,12 @@
 	<true/>
 
 	<!-- ── Google Sign-In ───────────────────────────────────────────
-	     Replace YOUR_REVERSED_CLIENT_ID with the value from your
-	     Google Cloud Console OAuth 2.0 iOS client.
-	     Format: com.googleusercontent.apps.XXXXXXXXXX-XXXXXXXX
+	     GIDClientID  = the iOS client ID in forward order.
+	     URL scheme   = the same ID reversed (com.googleusercontent.apps.<id>).
+	     Both come from the Google Cloud Console OAuth 2.0 iOS client.
 	──────────────────────────────────────────────────────────────── -->
+	<key>GIDClientID</key>
+	<string>1055277181394-2bhhjs5823cbclinpl15r28ue1gm14ij.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -62,7 +64,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>YOUR_REVERSED_CLIENT_ID</string>
+				<string>com.googleusercontent.apps.1055277181394-2bhhjs5823cbclinpl15r28ue1gm14ij</string>
 			</array>
 		</dict>
 	</array>

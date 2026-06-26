@@ -180,20 +180,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             builder: (_) => const BlockedAccountsScreen(),
                           ),
                         ),
-                        showDivider: true,
-                      ),
-                      _SettingsRow(
-                        icon: Icons.delete_outline_rounded,
-                        label: 'Delete Account',
-                        destructive: true,
-                        onTap: () => _confirmDeleteAccount(context, ref),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
 
-                  // ── Sign Out — standalone destructive button ──
-                  GestureDetector(
+                  // ── Sign Out — neutral (reversible action) ──
+                  _ActionButton(
+                    icon: Icons.logout_rounded,
+                    label: 'Sign Out',
+                    destructive: false,
                     onTap: () async {
                       HapticFeedback.mediumImpact();
                       try {
@@ -207,33 +203,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         }
                       }
                     },
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        border: Border.all(
-                            color: AppColors.textDestructive
-                                .withValues(alpha: 0.5)),
-                        borderRadius: BorderRadius.circular(AppRadius.card),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.logout_rounded,
-                              color: AppColors.textDestructive,
-                              size: AppIconSizes.control),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Sign Out',
-                            style: AppTypography.titleSmall.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textDestructive,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ── Delete Account — destructive (permanent) ──
+                  _ActionButton(
+                    icon: Icons.delete_outline_rounded,
+                    label: 'Delete Account',
+                    destructive: true,
+                    onTap: () => _confirmDeleteAccount(context, ref),
                   ),
                   const SizedBox(height: 16),
 
@@ -310,6 +288,57 @@ Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
       AppToast.show(context, 'Couldn\'t delete account. Try again.',
           isError: true);
     }
+  }
+}
+
+// ─────────────────────────────────────────────
+// Outlined action button — used for Sign Out (neutral) and
+// Delete Account (destructive) so the two terminal actions match.
+// ─────────────────────────────────────────────
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool destructive;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.destructive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        destructive ? AppColors.textDestructive : AppColors.textSecondary;
+    final borderColor = destructive
+        ? AppColors.textDestructive.withValues(alpha: 0.5)
+        : AppColors.borderDefault;
+    return Pressable(
+      pressedScale: 0.98,
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(AppRadius.card),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: AppIconSizes.control),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTypography.titleSmall
+                  .copyWith(fontWeight: FontWeight.w600, color: color),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -429,20 +458,16 @@ class _SettingsRow extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool showDivider;
-  final bool destructive;
 
   const _SettingsRow({
     required this.icon,
     required this.label,
     required this.onTap,
     this.showDivider = false,
-    this.destructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final tint =
-        destructive ? AppColors.textDestructive : AppColors.textSecondary;
     return Column(
       children: [
         Pressable(
@@ -455,21 +480,14 @@ class _SettingsRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
               children: [
-                Icon(icon, size: AppIconSizes.control, color: tint),
+                Icon(icon,
+                    size: AppIconSizes.control, color: AppColors.textSecondary),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: destructive
-                        ? AppTypography.titleSmall
-                            .copyWith(color: AppColors.textDestructive)
-                        : AppTypography.titleSmall,
-                  ),
+                  child: Text(label, style: AppTypography.titleSmall),
                 ),
-                if (!destructive)
-                  const Icon(Icons.chevron_right_rounded,
-                      size: AppIconSizes.control,
-                      color: AppColors.textTertiary),
+                const Icon(Icons.chevron_right_rounded,
+                    size: AppIconSizes.control, color: AppColors.textTertiary),
               ],
             ),
           ),

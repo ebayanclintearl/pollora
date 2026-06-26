@@ -166,8 +166,9 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
       isReply: _replyingToUsername != null,
     );
 
-    final insertAt =
-        _replyingToIndex != null ? _replyingToIndex! + 1 : _comments.length;
+    // Replies slot in after their parent thread; new top-level comments go
+    // to the top (newest-first).
+    final insertAt = _replyingToIndex != null ? _replyingToIndex! + 1 : 0;
     setState(() {
       _comments.insert(insertAt, optimistic);
       _inputCtrl.clear();
@@ -177,17 +178,6 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     });
     _focusNode.unfocus();
 
-    // Scroll to the new comment
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollCtrl.hasClients) {
-        _scrollCtrl.animateTo(
-          _scrollCtrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-
     if (uid == null) return;
     try {
       await supabase.from('comments').insert({
@@ -196,6 +186,8 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
         'text': body,
         'reply_to_id': replyToId,
       });
+      // Keep the poll card's comment count in sync.
+      ref.read(pollsProvider.notifier).bumpCommentCount(widget.pollId, 1);
       // Reload so the optimistic entry is replaced with the real DB row.
       if (mounted) await _loadComments();
     } catch (_) {
@@ -209,16 +201,20 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     // Cap at 2 levels: if replying to a reply, attach to its parent thread instead
     final effectiveParentId = comment.replyToId ?? commentId;
 
-    // Insert after the last existing reply in the same thread
-    int insertIdx = index;
+    // Insert directly under the parent so the newest reply sits at the top
+    // of the thread (matches the newest-first top-level ordering).
+    int parentIdx = index;
     for (int i = 0; i < _comments.length; i++) {
-      if (_comments[i].replyToId == effectiveParentId) insertIdx = i;
+      if (_comments[i].id == effectiveParentId) {
+        parentIdx = i;
+        break;
+      }
     }
 
     setState(() {
       _replyingToUsername = username;
       _replyingToId = effectiveParentId;
-      _replyingToIndex = insertIdx;
+      _replyingToIndex = parentIdx;
     });
     _inputCtrl.clear();
     Future.delayed(
@@ -240,6 +236,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     if (c.id.isNotEmpty) {
       try {
         await supabase.from('comments').delete().eq('id', c.id);
+        ref.read(pollsProvider.notifier).bumpCommentCount(widget.pollId, -1);
       } catch (_) {}
     }
   }
@@ -1328,7 +1325,9 @@ List<_Comment> _threadComments(List<_Comment> flat) {
     return cur.id;
   }
 
-  final topLevel = flat.where((c) => c.replyToId == null).toList();
+  // Newest top-level comments first; replies stay chronological under each.
+  final topLevel =
+      flat.where((c) => c.replyToId == null).toList().reversed.toList();
   final childrenOf = <String, List<_Comment>>{};
   for (final c in flat) {
     if (c.replyToId != null) {
@@ -1341,7 +1340,8 @@ List<_Comment> _threadComments(List<_Comment> flat) {
   for (final p in topLevel) {
     result.add(p);
     placed.add(p.id);
-    for (final child in childrenOf[p.id] ?? []) {
+    // Newest reply first, directly under the parent.
+    for (final child in (childrenOf[p.id] ?? const []).reversed) {
       result.add(child);
       placed.add(child.id);
     }

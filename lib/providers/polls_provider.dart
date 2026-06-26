@@ -290,6 +290,17 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     }
   }
 
+  // Optimistically adjust a poll's comment count so feed/detail cards update
+  // immediately when a comment is added or removed (the DB trigger keeps the
+  // real value in sync; this just avoids a stale-looking card until refresh).
+  void bumpCommentCount(String pollId, int delta) {
+    state = AsyncData(_current.map((p) {
+      if (p.id != pollId) return p;
+      return p.copyWith(
+          commentCount: (p.commentCount + delta).clamp(0, 1 << 31));
+    }).toList());
+  }
+
   Future<void> addPoll(Poll localPoll) async {
     final uid = supabase.auth.currentUser?.id;
     if (uid == null) throw Exception('Not signed in');

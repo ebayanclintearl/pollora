@@ -201,20 +201,17 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
     // Cap at 2 levels: if replying to a reply, attach to its parent thread instead
     final effectiveParentId = comment.replyToId ?? commentId;
 
-    // Insert directly under the parent so the newest reply sits at the top
-    // of the thread (matches the newest-first top-level ordering).
-    int parentIdx = index;
+    // Insert after the last existing reply so the thread reads chronologically
+    // and the new reply sits below the comment it answers (not jumping to top).
+    int insertIdx = index;
     for (int i = 0; i < _comments.length; i++) {
-      if (_comments[i].id == effectiveParentId) {
-        parentIdx = i;
-        break;
-      }
+      if (_comments[i].replyToId == effectiveParentId) insertIdx = i;
     }
 
     setState(() {
       _replyingToUsername = username;
       _replyingToId = effectiveParentId;
-      _replyingToIndex = parentIdx;
+      _replyingToIndex = insertIdx;
     });
     _inputCtrl.clear();
     Future.delayed(
@@ -1340,8 +1337,8 @@ List<_Comment> _threadComments(List<_Comment> flat) {
   for (final p in topLevel) {
     result.add(p);
     placed.add(p.id);
-    // Newest reply first, directly under the parent.
-    for (final child in (childrenOf[p.id] ?? const []).reversed) {
+    // Replies stay chronological under the parent (conversation flow).
+    for (final child in childrenOf[p.id] ?? const []) {
       result.add(child);
       placed.add(child.id);
     }

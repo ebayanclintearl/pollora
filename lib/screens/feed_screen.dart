@@ -140,6 +140,24 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   Future<void> _onRefresh() async {
     HapticFeedback.mediumImpact();
     await ref.read(pollsProvider.notifier).refresh();
+    _ensureTabData(_selectedTab);
+  }
+
+  // Fetch the selected tab's globally-ranked polls server-side; they merge
+  // into the shared pool so the tab shows a correct top, not just a re-sort
+  // of the recently-loaded window. Latest is already loaded by the notifier.
+  void _ensureTabData(_FeedTab tab) {
+    final notifier = ref.read(pollsProvider.notifier);
+    switch (tab) {
+      case _FeedTab.latest:
+        break;
+      case _FeedTab.trending:
+        notifier.loadTrending();
+      case _FeedTab.popular:
+        notifier.loadPopular();
+      case _FeedTab.following:
+        notifier.loadFollowing(ref.read(followProvider));
+    }
   }
 
   // ── Build ──────────────────────────────────
@@ -210,6 +228,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         onSelect: (tab) {
                           HapticFeedback.selectionClick();
                           setState(() => _selectedTab = tab);
+                          _ensureTabData(tab);
                         },
                         height: tabBarH,
                       ),

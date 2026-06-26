@@ -54,64 +54,73 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     // Cancel the channel when the provider is rebuilt / disposed.
     ref.onDispose(() => supabase.removeChannel(channel));
 
-    return _fetch(cursor: null);
+    final initial = await _fetch(cursor: null);
+    _latestCursor = initial.isNotEmpty ? initial.last.createdAt : null;
+    return initial;
   }
 
-  Future<List<Poll>> _fetch({required DateTime? cursor}) async {
-    final uid = supabase.auth.currentUser?.id;
+  // Oldest "Latest"-tab poll loaded so far. Kept separate from the pool so
+  // merging ranked polls (Popular/Trending/Following) can't corrupt the
+  // chronological pagination cursor.
+  DateTime? _latestCursor;
 
-    // Filters must be applied before .order()/.limit() in the Supabase Dart client.
+  static const _selectCols = '*, author:profiles!author_id(*), poll_options(*)';
+
+  // Latest feed page (newest-first, keyset-paginated by created_at).
+  Future<List<Poll>> _fetch({required DateTime? cursor}) async {
     final pollsData = cursor != null
         ? await supabase
             .from('polls')
-            .select('*, author:profiles!author_id(*), poll_options(*)')
+            .select(_selectCols)
             .lt('created_at', cursor.toIso8601String())
             .order('created_at', ascending: false)
             .limit(_pageSize)
         : await supabase
             .from('polls')
-            .select('*, author:profiles!author_id(*), poll_options(*)')
+            .select(_selectCols)
             .order('created_at', ascending: false)
             .limit(_pageSize);
+    return _decorate(pollsData as List);
+  }
 
+  // Annotate raw poll rows with the current user's vote/favorite/share state.
+  Future<List<Poll>> _decorate(List pollsData) async {
+    final uid = supabase.auth.currentUser?.id;
     Map<String, String> votedOptions = {};
     Set<String> favoritedPolls = {};
-
     Set<String> sharedPolls = {};
 
-    if (uid != null) {
-      final ids = (pollsData as List).map((j) => j['id'] as String).toList();
-      if (ids.isNotEmpty) {
-        final results = await Future.wait([
-          supabase
-              .from('votes')
-              .select('poll_id, option_id')
-              .eq('user_id', uid)
-              .inFilter('poll_id', ids),
-          supabase
-              .from('favorites')
-              .select('poll_id')
-              .eq('user_id', uid)
-              .inFilter('poll_id', ids),
-          supabase
-              .from('shares')
-              .select('poll_id')
-              .eq('user_id', uid)
-              .inFilter('poll_id', ids),
-        ]);
-        for (final v in results[0] as List) {
-          votedOptions[v['poll_id'] as String] = v['option_id'] as String;
-        }
-        for (final f in results[1] as List) {
-          favoritedPolls.add(f['poll_id'] as String);
-        }
-        for (final s in results[2] as List) {
-          sharedPolls.add(s['poll_id'] as String);
-        }
+    if (uid != null && pollsData.isNotEmpty) {
+      final ids = pollsData.map((j) => j['id'] as String).toList();
+      final results = await Future.wait([
+        supabase
+            .from('votes')
+            .select('poll_id, option_id')
+            .eq('user_id', uid)
+            .inFilter('poll_id', ids),
+        supabase
+            .from('favorites')
+            .select('poll_id')
+            .eq('user_id', uid)
+            .inFilter('poll_id', ids),
+        supabase
+            .from('shares')
+            .select('poll_id')
+            .eq('user_id', uid)
+            .inFilter('poll_id', ids),
+      ]);
+      for (final v in results[0] as List) {
+        votedOptions[v['poll_id'] as String] = v['option_id'] as String;
+      }
+      for (final f in results[1] as List) {
+        favoritedPolls.add(f['poll_id'] as String);
+      }
+      for (final s in results[2] as List) {
+        sharedPolls.add(s['poll_id'] as String);
       }
     }
 
-    return (pollsData as List).map((json) {
+    return pollsData.map((json) {
       final id = json['id'] as String;
       return Poll.fromJson(
         json as Map<String, dynamic>,
@@ -123,12 +132,62 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
     }).toList();
   }
 
+  // Add fetched polls to the shared pool, skipping ones already present so
+  // existing optimistic state (votes/favorites) is preserved.
+  void _merge(List<Poll> fetched) {
+    final current = _current;
+    final existing = {for (final p in current) p.id};
+    final additions = fetched.where((p) => !existing.contains(p.id)).toList();
+    if (additions.isEmpty) return;
+    state = AsyncData([...current, ...additions]);
+  }
+
+  // ── Server-side ranked tabs — fetched on demand and merged into the pool
+  // so the derived providers reorder a globally-correct set. ────────────────
+  Future<void> loadPopular() async {
+    try {
+      final data = await supabase
+          .from('polls')
+          .select(_selectCols)
+          .order('vote_count', ascending: false)
+          .limit(_pageSize * 2);
+      _merge(await _decorate(data as List));
+    } catch (_) {}
+  }
+
+  Future<void> loadTrending() async {
+    final cutoff = DateTime.now().subtract(const Duration(days: 7));
+    try {
+      final data = await supabase
+          .from('polls')
+          .select(_selectCols)
+          .gt('created_at', cutoff.toIso8601String())
+          .order('vote_count', ascending: false)
+          .limit(_pageSize * 2);
+      _merge(await _decorate(data as List));
+    } catch (_) {}
+  }
+
+  Future<void> loadFollowing(Set<String> followedIds) async {
+    if (followedIds.isEmpty) return;
+    try {
+      final data = await supabase
+          .from('polls')
+          .select(_selectCols)
+          .inFilter('author_id', followedIds.toList())
+          .order('created_at', ascending: false)
+          .limit(_pageSize * 2);
+      _merge(await _decorate(data as List));
+    } catch (_) {}
+  }
+
   Future<void> refresh() async {
     if (_refreshing) return;
     _refreshing = true;
     ref.read(newPollsCountProvider.notifier).state = 0;
     try {
       final fresh = await _fetch(cursor: null);
+      _latestCursor = fresh.isNotEmpty ? fresh.last.createdAt : null;
       ref.read(pollsHasMoreProvider.notifier).state = true;
       ref.read(pollsLoadingMoreProvider.notifier).state = false;
       state = AsyncData(fresh);
@@ -144,15 +203,15 @@ class PollsNotifier extends AsyncNotifier<List<Poll>> {
       return;
     }
 
-    final current = state.valueOrNull ?? [];
-    if (current.isEmpty) return;
+    final cursor = _latestCursor;
+    if (cursor == null) return;
 
     ref.read(pollsLoadingMoreProvider.notifier).state = true;
     try {
-      final cursor = current.last.createdAt;
       final more = await _fetch(cursor: cursor);
       ref.read(pollsHasMoreProvider.notifier).state = more.length >= _pageSize;
-      state = AsyncData([...current, ...more]);
+      if (more.isNotEmpty) _latestCursor = more.last.createdAt;
+      _merge(more);
     } catch (_) {
       // Keep existing state on failure.
     } finally {

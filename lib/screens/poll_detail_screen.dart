@@ -14,6 +14,7 @@ import '../providers/moderation_provider.dart';
 import '../providers/polls_provider.dart';
 import '../providers/users_provider.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/comment_actions_sheet.dart';
 import '../widgets/poll_image.dart';
 import '../widgets/pressable.dart';
 import '../widgets/report_sheet.dart';
@@ -967,141 +968,119 @@ class _CommentRowState extends State<_CommentRow>
         bottom: 20,
         left: widget.comment.isReply ? 36 : 0,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ProfileAvatar(
-            userId: widget.comment.userId,
-            displayName: widget.comment.username,
-            avatarUrl: widget.comment.avatarUrl,
-            radius: 16,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name + timestamp
-                Row(children: [
-                  Text(widget.comment.username,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                        height: 1,
-                      )),
-                  const SizedBox(width: 6),
-                  Text('· ${widget.comment.timestamp}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textTertiary,
-                        height: 1,
-                      )),
-                ]),
-                const SizedBox(height: 5),
-                // Text
-                Text(widget.comment.text,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textPrimary,
-                      height: 1.45,
-                    )),
-                const SizedBox(height: 8),
-                // Like / Reply / Delete
-                Row(children: [
-                  Pressable(
-                    onTap: _toggleLike,
-                    pressedScale: 0.88,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 2),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ScaleTransition(
-                            scale: _likeScale,
-                            child: Icon(
-                              _liked
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
-                              size: 16,
-                              color: _liked
-                                  ? const Color(0xFFFF5C7A)
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                          if (likes > 0) ...[
-                            const SizedBox(width: 4),
-                            Text('$likes',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: _liked
-                                      ? const Color(0xFFFF5C7A)
-                                      : AppColors.textSecondary,
-                                  height: 1,
-                                )),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Pressable(
-                    onTap: widget.onReply,
-                    pressedScale: 0.9,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                      child: Text('Reply',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                            height: 1,
-                          )),
-                    ),
-                  ),
-                  if (widget.onDelete != null) ...[
-                    const SizedBox(width: 16),
-                    Pressable(
-                      onTap: widget.onDelete,
-                      pressedScale: 0.9,
-                      child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                        child: Text('Delete',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textDestructive,
-                              height: 1,
-                            )),
-                      ),
-                    ),
-                  ],
-                  if (widget.onReport != null) ...[
-                    const SizedBox(width: 16),
-                    Pressable(
-                      onTap: widget.onReport,
-                      pressedScale: 0.9,
-                      child: const Padding(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
-                        child: Text('Report',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textTertiary,
-                              height: 1,
-                            )),
-                      ),
-                    ),
-                  ],
-                ]),
-              ],
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onLongPress: (widget.onReport == null && widget.onDelete == null)
+            ? null
+            : () {
+                HapticFeedback.mediumImpact();
+                showCommentActions(
+                  context,
+                  onReport: widget.onReport,
+                  onDelete: widget.onDelete,
+                );
+              },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ProfileAvatar(
+              userId: widget.comment.userId,
+              displayName: widget.comment.username,
+              avatarUrl: widget.comment.avatarUrl,
+              radius: 16,
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Name + timestamp
+                  Row(children: [
+                    Text(widget.comment.username,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          height: 1,
+                        )),
+                    const SizedBox(width: 6),
+                    Text('· ${widget.comment.timestamp}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textTertiary,
+                          height: 1,
+                        )),
+                  ]),
+                  const SizedBox(height: 5),
+                  // Text
+                  Text(widget.comment.text,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                        height: 1.45,
+                      )),
+                  const SizedBox(height: 8),
+                  // Like / Reply / Delete
+                  Row(children: [
+                    Pressable(
+                      onTap: _toggleLike,
+                      pressedScale: 0.88,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 2),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ScaleTransition(
+                              scale: _likeScale,
+                              child: Icon(
+                                _liked
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                size: 16,
+                                color: _liked
+                                    ? const Color(0xFFFF5C7A)
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                            if (likes > 0) ...[
+                              const SizedBox(width: 4),
+                              Text('$likes',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: _liked
+                                        ? const Color(0xFFFF5C7A)
+                                        : AppColors.textSecondary,
+                                    height: 1,
+                                  )),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Pressable(
+                      onTap: widget.onReply,
+                      pressedScale: 0.9,
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                        child: Text('Reply',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textSecondary,
+                              height: 1,
+                            )),
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

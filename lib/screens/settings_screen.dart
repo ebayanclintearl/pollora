@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -26,7 +25,6 @@ import 'web_view_screen.dart';
 const _kPrivacyPolicyUrl =
     'https://ebayanclintearl.github.io/pollora/privacy.html';
 const _kTermsUrl = 'https://ebayanclintearl.github.io/pollora/terms.html';
-const _kSupportEmail = 'support@pollora.app';
 const _kAppStoreUrl =
     'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission
 
@@ -101,21 +99,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           } else {
                             await review.openStoreListing(
                                 appStoreId: _kAppStoreUrl.split('/id').last);
-                          }
-                        },
-                        showDivider: true,
-                      ),
-                      _SettingsRow(
-                        icon: Icons.mail_outline_rounded,
-                        label: 'Contact Us',
-                        onTap: () async {
-                          final uri = Uri(
-                            scheme: 'mailto',
-                            path: _kSupportEmail,
-                            query: 'subject=Pollora%20Support',
-                          );
-                          if (await canLaunchUrl(uri)) {
-                            await launchUrl(uri);
                           }
                         },
                         showDivider: true,

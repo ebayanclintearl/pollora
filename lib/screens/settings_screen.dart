@@ -24,9 +24,9 @@ import 'web_view_screen.dart';
 
 // ── Update these before App Store submission ──
 const _kPrivacyPolicyUrl =
-    'https://github.com/clintearlebayan/pollora/blob/main/PRIVACY.md';
+    'https://github.com/ebayanclintearl/pollora/blob/main/PRIVACY.md';
 const _kTermsUrl =
-    'https://github.com/clintearlebayan/pollora/blob/main/TERMS.md';
+    'https://github.com/ebayanclintearl/pollora/blob/main/TERMS.md';
 const _kSupportEmail = 'support@pollora.app';
 const _kAppStoreUrl =
     'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission

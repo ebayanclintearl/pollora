@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 import '../app_colors.dart';
 import '../app_icon_sizes.dart';
 import '../app_radius.dart';
@@ -324,15 +323,6 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen>
                           poll: poll,
                           heartCtrl: _heartCtrl,
                           heartScale: _heartScale,
-                          onShare: () async {
-                            final result = await Share.share(
-                              '${poll.question}\n\nhttps://pollora.app/poll/${poll.id}',
-                              subject: poll.question,
-                            );
-                            if (result.status == ShareResultStatus.success) {
-                              ref.read(pollsProvider.notifier).share(poll.id);
-                            }
-                          },
                           onFavorite: () {
                             ref
                                 .read(pollsProvider.notifier)
@@ -478,7 +468,6 @@ class _PollCard extends ConsumerWidget {
   final AnimationController heartCtrl;
   final Animation<double> heartScale;
   final VoidCallback onFavorite;
-  final Future<void> Function() onShare;
   final void Function(String optionId) onVote;
   final VoidCallback onDelete;
 
@@ -487,7 +476,6 @@ class _PollCard extends ConsumerWidget {
     required this.heartCtrl,
     required this.heartScale,
     required this.onFavorite,
-    required this.onShare,
     required this.onVote,
     required this.onDelete,
   });
@@ -667,23 +655,6 @@ class _PollCard extends ConsumerWidget {
               ),
             ),
           ),
-
-          // Share
-          GestureDetector(
-            onTap: onShare,
-            behavior: HitTestBehavior.opaque,
-            child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Center(
-                child: Icon(Icons.ios_share_rounded,
-                    size: AppIconSizes.control,
-                    color: poll.hasShared
-                        ? AppColors.accentPrimary
-                        : AppColors.textTertiary),
-              ),
-            ),
-          ),
         ]),
 
         Container(height: 0.5, color: const Color(0xFF2A2A2A)),
@@ -726,17 +697,6 @@ class _PollCard extends ConsumerWidget {
                 },
               )
             else ...[
-              ListTile(
-                leading: const Icon(Icons.link_rounded,
-                    color: AppColors.textSecondary),
-                title: const Text('Copy link'),
-                onTap: () {
-                  Navigator.pop(context);
-                  Clipboard.setData(ClipboardData(
-                      text: 'https://pollora.app/poll/${poll.id}'));
-                  AppToast.show(context, 'Link copied');
-                },
-              ),
               ListTile(
                 leading: const Icon(Icons.flag_outlined,
                     color: AppColors.textDestructive),

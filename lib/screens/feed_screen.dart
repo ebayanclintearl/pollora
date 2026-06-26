@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/comments_sheet.dart';
 import '../widgets/poll_image.dart';
@@ -794,38 +793,6 @@ class _PollCardState extends ConsumerState<_PollCard>
                     ),
                   ),
                 ),
-                // Share
-                Semantics(
-                  label: 'Share poll',
-                  button: true,
-                  child: GestureDetector(
-                    onTap: () async {
-                      HapticFeedback.lightImpact();
-                      final result = await Share.share(
-                        '${p.question}\n\nhttps://pollora.app/poll/${widget.pollId}',
-                        subject: p.question,
-                      );
-                      if (result.status == ShareResultStatus.success &&
-                          context.mounted) {
-                        ref.read(pollsProvider.notifier).share(widget.pollId);
-                        AppToast.show(context, 'Poll shared',
-                            icon: Icons.ios_share_rounded);
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: SizedBox(
-                      width: AppIconSizes.touchTarget,
-                      height: AppIconSizes.touchTarget,
-                      child: Center(
-                        child: Icon(Icons.ios_share_rounded,
-                            size: AppIconSizes.control,
-                            color: p.hasShared
-                                ? AppColors.accentPrimary
-                                : AppColors.textTertiary),
-                      ),
-                    ),
-                  ),
-                ), // Semantics: Share
               ],
             ),
           ],
@@ -866,17 +833,6 @@ void _showOthersPollMenu(BuildContext context, WidgetRef ref, String pollId,
               color: AppColors.borderSubtle,
               borderRadius: BorderRadius.circular(2),
             ),
-          ),
-          ListTile(
-            leading:
-                const Icon(Icons.link_rounded, color: AppColors.textSecondary),
-            title: const Text('Copy link'),
-            onTap: () {
-              Navigator.pop(sheetCtx);
-              Clipboard.setData(
-                  ClipboardData(text: 'https://pollora.app/poll/$pollId'));
-              AppToast.show(context, 'Link copied');
-            },
           ),
           ListTile(
             leading: const Icon(Icons.flag_outlined,

@@ -184,7 +184,9 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
 
   // ── Publish ──────────────────────────────────
   Future<void> _publishPoll() async {
-    if (!_canPublish || _publishing) return;
+    // _published guards the brief success window before we navigate away,
+    // so rapid taps can't submit the same poll twice.
+    if (!_canPublish || _publishing || _published) return;
     _dismissKeyboard();
     setState(() => _publishing = true);
     HapticFeedback.mediumImpact();
@@ -491,7 +493,7 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
         height: 52,
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: enabled && !_publishing
+          onPressed: enabled && !_publishing && !_published
               ? (isStep2 ? _publishPoll : _goToStep2)
               : null,
           style: ElevatedButton.styleFrom(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_icon_sizes.dart';
@@ -23,11 +22,13 @@ abstract final class AppTheme {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: AppColors.background,
         colorScheme: _colorScheme,
+        // Inter is bundled in assets/fonts (see pubspec) — no runtime fetch.
+        fontFamily: 'Inter',
         iconTheme: const IconThemeData(
           color: AppColors.textSecondary,
           size: AppIconSizes.standard,
         ),
-        textTheme: GoogleFonts.interTextTheme(_baseTextTheme),
+        textTheme: _baseTextTheme,
 
         // ── IconButton ───────────────────────────────
         iconButtonTheme: IconButtonThemeData(
@@ -186,7 +187,7 @@ abstract final class AppTheme {
 
   // ─────────────────────────────────────────────────
   // Base text theme — M3 roles mapped to color tokens.
-  // Typeface and sizes are applied via GoogleFonts.interTextTheme().
+  // The Inter typeface is applied globally via ThemeData.fontFamily.
   // ─────────────────────────────────────────────────
   static const TextTheme _baseTextTheme = TextTheme(
     displayLarge: TextStyle(color: AppColors.textPrimary),

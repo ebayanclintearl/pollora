@@ -711,58 +711,21 @@ class _SocialButton extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────
-// Google "G" icon (painted, no image asset needed)
+// Google "G" icon — official logo on a white tile (brand-compliant)
 // ─────────────────────────────────────────────
 class _GoogleIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 20,
-      height: 20,
-      child: CustomPaint(painter: _GooglePainter()),
+    return ClipOval(
+      child: Image.asset(
+        'assets/images/google_logo.png',
+        width: 22,
+        height: 22,
+        fit: BoxFit.cover,
+        filterQuality: FilterQuality.high,
+      ),
     );
   }
-}
-
-class _GooglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = size.width / 2;
-
-    void arc(double start, double sweep, Color color) {
-      final paint = Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = size.width * 0.22
-        ..strokeCap = StrokeCap.butt;
-      canvas.drawArc(Rect.fromCircle(center: c, radius: r * 0.72), start, sweep,
-          false, paint);
-    }
-
-    // Blue
-    arc(-0.26, 1.8, const Color(0xFF4285F4));
-    // Green
-    arc(1.54, 0.73, const Color(0xFF34A853));
-    // Yellow
-    arc(2.27, 0.52, const Color(0xFFFBBC05));
-    // Red
-    arc(-1.05, 0.79, const Color(0xFFEA4335));
-
-    // Right arm of G
-    final paint = Paint()
-      ..color = const Color(0xFF4285F4)
-      ..strokeWidth = size.width * 0.22
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawLine(
-      Offset(c.dx, c.dy),
-      Offset(c.dx + r * 0.72, c.dy),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
 }
 
 // ─────────────────────────────────────────────

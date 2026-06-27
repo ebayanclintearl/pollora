@@ -347,15 +347,15 @@ class _AuthSheetState extends State<AuthSheet> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.accentPrimary,
-                borderRadius: BorderRadius.circular(10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/pollora_app_logo.png',
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
               ),
-              child: const Icon(Icons.bar_chart_rounded,
-                  color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
             const Text(
@@ -379,17 +379,6 @@ class _AuthSheetState extends State<AuthSheet> {
 
         _errorBanner(),
 
-        // Apple
-        _SocialButton(
-          label: 'Continue with Apple',
-          icon: const Icon(Icons.apple_rounded, color: Colors.white, size: 20),
-          backgroundColor: const Color(0xFF000000),
-          textColor: Colors.white,
-          loading: _busyProvider == 'apple',
-          onTap: _apple,
-        ),
-        const SizedBox(height: 12),
-
         // Google
         _SocialButton(
           label: 'Continue with Google',
@@ -398,6 +387,17 @@ class _AuthSheetState extends State<AuthSheet> {
           textColor: AppColors.textPrimary,
           loading: _busyProvider == 'google',
           onTap: _google,
+        ),
+        const SizedBox(height: 12),
+
+        // Apple
+        _SocialButton(
+          label: 'Continue with Apple',
+          icon: const Icon(Icons.apple_rounded, color: Colors.white, size: 22),
+          backgroundColor: const Color(0xFF000000),
+          textColor: Colors.white,
+          loading: _busyProvider == 'apple',
+          onTap: _apple,
         ),
         const SizedBox(height: 20),
 
@@ -719,8 +719,8 @@ class _GoogleIcon extends StatelessWidget {
     return ClipOval(
       child: Image.asset(
         'assets/images/google_logo.png',
-        width: 22,
-        height: 22,
+        width: 20,
+        height: 20,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.high,
       ),

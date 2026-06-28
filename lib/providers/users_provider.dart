@@ -78,8 +78,10 @@ class CurrentProfileNotifier extends AsyncNotifier<AppUser?> {
       rethrow;
     }
 
+    // Rebuilding this provider automatically invalidates fullProfileProvider,
+    // because fullProfileProvider watches currentProfileProvider. Explicitly
+    // invalidating that dependent here creates a circular dependency.
     ref.invalidateSelf();
-    ref.invalidate(fullProfileProvider(uid));
   }
 
   Future<String?> _uploadAvatar(File file, String uid) async {

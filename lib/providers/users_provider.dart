@@ -52,8 +52,15 @@ class CurrentProfileNotifier extends AsyncNotifier<AppUser?> {
     if (avatarFile != null) {
       avatarUrl = await _uploadAvatar(avatarFile, uid);
       // Evict cached image so the new photo shows immediately everywhere.
-      final oldUrl = ref.read(currentUserProvider)?.avatarUrl;
-      if (oldUrl != null) await CachedNetworkImage.evictFromCache(oldUrl);
+      // Read our own state directly — going through currentUserProvider here
+      // would be a circular dependency (it watches this notifier).
+      // Must never block saving — a cache miss/error here is harmless.
+      final oldUrl = state.valueOrNull?.avatarUrl;
+      if (oldUrl != null) {
+        try {
+          await CachedNetworkImage.evictFromCache(oldUrl);
+        } catch (_) {/* ignore — eviction is best-effort */}
+      }
     }
 
     final updateData = <String, dynamic>{

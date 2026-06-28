@@ -17,9 +17,9 @@ import '../providers/follow_provider.dart';
 import '../providers/moderation_provider.dart';
 import '../services/auth_service.dart';
 import '../widgets/app_toast.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'blocked_accounts_screen.dart';
 import 'edit_profile_screen.dart';
-import 'web_view_screen.dart';
 
 // ── Update these before App Store submission ──
 const _kPrivacyPolicyUrl =
@@ -27,6 +27,14 @@ const _kPrivacyPolicyUrl =
 const _kTermsUrl = 'https://ebayanclintearl.github.io/pollora/terms.html';
 const _kAppStoreUrl =
     'https://apps.apple.com/app/pollora/id000000000'; // replace with real ID after submission
+
+// Opens a URL in the system browser (Safari). Used for Privacy/Terms.
+Future<void> _openUrl(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -121,29 +129,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _SettingsRow(
                         icon: Icons.shield_outlined,
                         label: 'Privacy Policy',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const WebViewScreen(
-                              title: 'Privacy Policy',
-                              url: _kPrivacyPolicyUrl,
-                            ),
-                          ),
-                        ),
+                        onTap: () => _openUrl(_kPrivacyPolicyUrl),
                         showDivider: true,
                       ),
                       _SettingsRow(
                         icon: Icons.article_outlined,
                         label: 'Terms of Service',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const WebViewScreen(
-                              title: 'Terms of Service',
-                              url: _kTermsUrl,
-                            ),
-                          ),
-                        ),
+                        onTap: () => _openUrl(_kTermsUrl),
                       ),
                     ],
                   ),

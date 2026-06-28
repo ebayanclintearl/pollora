@@ -29,7 +29,6 @@ dependencies:
   # Links & reviews
   url_launcher: ^6.3.0
   in_app_review: ^2.0.9
-  webview_flutter: ^4.10.0
 
   # Config
   flutter_dotenv: ^5.1.0

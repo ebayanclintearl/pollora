@@ -130,11 +130,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      final msg = e.toString().contains('5 MB')
+      debugPrint('saveProfile failed: $e'); // surfaces the real cause in console
+      final raw = e.toString().replaceAll('Exception: ', '');
+      final msg = raw.contains('5 MB')
           ? 'Image must be under 5 MB'
-          : e.toString().contains('handle_taken')
+          : raw.contains('handle_taken')
               ? 'That handle is already taken'
-              : 'Failed to save — please try again';
+              : 'Couldn\'t save: $raw';
       AppToast.show(context, msg, isError: true);
     } finally {
       if (mounted) setState(() => _saving = false);
